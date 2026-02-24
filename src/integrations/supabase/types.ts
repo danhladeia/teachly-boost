@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      habilidades_bncc: {
+        Row: {
+          ano: string
+          codigo: string
+          created_at: string
+          descricao: string
+          disciplina: string
+          id: string
+          nivel: string
+          objeto_conhecimento: string | null
+          unidade_tematica: string | null
+        }
+        Insert: {
+          ano: string
+          codigo: string
+          created_at?: string
+          descricao: string
+          disciplina: string
+          id?: string
+          nivel: string
+          objeto_conhecimento?: string | null
+          unidade_tematica?: string | null
+        }
+        Update: {
+          ano?: string
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          disciplina?: string
+          id?: string
+          nivel?: string
+          objeto_conhecimento?: string | null
+          unidade_tematica?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
