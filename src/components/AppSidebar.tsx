@@ -1,12 +1,14 @@
 import {
   LayoutDashboard, BookOpen, FileText, Presentation, Gamepad2,
-  FileCheck, Calendar, Stamp, Settings, Sparkles
+  FileCheck, Calendar, Stamp, Settings, LogOut
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import logoPedagox from "@/assets/logo-pedagox.png";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -22,12 +24,18 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   return (
     <Sidebar collapsible="icon">
       <div className="flex h-16 items-center gap-2 px-4 border-b border-sidebar-border">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-primary">
-          <Sparkles className="h-4 w-4 text-primary-foreground" />
-        </div>
+        <img src={logoPedagox} alt="Pedagox" className="h-8 w-8 shrink-0 object-contain" />
         <span className="font-display text-lg font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
           Pedagox
         </span>
@@ -46,6 +54,12 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Sair" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  <span>Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
