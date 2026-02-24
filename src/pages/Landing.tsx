@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
+import logoPedagox from "@/assets/logo-pedagox.png";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -73,10 +74,7 @@ export default function Landing() {
       <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold text-foreground">Pedagox</span>
+            <img src={logoPedagox} alt="Pedagox" className="h-10 w-auto" />
           </Link>
           <div className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
@@ -280,10 +278,7 @@ export default function Landing() {
         <div className="container">
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-display text-lg font-bold">Pedagox</span>
+              <img src={logoPedagox} alt="Pedagox" className="h-10 w-auto" />
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Termos de Uso</a>
