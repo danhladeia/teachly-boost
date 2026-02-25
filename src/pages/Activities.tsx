@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { FileText, Plus, Sparkles, FileDown, Type, ListOrdered, Trash2, AlignLeft, AlignCenter, AlignRight, Loader2, Image, Save, Printer, Building2, Upload, BookOpen, Settings2, Columns2, Hash, MoveUp, MoveDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -31,11 +30,12 @@ export default function Activities() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiSerie, setAiSerie] = useState("");
   const [aiTipo, setAiTipo] = useState("mista");
-  const [aiNumQuestoes, setAiNumQuestoes] = useState(5);
+  const [aiNumAbertas, setAiNumAbertas] = useState(3);
+  const [aiNumFechadas, setAiNumFechadas] = useState(2);
+  const [aiTamanhoTexto, setAiTamanhoTexto] = useState<"curto" | "medio" | "longo">("medio");
   const [aiLoading, setAiLoading] = useState(false);
-  const [showHeader, setShowHeader] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
   const [escola, setEscola] = useState("");
-  const [dualColumn, setDualColumn] = useState(false);
   const [autoNumber, setAutoNumber] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedPlanos, setSavedPlanos] = useState<any[]>([]);
@@ -43,7 +43,17 @@ export default function Activities() {
 
   useEffect(() => {
     loadSavedPlanos();
+    loadEscola();
   }, []);
+
+  const loadEscola = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("escola").eq("user_id", user.id).single();
+      if (data?.escola) setEscola(data.escola);
+    } catch {}
+  };
 
   const loadSavedPlanos = async () => {
     try {
@@ -59,7 +69,6 @@ export default function Activities() {
   };
 
   const removeBlock = (id: string) => setBlocks(prev => prev.filter(b => b.id !== id));
-
   const addBlock = (type: BlockType) => setBlocks(prev => [...prev, emptyBlock(type)]);
 
   const moveBlock = (index: number, dir: -1 | 1) => {
@@ -72,12 +81,32 @@ export default function Activities() {
     });
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      const url = URL.createObjectURL(file);
+      setBlocks(prev => [...prev, { ...emptyBlock("image"), imageUrl: url, imageSize: "medium", imageFloat: "none" }]);
+    });
+    toast.success("Imagem inserida na atividade!");
+    e.target.value = "";
+  };
+
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim()) { toast.error("Digite um tema"); return; }
     setAiLoading(true);
     try {
+      const numAbertas = aiTipo === "multipla_escolha" ? 0 : aiNumAbertas;
+      const numFechadas = aiTipo === "aberta" ? 0 : aiNumFechadas;
       const { data, error } = await supabase.functions.invoke("generate-atividade", {
-        body: { prompt: aiPrompt, serie: aiSerie, tipo: aiTipo, num_questoes: aiNumQuestoes },
+        body: {
+          prompt: aiPrompt,
+          serie: aiSerie,
+          tipo: aiTipo,
+          num_abertas: numAbertas,
+          num_fechadas: numFechadas,
+          tamanho_texto: aiTamanhoTexto,
+        },
       });
       if (error) throw error;
       if (data?.blocks) {
@@ -96,9 +125,7 @@ export default function Activities() {
     const p = plano.conteudo || plano;
     if (p.identificacao?.tema) newBlocks.push({ ...emptyBlock("title"), content: p.identificacao.tema });
     if (p.desenvolvimento) newBlocks.push({ ...emptyBlock("text"), content: p.desenvolvimento });
-    if (p.objetivos?.length) {
-      newBlocks.push({ ...emptyBlock("text"), content: p.objetivos.join("\n") });
-    }
+    if (p.objetivos?.length) newBlocks.push({ ...emptyBlock("text"), content: p.objetivos.join("\n") });
     if (newBlocks.length === 0) newBlocks.push(emptyBlock("title"));
     setBlocks(newBlocks);
     toast.success("Plano importado para o editor!");
@@ -130,7 +157,7 @@ export default function Activities() {
       const titulo = blocks.find(b => b.type === "title")?.content || "Atividade sem título";
       const { error } = await supabase.from("documentos_salvos").insert({
         user_id: user.id, tipo: "atividade", titulo,
-        conteudo: { blocks, settings: { dualColumn, autoNumber, showHeader, escola } } as any,
+        conteudo: { blocks, settings: { autoNumber, showHeader, escola } } as any,
       });
       if (error) throw error;
       toast.success("Atividade salva na biblioteca!");
@@ -160,7 +187,6 @@ export default function Activities() {
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         {/* LEFT PANEL */}
         <div className="space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto pr-1">
-          {/* Tabs: IA / Manual / Importar */}
           <Card className="shadow-card">
             <CardContent className="pt-4">
               <Tabs value={tab} onValueChange={setTab}>
@@ -171,39 +197,84 @@ export default function Activities() {
                 </TabsList>
 
                 <TabsContent value="ia" className="space-y-3 mt-3">
+                  <Input placeholder="Tema (ex: Revolução Francesa)" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="text-sm" />
+                  <Input placeholder="Série (ex: 8º ano)" value={aiSerie} onChange={e => setAiSerie(e.target.value)} className="text-sm h-8" />
+
                   <div className="space-y-2">
-                    <Input placeholder="Tema (ex: Revolução Francesa)" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="text-sm" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input placeholder="Série (ex: 8º ano)" value={aiSerie} onChange={e => setAiSerie(e.target.value)} className="text-sm h-8" />
-                      <Select value={aiTipo} onValueChange={setAiTipo}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mista">Mista</SelectItem>
-                          <SelectItem value="aberta">Só Abertas</SelectItem>
-                          <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs">Nº Questões:</Label>
-                      <Input type="number" min={1} max={20} value={aiNumQuestoes} onChange={e => setAiNumQuestoes(parseInt(e.target.value) || 5)} className="h-8 w-16 text-xs" />
-                    </div>
+                    <Label className="text-xs font-semibold">Tipo de questões</Label>
+                    <Select value={aiTipo} onValueChange={setAiTipo}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
+                        <SelectItem value="aberta">Só Abertas</SelectItem>
+                        <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {/* Separate question counts */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {aiTipo !== "multipla_escolha" && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Questões abertas</Label>
+                        <Input type="number" min={0} max={20} value={aiNumAbertas} onChange={e => setAiNumAbertas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                      </div>
+                    )}
+                    {aiTipo !== "aberta" && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Questões fechadas</Label>
+                        <Input type="number" min={0} max={20} value={aiNumFechadas} onChange={e => setAiNumFechadas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Text size */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Tamanho do texto</Label>
+                    <Select value={aiTamanhoTexto} onValueChange={v => setAiTamanhoTexto(v as any)}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="curto">Curto (1-2 parágrafos)</SelectItem>
+                        <SelectItem value="medio">Médio (3-4 parágrafos)</SelectItem>
+                        <SelectItem value="longo">Longo (5+ parágrafos)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Image upload */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><Image className="h-3 w-3" /> Inserir imagem</Label>
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+                      <Upload className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Clique para enviar imagem</span>
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  </div>
+
                   <Button onClick={handleAiGenerate} disabled={aiLoading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
                     {aiLoading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Atividade</>}
                   </Button>
                 </TabsContent>
 
-                <TabsContent value="manual" className="mt-3">
-                  <p className="text-xs text-muted-foreground mb-2">Adicione blocos manualmente usando os botões abaixo.</p>
+                <TabsContent value="manual" className="mt-3 space-y-3">
+                  <p className="text-xs text-muted-foreground mb-2">Adicione blocos manualmente:</p>
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="outline" size="sm" onClick={() => addBlock("title")}><Type className="mr-1 h-3 w-3" /> Título</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("text")}><AlignLeft className="mr-1 h-3 w-3" /> Texto</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-open")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Aberta</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-mc")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Múltipla</Button>
-                    <Button variant="outline" size="sm" onClick={() => addBlock("image")}><Image className="mr-1 h-3 w-3" /> Imagem</Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">Dica: Use <code className="bg-muted px-1 rounded">$E=mc^2$</code> para fórmulas matemáticas nos textos.</p>
+
+                  {/* Image upload in manual tab too */}
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Inserir imagem</span>
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">Dica: Use <code className="bg-muted px-1 rounded">$E=mc^2$</code> para fórmulas.</p>
                 </TabsContent>
 
                 <TabsContent value="importar" className="mt-3 space-y-2">
@@ -232,7 +303,9 @@ export default function Activities() {
                 <Switch checked={showHeader} onCheckedChange={setShowHeader} id="act-header" />
                 <Label htmlFor="act-header" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Escola</Label>
               </div>
-              {showHeader && <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />}
+              {showHeader && (
+                <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+              )}
               <div className="flex items-center gap-2">
                 <Switch checked={autoNumber} onCheckedChange={setAutoNumber} id="auto-num" />
                 <Label htmlFor="auto-num" className="text-xs flex items-center gap-1"><Hash className="h-3 w-3" /> Numeração automática</Label>
@@ -261,12 +334,7 @@ export default function Activities() {
 
         {/* RIGHT PANEL - A4 Preview */}
         <div className="overflow-auto max-h-[calc(100vh-160px)]">
-          <A4Preview
-            blocks={blocks}
-            showHeader={showHeader}
-            escola={escola}
-            autoNumber={autoNumber}
-          />
+          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} />
         </div>
       </div>
     </div>
