@@ -9,21 +9,35 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, serie, tipo, num_questoes } = await req.json();
+    const { prompt, serie, tipo, num_abertas, num_fechadas, tamanho_texto } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const tipoInstrucao = tipo === "aberta" 
-      ? "Gere APENAS questões abertas (dissertativas) com linhas para resposta."
-      : tipo === "multipla_escolha"
-      ? "Gere APENAS questões de múltipla escolha com 4 alternativas cada."
-      : "Misture questões abertas e de múltipla escolha.";
+    const numAbertas = num_abertas ?? (tipo === "multipla_escolha" ? 0 : 3);
+    const numFechadas = num_fechadas ?? (tipo === "aberta" ? 0 : 2);
+    const totalQ = numAbertas + numFechadas;
+
+    const tamanhoMap: Record<string, string> = {
+      curto: "Gere 1 a 2 parágrafos curtos de texto explicativo (máximo 80 palavras).",
+      medio: "Gere 3 a 4 parágrafos de texto explicativo (150-250 palavras).",
+      longo: "Gere 5 ou mais parágrafos de texto explicativo detalhado (300+ palavras).",
+    };
+    const tamanhoInstrucao = tamanhoMap[tamanho_texto || "medio"];
+
+    let tipoInstrucao = "";
+    if (numAbertas > 0 && numFechadas > 0) {
+      tipoInstrucao = `Gere exatamente ${numAbertas} questão(ões) aberta(s) (dissertativas com linhas) e ${numFechadas} questão(ões) de múltipla escolha com 4 alternativas.`;
+    } else if (numAbertas > 0) {
+      tipoInstrucao = `Gere exatamente ${numAbertas} questão(ões) aberta(s) (dissertativas com linhas para resposta).`;
+    } else {
+      tipoInstrucao = `Gere exatamente ${numFechadas} questão(ões) de múltipla escolha com 4 alternativas cada.`;
+    }
 
     const systemPrompt = `Você é um especialista em criar atividades pedagógicas para impressão A4.
 Dado um tema, gere uma atividade completa com título, texto explicativo e questões.
 ${serie ? `A atividade é para ${serie}.` : ""}
+${tamanhoInstrucao}
 ${tipoInstrucao}
-Gere exatamente ${num_questoes || 5} questões.
 Responda APENAS com JSON no formato:
 {
   "blocks": [
@@ -33,7 +47,7 @@ Responda APENAS com JSON no formato:
     { "type": "question-mc", "content": "Pergunta múltipla escolha?", "alignment": "left", "alternatives": ["A", "B", "C", "D"], "correctIndex": 0 }
   ]
 }
-Gere 1 título, 1-2 textos explicativos e ${num_questoes || 5} questões.
+Gere 1 título, o texto explicativo conforme o tamanho solicitado e ${totalQ} questões.
 Use linguagem adequada ao nível de ensino. Sem markdown, apenas JSON.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
