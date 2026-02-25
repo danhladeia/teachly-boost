@@ -9,23 +9,32 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, serie, tipo, num_questoes } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const tipoInstrucao = tipo === "aberta" 
+      ? "Gere APENAS questões abertas (dissertativas) com linhas para resposta."
+      : tipo === "multipla_escolha"
+      ? "Gere APENAS questões de múltipla escolha com 4 alternativas cada."
+      : "Misture questões abertas e de múltipla escolha.";
+
     const systemPrompt = `Você é um especialista em criar atividades pedagógicas para impressão A4.
 Dado um tema, gere uma atividade completa com título, texto explicativo e questões.
+${serie ? `A atividade é para ${serie}.` : ""}
+${tipoInstrucao}
+Gere exatamente ${num_questoes || 5} questões.
 Responda APENAS com JSON no formato:
 {
   "blocks": [
     { "type": "title", "content": "Título da atividade", "alignment": "center" },
     { "type": "text", "content": "Texto explicativo sobre o tema...", "alignment": "left" },
-    { "type": "question-open", "content": "Pergunta aberta sobre o tema?", "alignment": "left", "lines": 4 },
-    { "type": "question-mc", "content": "Pergunta de múltipla escolha?", "alignment": "left", "alternatives": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"], "correctIndex": 0 }
+    { "type": "question-open", "content": "Pergunta aberta?", "alignment": "left", "lines": 4 },
+    { "type": "question-mc", "content": "Pergunta múltipla escolha?", "alignment": "left", "alternatives": ["A", "B", "C", "D"], "correctIndex": 0 }
   ]
 }
-Gere entre 1 título, 1-2 textos explicativos e 4-6 questões (misture abertas e múltipla escolha).
-Use linguagem adequada ao nível de ensino mencionado. Sem markdown, apenas JSON.`;
+Gere 1 título, 1-2 textos explicativos e ${num_questoes || 5} questões.
+Use linguagem adequada ao nível de ensino. Sem markdown, apenas JSON.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
