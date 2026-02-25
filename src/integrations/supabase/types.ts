@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      documentos_salvos: {
+        Row: {
+          conteudo: Json
+          created_at: string
+          disciplina: string | null
+          id: string
+          modelo: string | null
+          nivel: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conteudo?: Json
+          created_at?: string
+          disciplina?: string | null
+          id?: string
+          modelo?: string | null
+          nivel?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conteudo?: Json
+          created_at?: string
+          disciplina?: string | null
+          id?: string
+          modelo?: string | null
+          nivel?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       habilidades_bncc: {
         Row: {
           ano: string

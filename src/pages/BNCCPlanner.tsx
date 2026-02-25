@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Sparkles, FileDown, Copy, Loader2, RefreshCw, Pencil } from "lucide-react";
+import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -239,10 +239,7 @@ export default function BNCCPlanner() {
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline"><FileDown className="mr-2 h-4 w-4" /> Exportar PDF</Button>
-            <Button variant="outline"><Copy className="mr-2 h-4 w-4" /> Duplicar</Button>
-          </div>
+          {/* Actions are now inside PlanoPreview */}
         </>
       )}
 

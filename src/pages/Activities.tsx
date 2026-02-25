@@ -1,34 +1,23 @@
-import { useState, useRef, useCallback } from "react";
-import { FileText, Plus, Image, Sparkles, FileDown, Type, ListOrdered, Trash2, GripVertical, AlignLeft, AlignCenter, AlignRight, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { FileText, Plus, Sparkles, FileDown, Type, ListOrdered, Trash2, AlignLeft, AlignCenter, AlignRight, Loader2, Image, Save, Printer, Building2, Upload, BookOpen, Settings2, Columns2, Hash, MoveUp, MoveDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-type BlockType = "title" | "text" | "question-open" | "question-mc" | "image";
-type Alignment = "left" | "center" | "right";
-
-interface Block {
-  id: string;
-  type: BlockType;
-  content: string;
-  alignment: Alignment;
-  // For questions
-  alternatives?: string[];
-  correctIndex?: number;
-  lines?: number; // answer lines for open questions
-  // For images
-  imageUrl?: string;
-  imagePosition?: "left" | "center" | "right";
-}
+import { exportToPdf } from "@/lib/export-utils";
+import A4Preview from "@/components/activities/A4Preview";
+import BlockEditor from "@/components/activities/BlockEditor";
+import type { Block, BlockType } from "@/components/activities/types";
 
 const genId = () => Math.random().toString(36).slice(2, 10);
 
-const emptyBlock = (type: BlockType): Block => ({
+export const emptyBlock = (type: BlockType): Block => ({
   id: genId(),
   type,
   content: "",
@@ -40,241 +29,244 @@ const emptyBlock = (type: BlockType): Block => ({
 export default function Activities() {
   const [blocks, setBlocks] = useState<Block[]>([emptyBlock("title")]);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [aiSerie, setAiSerie] = useState("");
+  const [aiTipo, setAiTipo] = useState("mista");
+  const [aiNumQuestoes, setAiNumQuestoes] = useState(5);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showHeader, setShowHeader] = useState(false);
+  const [escola, setEscola] = useState("");
+  const [dualColumn, setDualColumn] = useState(false);
+  const [autoNumber, setAutoNumber] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savedPlanos, setSavedPlanos] = useState<any[]>([]);
+  const [tab, setTab] = useState("ia");
+
+  useEffect(() => {
+    loadSavedPlanos();
+  }, []);
+
+  const loadSavedPlanos = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("documentos_salvos").select("id, titulo, created_at, conteudo").eq("user_id", user.id).eq("tipo", "plano").order("created_at", { ascending: false }).limit(20);
+      if (data) setSavedPlanos(data);
+    } catch {}
+  };
 
   const updateBlock = (id: string, updates: Partial<Block>) => {
     setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
   };
 
-  const removeBlock = (id: string) => {
-    setBlocks(prev => prev.filter(b => b.id !== id));
-  };
+  const removeBlock = (id: string) => setBlocks(prev => prev.filter(b => b.id !== id));
 
-  const addBlock = (type: BlockType) => {
-    setBlocks(prev => [...prev, emptyBlock(type)]);
+  const addBlock = (type: BlockType) => setBlocks(prev => [...prev, emptyBlock(type)]);
+
+  const moveBlock = (index: number, dir: -1 | 1) => {
+    setBlocks(prev => {
+      const arr = [...prev];
+      const target = index + dir;
+      if (target < 0 || target >= arr.length) return prev;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      return arr;
+    });
   };
 
   const handleAiGenerate = async () => {
-    if (!aiPrompt.trim()) { toast.error("Digite um tema para gerar o conteúdo"); return; }
+    if (!aiPrompt.trim()) { toast.error("Digite um tema"); return; }
     setAiLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-atividade", {
-        body: { prompt: aiPrompt },
+        body: { prompt: aiPrompt, serie: aiSerie, tipo: aiTipo, num_questoes: aiNumQuestoes },
       });
       if (error) throw error;
       if (data?.blocks) {
         setBlocks(data.blocks.map((b: any) => ({ ...emptyBlock(b.type), ...b, id: genId() })));
-        toast.success("Atividade gerada com sucesso!");
+        toast.success("Atividade gerada!");
       }
     } catch (err: any) {
-      toast.error(err.message || "Erro ao gerar atividade");
+      toast.error(err.message || "Erro ao gerar");
     } finally {
       setAiLoading(false);
     }
   };
 
-  const handleImageUpload = (blockId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    updateBlock(blockId, { imageUrl: url });
+  const handleImportPlano = (plano: any) => {
+    const newBlocks: Block[] = [];
+    const p = plano.conteudo || plano;
+    if (p.identificacao?.tema) newBlocks.push({ ...emptyBlock("title"), content: p.identificacao.tema });
+    if (p.desenvolvimento) newBlocks.push({ ...emptyBlock("text"), content: p.desenvolvimento });
+    if (p.objetivos?.length) {
+      newBlocks.push({ ...emptyBlock("text"), content: p.objetivos.join("\n") });
+    }
+    if (newBlocks.length === 0) newBlocks.push(emptyBlock("title"));
+    setBlocks(newBlocks);
+    toast.success("Plano importado para o editor!");
+  };
+
+  const handlePrint = () => {
+    const el = document.getElementById("atividade-print-area");
+    if (!el) return;
+    const pw = window.open("", "_blank");
+    if (!pw) return;
+    pw.document.write(`<html><head><title>Atividade</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"><style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', 'Arial', sans-serif; }
+      @page { size: A4; margin: 0; }
+    </style></head><body>`);
+    pw.document.write(el.innerHTML);
+    pw.document.write("</body></html>");
+    pw.document.close();
+    pw.focus();
+    pw.print();
+    pw.close();
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login"); return; }
+      const titulo = blocks.find(b => b.type === "title")?.content || "Atividade sem título";
+      const { error } = await supabase.from("documentos_salvos").insert({
+        user_id: user.id, tipo: "atividade", titulo,
+        conteudo: { blocks, settings: { dualColumn, autoNumber, showHeader, escola } } as any,
+      });
+      if (error) throw error;
+      toast.success("Atividade salva na biblioteca!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" /> Editor de Atividades A4
-        </h1>
-        <p className="text-muted-foreground mt-1">Crie atividades com layout profissional para impressão</p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" /> Editor de Atividades A4
+          </h1>
+          <p className="text-muted-foreground text-sm">Diagramador automático para impressão</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
+          <Button size="sm" variant="outline" onClick={() => exportToPdf("atividade-print-area", "atividade")}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
+          <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}</Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[350px_1fr]">
-        {/* Left - Toolbar */}
-        <div className="space-y-4">
-          {/* AI Generation */}
+      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+        {/* LEFT PANEL */}
+        <div className="space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto pr-1">
+          {/* Tabs: IA / Manual / Importar */}
           <Card className="shadow-card">
-            <CardHeader><CardTitle className="font-display text-sm">✨ Gerar com IA</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Textarea
-                placeholder='Descreva o tema (ex: "Revolução Francesa para 8º ano" ou "Frações equivalentes 5º ano")'
-                value={aiPrompt}
-                onChange={e => setAiPrompt(e.target.value)}
-                className="min-h-[80px] text-sm"
-              />
-              <Button onClick={handleAiGenerate} disabled={aiLoading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                {aiLoading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Atividade</>}
-              </Button>
-            </CardContent>
-          </Card>
+            <CardContent className="pt-4">
+              <Tabs value={tab} onValueChange={setTab}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="ia" className="text-xs">✨ IA</TabsTrigger>
+                  <TabsTrigger value="manual" className="text-xs">📝 Manual</TabsTrigger>
+                  <TabsTrigger value="importar" className="text-xs">📥 Importar</TabsTrigger>
+                </TabsList>
 
-          {/* Add Blocks */}
-          <Card className="shadow-card">
-            <CardHeader><CardTitle className="font-display text-sm">➕ Adicionar Elementos</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addBlock("title")}>
-                <Type className="mr-2 h-4 w-4" /> Título
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addBlock("text")}>
-                <AlignLeft className="mr-2 h-4 w-4" /> Bloco de Texto
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addBlock("question-open")}>
-                <ListOrdered className="mr-2 h-4 w-4" /> Questão Aberta
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addBlock("question-mc")}>
-                <ListOrdered className="mr-2 h-4 w-4" /> Questão Múltipla Escolha
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addBlock("image")}>
-                <Image className="mr-2 h-4 w-4" /> Imagem
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Block Editor */}
-          <Card className="shadow-card">
-            <CardHeader><CardTitle className="font-display text-sm">📝 Blocos ({blocks.length})</CardTitle></CardHeader>
-            <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
-              {blocks.map((block, i) => (
-                <div key={block.id} className="rounded-lg border p-3 space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground uppercase">
-                      {block.type === "title" ? "Título" : block.type === "text" ? "Texto" : block.type === "question-open" ? "Q. Aberta" : block.type === "question-mc" ? "Q. Múltipla Escolha" : "Imagem"}
-                    </span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateBlock(block.id, { alignment: "left" })}><AlignLeft className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateBlock(block.id, { alignment: "center" })}><AlignCenter className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateBlock(block.id, { alignment: "right" })}><AlignRight className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeBlock(block.id)}><Trash2 className="h-3 w-3" /></Button>
+                <TabsContent value="ia" className="space-y-3 mt-3">
+                  <div className="space-y-2">
+                    <Input placeholder="Tema (ex: Revolução Francesa)" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="text-sm" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input placeholder="Série (ex: 8º ano)" value={aiSerie} onChange={e => setAiSerie(e.target.value)} className="text-sm h-8" />
+                      <Select value={aiTipo} onValueChange={setAiTipo}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mista">Mista</SelectItem>
+                          <SelectItem value="aberta">Só Abertas</SelectItem>
+                          <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Nº Questões:</Label>
+                      <Input type="number" min={1} max={20} value={aiNumQuestoes} onChange={e => setAiNumQuestoes(parseInt(e.target.value) || 5)} className="h-8 w-16 text-xs" />
                     </div>
                   </div>
-                  {block.type !== "image" && (
-                    <Textarea
-                      value={block.content}
-                      onChange={e => updateBlock(block.id, { content: e.target.value })}
-                      placeholder={block.type === "title" ? "Título da atividade" : block.type.startsWith("question") ? "Enunciado da questão" : "Texto do bloco"}
-                      className="min-h-[60px] text-xs"
-                    />
-                  )}
-                  {block.type === "question-mc" && block.alternatives && (
-                    <div className="space-y-1">
-                      {block.alternatives.map((alt, ai) => (
-                        <div key={ai} className="flex gap-1 items-center">
-                          <span className="text-xs font-mono w-4">{String.fromCharCode(65 + ai)})</span>
-                          <Input
-                            value={alt}
-                            onChange={e => {
-                              const alts = [...(block.alternatives || [])];
-                              alts[ai] = e.target.value;
-                              updateBlock(block.id, { alternatives: alts });
-                            }}
-                            className="h-7 text-xs"
-                            placeholder={`Alternativa ${String.fromCharCode(65 + ai)}`}
-                          />
-                        </div>
+                  <Button onClick={handleAiGenerate} disabled={aiLoading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                    {aiLoading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Atividade</>}
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="manual" className="mt-3">
+                  <p className="text-xs text-muted-foreground mb-2">Adicione blocos manualmente usando os botões abaixo.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => addBlock("title")}><Type className="mr-1 h-3 w-3" /> Título</Button>
+                    <Button variant="outline" size="sm" onClick={() => addBlock("text")}><AlignLeft className="mr-1 h-3 w-3" /> Texto</Button>
+                    <Button variant="outline" size="sm" onClick={() => addBlock("question-open")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Aberta</Button>
+                    <Button variant="outline" size="sm" onClick={() => addBlock("question-mc")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Múltipla</Button>
+                    <Button variant="outline" size="sm" onClick={() => addBlock("image")}><Image className="mr-1 h-3 w-3" /> Imagem</Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Dica: Use <code className="bg-muted px-1 rounded">$E=mc^2$</code> para fórmulas matemáticas nos textos.</p>
+                </TabsContent>
+
+                <TabsContent value="importar" className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">Importe conteúdo dos seus planos de aula salvos:</p>
+                  {savedPlanos.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">Nenhum plano salvo ainda.</p>
+                  ) : (
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                      {savedPlanos.map(p => (
+                        <Button key={p.id} variant="ghost" size="sm" className="w-full justify-start text-xs h-8" onClick={() => handleImportPlano(p)}>
+                          <BookOpen className="mr-1 h-3 w-3" /> {p.titulo}
+                        </Button>
                       ))}
                     </div>
                   )}
-                  {block.type === "question-open" && (
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs">Linhas:</Label>
-                      <Input type="number" min={1} max={20} value={block.lines || 4} onChange={e => updateBlock(block.id, { lines: parseInt(e.target.value) || 4 })} className="h-7 w-16 text-xs" />
-                    </div>
-                  )}
-                  {block.type === "image" && (
-                    <div>
-                      <input type="file" accept="image/*" onChange={e => handleImageUpload(block.id, e)} className="text-xs" />
-                      {block.imageUrl && <img src={block.imageUrl} alt="" className="mt-2 max-h-20 rounded" />}
-                    </div>
-                  )}
-                </div>
-              ))}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
-          {/* Export */}
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1" onClick={() => window.print()}>
-              <FileDown className="mr-1 h-4 w-4" /> PDF / Imprimir
-            </Button>
-          </div>
-        </div>
-
-        {/* Right - A4 Preview */}
-        <div className="print:m-0">
-          <Card className="shadow-card print:shadow-none print:border-0">
-            <CardHeader className="flex flex-row items-center justify-between print:hidden">
-              <CardTitle className="font-display text-lg">Folha A4 - Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 flex justify-center">
-              <div
-                className="bg-white text-black border print:border-0"
-                style={{
-                  width: "210mm",
-                  minHeight: "297mm",
-                  padding: "15mm",
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "12pt",
-                  lineHeight: "1.6",
-                }}
-              >
-                {blocks.length === 0 && (
-                  <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                    Adicione elementos à atividade usando a barra lateral
-                  </div>
-                )}
-                {blocks.map((block, i) => {
-                  const align = block.alignment === "center" ? "center" : block.alignment === "right" ? "right" : "left";
-                  
-                  if (block.type === "title") {
-                    return (
-                      <h1 key={block.id} style={{ textAlign: align, fontSize: "18pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "8mm", borderBottom: "1px solid #ccc", paddingBottom: "4mm" }}>
-                        {block.content || "Título da Atividade"}
-                      </h1>
-                    );
-                  }
-                  if (block.type === "text") {
-                    return (
-                      <p key={block.id} style={{ textAlign: "justify", marginBottom: "5mm", textIndent: align === "left" ? "10mm" : 0 }}>
-                        {block.content || "Texto do bloco"}
-                      </p>
-                    );
-                  }
-                  if (block.type === "question-open") {
-                    const questionNum = blocks.slice(0, i).filter(b => b.type.startsWith("question")).length + 1;
-                    return (
-                      <div key={block.id} style={{ marginBottom: "8mm" }}>
-                        <p style={{ fontWeight: 600, marginBottom: "3mm" }}>{questionNum}) {block.content || "Enunciado da questão"}</p>
-                        {Array.from({ length: block.lines || 4 }).map((_, li) => (
-                          <div key={li} style={{ borderBottom: "1px solid #ccc", height: "8mm", marginBottom: "1mm" }} />
-                        ))}
-                      </div>
-                    );
-                  }
-                  if (block.type === "question-mc") {
-                    const questionNum = blocks.slice(0, i).filter(b => b.type.startsWith("question")).length + 1;
-                    return (
-                      <div key={block.id} style={{ marginBottom: "8mm" }}>
-                        <p style={{ fontWeight: 600, marginBottom: "3mm" }}>{questionNum}) {block.content || "Enunciado da questão"}</p>
-                        {block.alternatives?.map((alt, ai) => (
-                          <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
-                            <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span> {alt || `Alternativa ${String.fromCharCode(65 + ai)}`}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }
-                  if (block.type === "image" && block.imageUrl) {
-                    return (
-                      <div key={block.id} style={{ textAlign: align, marginBottom: "5mm" }}>
-                        <img src={block.imageUrl} alt="" style={{ maxWidth: "100%", maxHeight: "80mm" }} />
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
+          {/* Global Settings */}
+          <Card className="shadow-card">
+            <CardContent className="pt-4 space-y-3">
+              <h3 className="text-xs font-semibold flex items-center gap-1"><Settings2 className="h-3 w-3" /> Configurações</h3>
+              <div className="flex items-center gap-2">
+                <Switch checked={showHeader} onCheckedChange={setShowHeader} id="act-header" />
+                <Label htmlFor="act-header" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Escola</Label>
+              </div>
+              {showHeader && <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />}
+              <div className="flex items-center gap-2">
+                <Switch checked={autoNumber} onCheckedChange={setAutoNumber} id="auto-num" />
+                <Label htmlFor="auto-num" className="text-xs flex items-center gap-1"><Hash className="h-3 w-3" /> Numeração automática</Label>
               </div>
             </CardContent>
           </Card>
+
+          {/* Block list */}
+          <Card className="shadow-card">
+            <CardHeader className="py-3"><CardTitle className="text-xs font-semibold">📝 Blocos ({blocks.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-2 max-h-[350px] overflow-y-auto">
+              {blocks.map((block, i) => (
+                <BlockEditor
+                  key={block.id}
+                  block={block}
+                  index={i}
+                  totalBlocks={blocks.length}
+                  onUpdate={(updates) => updateBlock(block.id, updates)}
+                  onRemove={() => removeBlock(block.id)}
+                  onMove={(dir) => moveBlock(i, dir)}
+                />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT PANEL - A4 Preview */}
+        <div className="overflow-auto max-h-[calc(100vh-160px)]">
+          <A4Preview
+            blocks={blocks}
+            showHeader={showHeader}
+            escola={escola}
+            autoNumber={autoNumber}
+          />
         </div>
       </div>
     </div>

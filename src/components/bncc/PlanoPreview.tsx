@@ -1,4 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { FileDown, Printer, Save, Building2 } from "lucide-react";
+import { exportToPdf, exportPlanoToDocx } from "@/lib/export-utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PlanoPreviewProps {
   plano: any;
@@ -6,208 +15,194 @@ interface PlanoPreviewProps {
 }
 
 export default function PlanoPreview({ plano, modelo }: PlanoPreviewProps) {
-  return (
-    <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="font-display text-lg flex items-center gap-2">
-          Plano de Aula Gerado
-          <span className="text-xs font-normal bg-primary/10 text-primary px-2 py-1 rounded-full">
-            {modelo === "simples" ? "⚡ Simples" : modelo === "criativo" ? "🚀 Criativo (PBL)" : "📋 Tradicional"}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Identificação */}
-        {plano.identificacao && (
-          <Section icon="📋" title="Identificação" bg>
-            <div className="grid gap-2 sm:grid-cols-2 text-sm">
-              <p><strong>Disciplina:</strong> {plano.identificacao.disciplina}</p>
-              <p><strong>Nível:</strong> {plano.identificacao.nivel}</p>
-              <p><strong>Duração:</strong> {plano.identificacao.duracao}</p>
-              <p><strong>Tema:</strong> {plano.identificacao.tema}</p>
-            </div>
-          </Section>
-        )}
+  const [showHeader, setShowHeader] = useState(false);
+  const [escola, setEscola] = useState("");
+  const [saving, setSaving] = useState(false);
 
-        {/* Habilidades BNCC */}
-        {plano.habilidades_bncc?.length > 0 && (
-          <Section icon="📚" title="Habilidades BNCC">
-            <div className="space-y-2">
+  const handlePrint = () => {
+    const el = document.getElementById("plano-print-area");
+    if (!el) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html><head><title>Plano de Aula</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; padding: 15mm; font-size: 11pt; line-height: 1.6; color: #1e293b; }
+        h1 { font-size: 16pt; text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #2563eb; padding-bottom: 4mm; }
+        h2 { font-size: 13pt; color: #2563eb; margin: 6mm 0 3mm; }
+        p, li { margin-bottom: 2mm; }
+        ul { padding-left: 5mm; }
+        .header { text-align: center; margin-bottom: 6mm; font-weight: bold; font-size: 14pt; }
+        .badge { display: inline-block; background: #eff6ff; color: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 9pt; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
+        .border-box { border: 1px solid #e2e8f0; border-radius: 4px; padding: 3mm; margin-bottom: 3mm; }
+        .highlight { background: #f0f9ff; padding: 3mm; border-left: 3px solid #2563eb; border-radius: 4px; }
+        @page { size: A4; margin: 10mm; }
+      </style></head><body>
+    `);
+    if (showHeader && escola) {
+      printWindow.document.write(`<div class="header">${escola}</div>`);
+    }
+    printWindow.document.write(el.innerHTML);
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+
+  const handleExportPdf = () => exportToPdf("plano-print-area", "plano-de-aula");
+
+  const handleExportDocx = () => exportPlanoToDocx(plano, showHeader ? { escola } : undefined);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para salvar"); return; }
+      const titulo = plano.identificacao?.tema || "Plano de Aula";
+      const { error } = await supabase.from("documentos_salvos").insert({
+        user_id: user.id,
+        tipo: "plano",
+        titulo,
+        conteudo: plano,
+        modelo,
+        disciplina: plano.identificacao?.disciplina,
+        nivel: plano.identificacao?.nivel,
+      });
+      if (error) throw error;
+      toast.success("Plano salvo na biblioteca!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header config + actions */}
+      <Card className="shadow-card">
+        <CardContent className="pt-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Switch checked={showHeader} onCheckedChange={setShowHeader} id="header-switch" />
+              <Label htmlFor="header-switch" className="text-sm flex items-center gap-1"><Building2 className="h-4 w-4" /> Cabeçalho da Escola</Label>
+            </div>
+            {showHeader && (
+              <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="max-w-xs h-8 text-sm" />
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
+            <Button size="sm" variant="outline" onClick={handleExportPdf}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
+            <Button size="sm" variant="outline" onClick={handleExportDocx}><FileDown className="mr-1 h-4 w-4" /> DOCX</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar na Biblioteca"}</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Printable A4 area */}
+      <Card className="shadow-card overflow-auto">
+        <div id="plano-print-area" className="bg-white text-black p-[15mm] mx-auto" style={{ width: "210mm", minHeight: "297mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}>
+          {showHeader && escola && (
+            <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "6mm", fontFamily: "'Montserrat', sans-serif" }}>{escola}</div>
+          )}
+
+          <h1 style={{ textAlign: "center", fontSize: "16pt", fontWeight: 700, borderBottom: "2px solid #2563eb", paddingBottom: "4mm", marginBottom: "6mm", fontFamily: "'Montserrat', sans-serif" }}>
+            PLANO DE AULA
+            <span style={{ display: "block", fontSize: "10pt", color: "#64748b", fontWeight: 400, marginTop: "2mm" }}>
+              {modelo === "simples" ? "⚡ Modelo Simples" : modelo === "criativo" ? "🚀 Modelo Criativo (PBL)" : "📋 Modelo Tradicional"}
+            </span>
+          </h1>
+
+          {plano.identificacao && (
+            <PrintSection title="Identificação">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2mm", fontSize: "10pt" }}>
+                <p><strong>Disciplina:</strong> {plano.identificacao.disciplina}</p>
+                <p><strong>Nível:</strong> {plano.identificacao.nivel}</p>
+                <p><strong>Duração:</strong> {plano.identificacao.duracao}</p>
+                <p><strong>Tema:</strong> {plano.identificacao.tema}</p>
+              </div>
+            </PrintSection>
+          )}
+
+          {plano.habilidades_bncc?.length > 0 && (
+            <PrintSection title="Habilidades BNCC">
               {plano.habilidades_bncc.map((h: any, i: number) => (
-                <div key={i} className="rounded-lg border p-3 text-sm">
-                  <span className="font-mono text-xs text-primary font-semibold">{h.codigo}</span>
-                  <p className="text-muted-foreground mt-1">{h.descricao}</p>
+                <p key={i} style={{ fontSize: "10pt", marginBottom: "2mm" }}><strong style={{ color: "#2563eb" }}>{h.codigo}</strong> — {h.descricao}</p>
+              ))}
+            </PrintSection>
+          )}
+
+          {plano.pergunta_norteadora && (
+            <PrintSection title="Pergunta Norteadora (PBL)">
+              <p style={{ background: "#f0f9ff", padding: "3mm", borderLeft: "3px solid #2563eb", borderRadius: "4px", fontStyle: "italic" }}>{plano.pergunta_norteadora}</p>
+            </PrintSection>
+          )}
+
+          {plano.objetivos?.length > 0 && (
+            <PrintSection title="Objetivos de Aprendizagem">
+              <ul style={{ paddingLeft: "5mm" }}>{plano.objetivos.map((o: string, i: number) => <li key={i}>{o}</li>)}</ul>
+            </PrintSection>
+          )}
+
+          {plano.conteudo_programatico && <PrintSection title="Conteúdo Programático"><p style={{ whiteSpace: "pre-line" }}>{plano.conteudo_programatico}</p></PrintSection>}
+          {plano.gancho_inicial && <PrintSection title="Gancho Inicial"><p>{plano.gancho_inicial}</p></PrintSection>}
+          {plano.problema_desafio && <PrintSection title="O Problema / Desafio"><p style={{ whiteSpace: "pre-line" }}>{plano.problema_desafio}</p></PrintSection>}
+          {plano.pesquisa_exploracao && <PrintSection title="Pesquisa e Exploração"><p style={{ whiteSpace: "pre-line" }}>{plano.pesquisa_exploracao}</p></PrintSection>}
+          {plano.criacao_prototipagem && <PrintSection title="Criação e Prototipagem"><p style={{ whiteSpace: "pre-line" }}>{plano.criacao_prototipagem}</p></PrintSection>}
+
+          {plano.roteiro_sala_invertida && (
+            <PrintSection title="Roteiro de Sala Invertida">
+              <p><strong>📥 Atividade Prévia:</strong> {plano.roteiro_sala_invertida.atividade_previa}</p>
+              <p><strong>🏫 Atividade em Sala:</strong> {plano.roteiro_sala_invertida.atividade_em_sala}</p>
+            </PrintSection>
+          )}
+
+          {plano.gamificacao && <PrintSection title="Gamificação"><p style={{ whiteSpace: "pre-line" }}>{plano.gamificacao}</p></PrintSection>}
+
+          {plano.cronograma_aulas?.length > 0 && (
+            <PrintSection title={`Cronograma — ${plano.cronograma_aulas.length} Aulas`}>
+              {plano.cronograma_aulas.map((a: any, i: number) => (
+                <div key={i} style={{ border: "1px solid #e2e8f0", borderRadius: "4px", padding: "3mm", marginBottom: "3mm" }}>
+                  <p><strong>Aula {a.aula || i + 1}: {a.titulo}</strong> {a.duracao && <span style={{ color: "#64748b", fontSize: "9pt" }}>({a.duracao})</span>}</p>
+                  {a.atividades && <p style={{ fontSize: "10pt" }}>{a.atividades}</p>}
                 </div>
               ))}
-            </div>
-          </Section>
-        )}
+            </PrintSection>
+          )}
 
-        {/* Pergunta Norteadora (Criativo) */}
-        {plano.pergunta_norteadora && (
-          <Section icon="❓" title="Pergunta Norteadora (PBL)">
-            <p className="text-sm font-medium bg-accent/50 rounded-lg p-4 border-l-4 border-primary">{plano.pergunta_norteadora}</p>
-          </Section>
-        )}
-
-        {/* Objetivos */}
-        {plano.objetivos?.length > 0 && (
-          <Section icon="🎯" title="Objetivos de Aprendizagem">
-            <ul className="space-y-1 text-sm list-disc list-inside text-muted-foreground">
-              {plano.objetivos.map((o: string, i: number) => <li key={i}>{o}</li>)}
-            </ul>
-          </Section>
-        )}
-
-        {/* Conteúdo Programático (Tradicional) */}
-        {plano.conteudo_programatico && (
-          <Section icon="📖" title="Conteúdo Programático">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.conteudo_programatico}</p>
-          </Section>
-        )}
-
-        {/* Gancho Inicial (Tradicional) */}
-        {plano.gancho_inicial && (
-          <Section icon="🪝" title="Gancho Inicial (Hook)">
-            <p className="text-sm text-muted-foreground bg-accent/50 rounded-lg p-3">{plano.gancho_inicial}</p>
-          </Section>
-        )}
-
-        {/* Problema/Desafio (Criativo) */}
-        {plano.problema_desafio && (
-          <Section icon="🧩" title="O Problema / Desafio">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.problema_desafio}</p>
-          </Section>
-        )}
-
-        {/* Pesquisa/Exploração (Criativo) */}
-        {plano.pesquisa_exploracao && (
-          <Section icon="🔍" title="Pesquisa e Exploração">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.pesquisa_exploracao}</p>
-          </Section>
-        )}
-
-        {/* Criação/Prototipagem (Criativo) */}
-        {plano.criacao_prototipagem && (
-          <Section icon="🛠️" title="Criação e Prototipagem">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.criacao_prototipagem}</p>
-          </Section>
-        )}
-
-        {/* Roteiro Sala Invertida (Criativo) */}
-        {plano.roteiro_sala_invertida && (
-          <Section icon="🔄" title="Roteiro de Sala Invertida">
-            <div className="space-y-3 text-sm">
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="font-semibold text-primary mb-1">📥 Atividade Prévia (antes da aula)</p>
-                <p className="text-muted-foreground">{plano.roteiro_sala_invertida.atividade_previa}</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="font-semibold text-primary mb-1">🏫 Atividade em Sala</p>
-                <p className="text-muted-foreground">{plano.roteiro_sala_invertida.atividade_em_sala}</p>
-              </div>
-            </div>
-          </Section>
-        )}
-
-        {/* Gamificação (Criativo) */}
-        {plano.gamificacao && (
-          <Section icon="🎮" title="Gamificação">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.gamificacao}</p>
-          </Section>
-        )}
-
-        {/* Cronograma (Tradicional) */}
-        {plano.cronograma && !plano.cronograma_aulas && (
-          <Section icon="⏱️" title="Cronograma">
-            <div className="space-y-2 text-sm">
+          {plano.cronograma && !plano.cronograma_aulas && (
+            <PrintSection title="Cronograma">
               {plano.cronograma.introducao && <p><strong>Introdução:</strong> {plano.cronograma.introducao}</p>}
               {plano.cronograma.desenvolvimento && <p><strong>Desenvolvimento:</strong> {plano.cronograma.desenvolvimento}</p>}
               {plano.cronograma.fechamento && <p><strong>Fechamento:</strong> {plano.cronograma.fechamento}</p>}
-            </div>
-          </Section>
-        )}
+            </PrintSection>
+          )}
 
-        {/* Cronograma Aula a Aula (multi-aula) */}
-        {plano.cronograma_aulas?.length > 0 && (
-          <Section icon="📅" title={`Cronograma - ${plano.cronograma_aulas.length} Aulas`}>
-            <div className="space-y-3">
-              {plano.cronograma_aulas.map((aula: any, i: number) => (
-                <div key={i} className="rounded-lg border p-4 text-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">Aula {aula.aula || i + 1}</span>
-                    <span className="font-semibold">{aula.titulo}</span>
-                    {aula.duracao && <span className="text-xs text-muted-foreground ml-auto">{aula.duracao}</span>}
-                  </div>
-                  {aula.objetivos && (
-                    <ul className="list-disc list-inside text-muted-foreground mb-1">
-                      {(Array.isArray(aula.objetivos) ? aula.objetivos : [aula.objetivos]).map((o: string, j: number) => <li key={j}>{o}</li>)}
-                    </ul>
-                  )}
-                  {aula.atividades && <p className="text-muted-foreground">{aula.atividades}</p>}
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* Resumo Atividade (Simples) */}
-        {plano.resumo_atividade && (
-          <Section icon="📝" title="Resumo da Atividade">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.resumo_atividade}</p>
-          </Section>
-        )}
-
-        {/* Desenvolvimento (Tradicional) */}
-        {plano.desenvolvimento && (
-          <Section icon="📖" title="Desenvolvimento">
-            <div className="text-sm text-muted-foreground whitespace-pre-line bg-secondary/50 rounded-lg p-4">{plano.desenvolvimento}</div>
-          </Section>
-        )}
-
-        {/* Recursos */}
-        {plano.recursos?.length > 0 && (
-          <Section icon="🧰" title="Recursos Necessários">
-            <ul className="space-y-1 text-sm list-disc list-inside text-muted-foreground">
-              {plano.recursos.map((r: string, i: number) => <li key={i}>{r}</li>)}
-            </ul>
-          </Section>
-        )}
-
-        {/* Diferenciação */}
-        {plano.diferenciacao && (
-          <Section icon="♿" title="Diferenciação e Inclusão">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.diferenciacao}</p>
-          </Section>
-        )}
-
-        {/* Avaliação (OBRIGATÓRIO) */}
-        {plano.avaliacao && (
-          <Section icon="✅" title="Avaliação">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{plano.avaliacao}</p>
-          </Section>
-        )}
-
-        {/* Referências (OBRIGATÓRIO) */}
-        {plano.referencias?.length > 0 && (
-          <Section icon="📚" title="Referências (ABNT)">
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {plano.referencias.map((r: string, i: number) => (
-                <li key={i} className="pl-4 border-l-2 border-muted">{r}</li>
-              ))}
-            </ul>
-          </Section>
-        )}
-      </CardContent>
-    </Card>
+          {plano.resumo_atividade && <PrintSection title="Resumo da Atividade"><p style={{ whiteSpace: "pre-line" }}>{plano.resumo_atividade}</p></PrintSection>}
+          {plano.desenvolvimento && <PrintSection title="Desenvolvimento"><p style={{ whiteSpace: "pre-line" }}>{plano.desenvolvimento}</p></PrintSection>}
+          {plano.recursos?.length > 0 && <PrintSection title="Recursos Necessários"><ul style={{ paddingLeft: "5mm" }}>{plano.recursos.map((r: string, i: number) => <li key={i}>{r}</li>)}</ul></PrintSection>}
+          {plano.diferenciacao && <PrintSection title="Diferenciação e Inclusão"><p style={{ whiteSpace: "pre-line" }}>{plano.diferenciacao}</p></PrintSection>}
+          {plano.avaliacao && <PrintSection title="Avaliação"><p style={{ whiteSpace: "pre-line" }}>{plano.avaliacao}</p></PrintSection>}
+          {plano.referencias?.length > 0 && (
+            <PrintSection title="Referências (ABNT)">
+              {plano.referencias.map((r: string, i: number) => <p key={i} style={{ paddingLeft: "4mm", borderLeft: "2px solid #e2e8f0", marginBottom: "2mm", fontSize: "10pt" }}>{r}</p>)}
+            </PrintSection>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 }
 
-function Section({ icon, title, children, bg }: { icon: string; title: string; children: React.ReactNode; bg?: boolean }) {
+function PrintSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className={bg ? "rounded-lg bg-primary/5 border border-primary/20 p-4" : ""}>
-      <h4 className="font-display font-bold text-sm text-primary mb-2">{icon} {title}</h4>
-      {children}
+    <div style={{ marginBottom: "6mm" }}>
+      <h2 style={{ fontSize: "12pt", fontWeight: 700, color: "#2563eb", marginBottom: "2mm", fontFamily: "'Montserrat', sans-serif" }}>{title}</h2>
+      <div style={{ fontSize: "10.5pt" }}>{children}</div>
     </div>
   );
 }
