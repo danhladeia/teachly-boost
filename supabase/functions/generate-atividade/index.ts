@@ -18,9 +18,9 @@ serve(async (req) => {
     const totalQ = numAbertas + numFechadas;
 
     const tamanhoMap: Record<string, string> = {
-      curto: "Gere 1 a 2 parágrafos curtos de texto explicativo (máximo 80 palavras).",
-      medio: "Gere 3 a 4 parágrafos de texto explicativo (150-250 palavras).",
-      longo: "Gere 5 ou mais parágrafos de texto explicativo detalhado (300+ palavras).",
+      curto: "Gere um texto explicativo CURTO com aproximadamente 500 caracteres (cerca de 1-2 parágrafos).",
+      medio: "Gere um texto explicativo MÉDIO com aproximadamente 1500 caracteres (cerca de 3-4 parágrafos).",
+      longo: "Gere um texto explicativo LONGO e detalhado com aproximadamente 3000 caracteres ou mais (5+ parágrafos).",
     };
     const tamanhoInstrucao = tamanhoMap[tamanho_texto || "medio"];
 

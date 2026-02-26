@@ -6,10 +6,11 @@ interface A4PreviewProps {
   showHeader: boolean;
   escola: string;
   autoNumber: boolean;
+  professor?: string;
+  turma?: string;
 }
 
 function renderKaTeX(text: string): string {
-  // Replace $...$ with KaTeX rendered HTML
   try {
     const katex = (window as any).katex;
     if (!katex) return text.replace(/\n/g, "<br/>");
@@ -25,11 +26,10 @@ function renderKaTeX(text: string): string {
   }
 }
 
-export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4PreviewProps) {
+export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma }: A4PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load KaTeX CSS and JS dynamically
     if (!(window as any).katex) {
       const link = document.createElement("link");
       link.rel = "stylesheet";
@@ -42,7 +42,6 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4
   }, []);
 
   const imageSizeMap = { small: "30%", medium: "50%", large: "80%" };
-
   let questionCounter = 0;
 
   return (
@@ -61,8 +60,15 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4
         }}
       >
         {showHeader && escola && (
-          <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "6mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
+          <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
             {escola}
+          </div>
+        )}
+
+        {(professor || turma) && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "4mm", color: "#475569" }}>
+            {professor && <span><strong>Professor(a):</strong> {professor}</span>}
+            {turma && <span><strong>Turma:</strong> {turma}</span>}
           </div>
         )}
 
@@ -87,7 +93,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4
             return (
               <div
                 key={block.id}
-                style={{ textAlign: "justify", marginBottom: "4mm", textIndent: align === "left" ? "10mm" : 0 }}
+                style={{ textAlign: "justify", marginBottom: "4mm", textIndent: "10mm" }}
                 dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto do bloco") }}
               />
             );
@@ -98,7 +104,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4
             const num = autoNumber ? questionCounter : "";
             return (
               <div key={block.id} style={{ marginBottom: "6mm" }}>
-                <p style={{ fontWeight: 600, marginBottom: "2mm" }}>
+                <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                   <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
                 </p>
                 {Array.from({ length: block.lines || 4 }).map((_, li) => (
@@ -113,7 +119,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4
             const num = autoNumber ? questionCounter : "";
             return (
               <div key={block.id} style={{ marginBottom: "6mm" }}>
-                <p style={{ fontWeight: 600, marginBottom: "2mm" }}>
+                <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                   <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado")}` }} />
                 </p>
                 {block.alternatives?.map((alt, ai) => (
@@ -133,18 +139,14 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber }: A4
             if (float !== "none") {
               return (
                 <div key={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
-                  <img
-                    src={block.imageUrl}
-                    alt=""
-                    style={{
-                      float: float,
-                      width: size,
-                      maxHeight: "80mm",
-                      objectFit: "contain",
-                      margin: float === "left" ? "0 4mm 2mm 0" : "0 0 2mm 4mm",
-                      shapeOutside: `url(${block.imageUrl})`,
-                    }}
-                  />
+                  <img src={block.imageUrl} alt="" style={{
+                    float: float,
+                    width: size,
+                    maxHeight: "80mm",
+                    objectFit: "contain",
+                    margin: float === "left" ? "0 4mm 2mm 0" : "0 0 2mm 4mm",
+                    shapeOutside: `url(${block.imageUrl})`,
+                  }} />
                 </div>
               );
             }

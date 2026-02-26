@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,12 @@ const niveis = [
   { value: "fundamental_finais", label: "Fundamental - Séries Finais (6º ao 9º ano)" },
   { value: "ensino_medio", label: "Ensino Médio" },
 ];
+
+const seriesPorNivel: Record<string, string[]> = {
+  fundamental_iniciais: ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
+  fundamental_finais: ["6º ano", "7º ano", "8º ano", "9º ano"],
+  ensino_medio: ["1ª série", "2ª série", "3ª série"],
+};
 
 const disciplinasPorNivel: Record<string, string[]> = {
   fundamental_iniciais: [
@@ -41,6 +47,7 @@ const modeloDescricoes: Record<string, { titulo: string; desc: string }> = {
 
 export default function BNCCPlanner() {
   const [nivel, setNivel] = useState("");
+  const [serie, setSerie] = useState("");
   const [disciplina, setDisciplina] = useState("");
   const [disciplinaCustom, setDisciplinaCustom] = useState("");
   const [conteudo, setConteudo] = useState("");
@@ -51,9 +58,24 @@ export default function BNCCPlanner() {
   const [refinamentoTexto, setRefinamentoTexto] = useState("");
   const [refinando, setRefinando] = useState(false);
   const [showRefinamento, setShowRefinamento] = useState(false);
+  const [professor, setProfessor] = useState("");
+  const [turma, setTurma] = useState("");
 
   const disciplinaFinal = disciplina === "Novo Ensino Médio" ? disciplinaCustom : disciplina;
   const nivelLabel = niveis.find(n => n.value === nivel)?.label || nivel;
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("nome").eq("user_id", user.id).single();
+      if (data?.nome) setProfessor(data.nome);
+    } catch {}
+  };
 
   const handleGenerate = async () => {
     if (!nivel || !disciplinaFinal || !conteudo.trim()) {
@@ -65,7 +87,7 @@ export default function BNCCPlanner() {
     setShowRefinamento(false);
     try {
       const { data, error } = await supabase.functions.invoke("generate-plano", {
-        body: { nivel: nivelLabel, disciplina: disciplinaFinal, conteudo, modelo, quantidade_aulas: quantidadeAulas },
+        body: { nivel: nivelLabel, serie, disciplina: disciplinaFinal, conteudo, modelo, quantidade_aulas: quantidadeAulas },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -127,17 +149,30 @@ export default function BNCCPlanner() {
             </Tabs>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             {/* Nível */}
             <div className="space-y-2">
               <Label>Nível de Ensino</Label>
-              <Select value={nivel} onValueChange={(v) => { setNivel(v); setDisciplina(""); setDisciplinaCustom(""); }}>
+              <Select value={nivel} onValueChange={(v) => { setNivel(v); setSerie(""); setDisciplina(""); setDisciplinaCustom(""); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione o nível" /></SelectTrigger>
                 <SelectContent>
                   {niveis.map(n => <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Série */}
+            {nivel && (
+              <div className="space-y-2">
+                <Label>Série / Ano</Label>
+                <Select value={serie} onValueChange={setSerie}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a série" /></SelectTrigger>
+                  <SelectContent>
+                    {seriesPorNivel[nivel]?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Disciplina */}
             {nivel && (
@@ -165,7 +200,6 @@ export default function BNCCPlanner() {
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Conteúdo */}
             <div className="space-y-2">
               <Label>Conteúdo / Tema da Aula</Label>
               <Input
@@ -174,8 +208,6 @@ export default function BNCCPlanner() {
                 onChange={(e) => setConteudo(e.target.value)}
               />
             </div>
-
-            {/* Quantidade de aulas */}
             <div className="space-y-2">
               <Label>Quantidade de Aulas</Label>
               <Input
@@ -189,6 +221,18 @@ export default function BNCCPlanner() {
               {quantidadeAulas > 1 && (
                 <p className="text-xs text-muted-foreground">A IA gerará um cronograma aula a aula ({quantidadeAulas} aulas)</p>
               )}
+            </div>
+          </div>
+
+          {/* Professor e Turma opcionais */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Professor(a) <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Input placeholder="Nome do professor" value={professor} onChange={e => setProfessor(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Turma <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Input placeholder="Ex: 5ºA, Turma 301" value={turma} onChange={e => setTurma(e.target.value)} />
             </div>
           </div>
 
@@ -210,7 +254,7 @@ export default function BNCCPlanner() {
       {/* Plano gerado */}
       {plano && !plano.raw && (
         <>
-          <PlanoPreview plano={plano} modelo={modelo} />
+          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} />
 
           {/* Refinamento */}
           <Card className="shadow-card">
@@ -238,8 +282,6 @@ export default function BNCCPlanner() {
               )}
             </CardContent>
           </Card>
-
-          {/* Actions are now inside PlanoPreview */}
         </>
       )}
 
