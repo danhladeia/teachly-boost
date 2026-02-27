@@ -141,13 +141,13 @@ export default function Activities() {
           for (const block of generatedBlocks) {
             finalBlocks.push(block);
             if (block.type === "text" && imgIdx < uploadedImages.length) {
-              finalBlocks.push({ ...emptyBlock("image"), imageUrl: uploadedImages[imgIdx], imageSize: "medium", imageFloat: "none" });
+              finalBlocks.push({ ...emptyBlock("image"), imageUrl: uploadedImages[imgIdx], imageSize: "medium", imageFloat: "left" });
               imgIdx++;
             }
           }
           // Add remaining images at end
           while (imgIdx < uploadedImages.length) {
-            finalBlocks.push({ ...emptyBlock("image"), imageUrl: uploadedImages[imgIdx], imageSize: "medium", imageFloat: "none" });
+            finalBlocks.push({ ...emptyBlock("image"), imageUrl: uploadedImages[imgIdx], imageSize: "medium", imageFloat: "left" });
             imgIdx++;
           }
           setBlocks(finalBlocks);
