@@ -134,26 +134,26 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
 
           if (block.type === "image" && block.imageUrl) {
             const size = imageSizeMap[block.imageSize || "medium"];
-            const float = block.imageFloat || "none";
+            const float = block.imageFloat || "left";
 
             if (float !== "none") {
+              // Floating image — rendered inline, next text block will wrap around it
               return (
-                <div key={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
-                  <img src={block.imageUrl} alt="" style={{
-                    float: float,
-                    width: size,
-                    maxHeight: "80mm",
-                    objectFit: "contain",
-                    margin: float === "left" ? "0 4mm 2mm 0" : "0 0 2mm 4mm",
-                    shapeOutside: `url(${block.imageUrl})`,
-                  }} />
-                </div>
+                <img key={block.id} src={block.imageUrl} alt="" style={{
+                  float: float as any,
+                  width: size,
+                  maxHeight: "80mm",
+                  objectFit: "contain",
+                  margin: float === "left" ? "0 5mm 3mm 0" : "0 0 3mm 5mm",
+                  shapeOutside: "margin-box",
+                  borderRadius: "2mm",
+                }} />
               );
             }
 
             return (
               <div key={block.id} style={{ textAlign: align, marginBottom: "4mm" }}>
-                <img src={block.imageUrl} alt="" style={{ maxWidth: size, maxHeight: "80mm", display: "inline-block", objectFit: "contain" }} />
+                <img src={block.imageUrl} alt="" style={{ maxWidth: size, maxHeight: "80mm", display: "inline-block", objectFit: "contain", borderRadius: "2mm" }} />
               </div>
             );
           }
