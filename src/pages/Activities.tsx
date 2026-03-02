@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload } from "lucide-react";
+import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { exportToPdf, exportAtividadeToDocx } from "@/lib/export-utils";
 import A4Preview from "@/components/activities/A4Preview";
 import BlockEditor from "@/components/activities/BlockEditor";
-import type { Block, BlockType } from "@/components/activities/types";
+import type { Block, BlockType, ImageFloat } from "@/components/activities/types";
 
 const genId = () => Math.random().toString(36).slice(2, 10);
 
@@ -25,8 +25,8 @@ const niveis: Record<string, string[]> = {
 export const emptyBlock = (type: BlockType): Block => ({
   id: genId(),
   type,
-  content: "",
-  alignment: type === "title" ? "center" : "left",
+  content: type === "separator" ? "Atividades" : "",
+  alignment: type === "title" || type === "separator" ? "center" : "left",
   ...(type === "question-mc" ? { alternatives: ["", "", "", ""], correctIndex: 0 } : {}),
   ...(type === "question-open" ? { lines: 4 } : {}),
 });
@@ -51,6 +51,8 @@ export default function Activities() {
   const [savedPlanos, setSavedPlanos] = useState<any[]>([]);
   const [tab, setTab] = useState("ia");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imagePosition, setImagePosition] = useState<ImageFloat>("left");
+  const [separatorTitle, setSeparatorTitle] = useState("Atividades");
 
   useEffect(() => {
     loadSavedPlanos();
@@ -97,11 +99,10 @@ export default function Activities() {
     if (!files) return;
     const newUrls: string[] = [];
     Array.from(files).forEach(file => {
-      const url = URL.createObjectURL(file);
-      newUrls.push(url);
+      newUrls.push(URL.createObjectURL(file));
     });
     setUploadedImages(prev => [...prev, ...newUrls]);
-    toast.success(`${newUrls.length} imagem(ns) carregada(s). Serão inseridas ao gerar a atividade.`);
+    toast.success(`${newUrls.length} imagem(ns) carregada(s).`);
     e.target.value = "";
   };
 
@@ -133,25 +134,36 @@ export default function Activities() {
           num_fechadas: numFechadas,
           tamanho_texto: aiTamanhoTexto,
           num_imagens: uploadedImages.length,
+          separator_title: separatorTitle,
         },
       });
       if (error) throw error;
       if (data?.blocks) {
         const generatedBlocks: Block[] = data.blocks.map((b: any) => ({ ...emptyBlock(b.type), ...b, id: genId() }));
-        // Insert uploaded images between text and question blocks
+        
+        // Insert uploaded images between text blocks with chosen position
         if (uploadedImages.length > 0) {
           const finalBlocks: Block[] = [];
           let imgIdx = 0;
           for (const block of generatedBlocks) {
             finalBlocks.push(block);
             if (block.type === "text" && imgIdx < uploadedImages.length) {
-              finalBlocks.push({ ...emptyBlock("image"), imageUrl: uploadedImages[imgIdx], imageSize: "medium", imageFloat: "left" });
+              finalBlocks.push({
+                ...emptyBlock("image"),
+                imageUrl: uploadedImages[imgIdx],
+                imageSize: "medium",
+                imageFloat: imagePosition,
+              });
               imgIdx++;
             }
           }
-          // Add remaining images at end
           while (imgIdx < uploadedImages.length) {
-            finalBlocks.push({ ...emptyBlock("image"), imageUrl: uploadedImages[imgIdx], imageSize: "medium", imageFloat: "left" });
+            finalBlocks.push({
+              ...emptyBlock("image"),
+              imageUrl: uploadedImages[imgIdx],
+              imageSize: "medium",
+              imageFloat: imagePosition,
+            });
             imgIdx++;
           }
           setBlocks(finalBlocks);
@@ -305,7 +317,6 @@ export default function Activities() {
                     )}
                   </div>
 
-                  {/* Text size by characters */}
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold">Extensão do texto</Label>
                     <Select value={aiTamanhoTexto} onValueChange={v => setAiTamanhoTexto(v as any)}>
@@ -318,7 +329,13 @@ export default function Activities() {
                     </Select>
                   </div>
 
-                  {/* Image upload before generation */}
+                  {/* Separator title */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
+                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
+                  </div>
+
+                  {/* Image upload */}
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold flex items-center gap-1"><Image className="h-3 w-3" /> Imagens (inseridas junto ao texto)</Label>
                     <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
@@ -327,12 +344,26 @@ export default function Activities() {
                       <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
                     </label>
                     {uploadedImages.length > 0 && (
-                      <div className="flex gap-1 flex-wrap mt-1">
-                        {uploadedImages.map((url, i) => (
-                          <img key={i} src={url} alt="" className="h-10 w-10 rounded object-cover border" />
-                        ))}
-                        <span className="text-[10px] text-muted-foreground self-center ml-1">{uploadedImages.length} imagem(ns)</span>
-                      </div>
+                      <>
+                        <div className="flex gap-1 flex-wrap mt-1">
+                          {uploadedImages.map((url, i) => (
+                            <img key={i} src={url} alt="" className="h-10 w-10 rounded object-cover border" />
+                          ))}
+                          <span className="text-[10px] text-muted-foreground self-center ml-1">{uploadedImages.length} imagem(ns)</span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <Label className="text-[10px]">Posição das imagens</Label>
+                          <Select value={imagePosition} onValueChange={v => setImagePosition(v as ImageFloat)}>
+                            <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="left">À Esquerda do Texto</SelectItem>
+                              <SelectItem value="right">À Direita do Texto</SelectItem>
+                              <SelectItem value="none">Centralizada</SelectItem>
+                              <SelectItem value="alternating">Intercalada (esq/dir)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
                     )}
                   </div>
 
@@ -346,6 +377,7 @@ export default function Activities() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="outline" size="sm" onClick={() => addBlock("title")}><Type className="mr-1 h-3 w-3" /> Título</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("text")}><AlignLeft className="mr-1 h-3 w-3" /> Texto</Button>
+                    <Button variant="outline" size="sm" onClick={() => addBlock("separator")}><SeparatorHorizontal className="mr-1 h-3 w-3" /> Separador</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-open")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Aberta</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-mc")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Múltipla</Button>
                   </div>

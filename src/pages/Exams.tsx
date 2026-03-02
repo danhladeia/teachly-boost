@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Upload, Loader2, QrCode, Building2, Printer, FileDown, Save } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { FileCheck, Sparkles, Upload, Loader2, QrCode, Building2, Printer, FileDown, Save, Plus, Trash2, MoveUp, MoveDown, CheckCircle2, XCircle, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { exportToPdf } from "@/lib/export-utils";
 
 const niveis: Record<string, string[]> = {
   "Fundamental - Séries Iniciais": ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
@@ -17,23 +18,53 @@ const niveis: Record<string, string[]> = {
   "Ensino Médio": ["1ª série", "2ª série", "3ª série"],
 };
 
+interface ExamQuestion {
+  id: string;
+  type: "mc" | "open";
+  content: string;
+  alternatives: string[];
+  correctIndex: number;
+  lines: number;
+}
+
+const genId = () => Math.random().toString(36).slice(2, 10);
+
+const emptyMC = (): ExamQuestion => ({
+  id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0,
+});
+const emptyOpen = (): ExamQuestion => ({
+  id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4,
+});
+
 export default function Exams() {
   const [titulo, setTitulo] = useState("");
-  const [tema, setTema] = useState("");
+  const [temas, setTemas] = useState("");
   const [nivel, setNivel] = useState("");
   const [serie, setSerie] = useState("");
-  const [numQuestoes, setNumQuestoes] = useState(10);
   const [tipoQuestoes, setTipoQuestoes] = useState("mista");
-  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [numAbertas, setNumAbertas] = useState(3);
+  const [numFechadas, setNumFechadas] = useState(5);
   const [showHeader, setShowHeader] = useState(true);
   const [escola, setEscola] = useState("");
   const [professor, setProfessor] = useState("");
+  const [turma, setTurma] = useState("");
   const [loading, setLoading] = useState(false);
-  const [gerarQr, setGerarQr] = useState(false);
+  const [gerarQr, setGerarQr] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  // Questions state
+  const [questoes, setQuestoes] = useState<ExamQuestion[]>([]);
+  const [mainTab, setMainTab] = useState("criar");
+
+  // Correction state
+  const [qrInput, setQrInput] = useState("");
+  const [correctionGabarito, setCorrectionGabarito] = useState<{q: number; correct: number}[]>([]);
+  const [studentAnswers, setStudentAnswers] = useState<Record<number, number>>({});
+  const [correctionResult, setCorrectionResult] = useState<{total: number; correct: number; percentage: number} | null>(null);
+
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => { loadProfile(); }, []);
 
   const loadProfile = async () => {
     try {
@@ -45,135 +76,449 @@ export default function Exams() {
     } catch {}
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) { setArquivo(file); toast.success(`Arquivo "${file.name}" carregado`); }
+  const updateQuestion = (id: string, updates: Partial<ExamQuestion>) => {
+    setQuestoes(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
+  };
+  const removeQuestion = (id: string) => setQuestoes(prev => prev.filter(q => q.id !== id));
+  const moveQuestion = (idx: number, dir: -1 | 1) => {
+    setQuestoes(prev => {
+      const arr = [...prev];
+      const t = idx + dir;
+      if (t < 0 || t >= arr.length) return prev;
+      [arr[idx], arr[t]] = [arr[t], arr[idx]];
+      return arr;
+    });
+  };
+
+  const handleAiGenerate = async () => {
+    if (!temas.trim()) { toast.error("Insira os temas da prova"); return; }
+    setLoading(true);
+    try {
+      const nA = tipoQuestoes === "multipla_escolha" ? 0 : numAbertas;
+      const nF = tipoQuestoes === "aberta" ? 0 : numFechadas;
+      const { data, error } = await supabase.functions.invoke("generate-prova", {
+        body: { temas, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
+      });
+      if (error) throw error;
+      if (data?.questoes) {
+        const mapped: ExamQuestion[] = data.questoes.map((q: any) => ({
+          id: genId(),
+          type: q.type === "question-open" ? "open" : "mc",
+          content: q.content || "",
+          alternatives: q.alternatives || ["", "", "", ""],
+          correctIndex: q.correctIndex ?? 0,
+          lines: q.lines || 4,
+        }));
+        setQuestoes(mapped);
+        toast.success(`${mapped.length} questões geradas!`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate QR code with gabarito
+  const generateQrCode = async () => {
+    const mcQuestions = questoes.filter(q => q.type === "mc");
+    if (mcQuestions.length === 0) return null;
+    
+    const gabarito = mcQuestions.map((q, i) => ({
+      q: i + 1,
+      correct: q.correctIndex,
+    }));
+    const payload = JSON.stringify({ titulo: titulo || "Prova", gabarito });
+    
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const canvas = qrCanvasRef.current;
+      if (canvas) {
+        await QRCode.toCanvas(canvas, payload, { width: 120, margin: 1 });
+      }
+      return payload;
+    } catch (err) {
+      console.error("QR error:", err);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (gerarQr && questoes.some(q => q.type === "mc")) {
+      generateQrCode();
+    }
+  }, [questoes, gerarQr]);
+
+  // Correction logic
+  const handleDecodeQr = () => {
+    if (!qrInput.trim()) { toast.error("Cole o conteúdo do QR Code"); return; }
+    try {
+      const parsed = JSON.parse(qrInput);
+      if (parsed.gabarito) {
+        setCorrectionGabarito(parsed.gabarito);
+        setStudentAnswers({});
+        setCorrectionResult(null);
+        toast.success(`Gabarito carregado: ${parsed.gabarito.length} questões`);
+      }
+    } catch {
+      toast.error("QR Code inválido");
+    }
+  };
+
+  const handleCorrect = () => {
+    if (correctionGabarito.length === 0) return;
+    let correct = 0;
+    correctionGabarito.forEach(item => {
+      if (studentAnswers[item.q] === item.correct) correct++;
+    });
+    const total = correctionGabarito.length;
+    setCorrectionResult({ total, correct, percentage: Math.round((correct / total) * 100) });
+    toast.success("Correção concluída!");
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login"); return; }
+      const { error } = await supabase.from("documentos_salvos").insert({
+        user_id: user.id, tipo: "prova", titulo: titulo || "Prova sem título",
+        nivel: nivel || null,
+        conteudo: { questoes, settings: { showHeader, escola, professor, turma, gerarQr } } as any,
+      });
+      if (error) throw error;
+      toast.success("Prova salva!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePrint = () => {
+    const el = document.getElementById("prova-print-area");
+    if (!el) return;
+    const pw = window.open("", "_blank");
+    if (!pw) return;
+    pw.document.write(`<html><head><title>Prova</title><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'Inter', 'Arial', sans-serif; } @page { size: A4; margin: 0; }</style></head><body>`);
+    pw.document.write(el.innerHTML);
+    pw.document.write("</body></html>");
+    pw.document.close();
+    pw.focus();
+    pw.print();
+    pw.close();
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <FileCheck className="h-6 w-6 text-primary" /> Provas e Correção
-        </h1>
-        <p className="text-muted-foreground mt-1">Crie provas por IA ou arquivo e corrija automaticamente com QR Code</p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <FileCheck className="h-6 w-6 text-primary" /> Provas e Correção
+          </h1>
+          <p className="text-muted-foreground text-sm">Crie provas e corrija com QR Code</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {questoes.length > 0 && (
+            <>
+              <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
+              <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}</Button>
+            </>
+          )}
+        </div>
       </div>
 
-      <Tabs defaultValue="criar">
+      <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList>
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
           <TabsTrigger value="corrigir">Corrigir por QR Code</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
-          <Card className="shadow-card mt-4">
-            <CardHeader><CardTitle className="font-display text-lg">Nova Prova</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Título da prova</Label>
-                  <Input placeholder="Prova de Ciências - 4º ano" value={titulo} onChange={e => setTitulo(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tema / Conteúdo</Label>
-                  <Input placeholder="Ex: Sistema Solar, Frações" value={tema} onChange={e => setTema(e.target.value)} />
+          <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
+            {/* LEFT - Config & Questions */}
+            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {/* AI Generation */}
+              <Card className="shadow-card">
+                <CardHeader className="py-3"><CardTitle className="text-sm font-semibold flex items-center gap-1"><Sparkles className="h-4 w-4" /> Gerar com IA</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Título da prova</Label>
+                    <Input placeholder="Prova de Ciências" value={titulo} onChange={e => setTitulo(e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Temas / Conteúdos</Label>
+                    <Textarea placeholder="Ex: Sistema Solar, Frações, Revolução Industrial..." value={temas} onChange={e => setTemas(e.target.value)} className="min-h-[60px] text-xs" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Nível de ensino</Label>
+                      <Select value={nivel} onValueChange={v => { setNivel(v); setSerie(""); }}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Nível" /></SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(niveis).map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Série / Ano</Label>
+                      <Select value={serie} onValueChange={setSerie} disabled={!nivel}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Série" /></SelectTrigger>
+                        <SelectContent>
+                          {(niveis[nivel] || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Tipo de questões</Label>
+                    <Select value={tipoQuestoes} onValueChange={setTipoQuestoes}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
+                        <SelectItem value="aberta">Só Abertas</SelectItem>
+                        <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {tipoQuestoes !== "multipla_escolha" && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Q. Abertas</Label>
+                        <Input type="number" min={0} max={30} value={numAbertas} onChange={e => setNumAbertas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                      </div>
+                    )}
+                    {tipoQuestoes !== "aberta" && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Q. Múltipla Escolha</Label>
+                        <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                      </div>
+                    )}
+                  </div>
+                  <Button onClick={handleAiGenerate} disabled={loading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                    {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Questões</>}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Branding */}
+              <Card className="shadow-card">
+                <CardContent className="pt-4 space-y-3">
+                  <h3 className="text-xs font-semibold">Cabeçalho da Prova</h3>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={showHeader} onCheckedChange={setShowHeader} id="exam-hdr" />
+                    <Label htmlFor="exam-hdr" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Timbre da escola</Label>
+                  </div>
+                  {showHeader && <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input placeholder="Professor(a)" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
+                    <Input placeholder="Turma" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={gerarQr} onCheckedChange={setGerarQr} id="qr-sw" />
+                    <Label htmlFor="qr-sw" className="text-xs flex items-center gap-1"><QrCode className="h-3 w-3" /> QR Code para correção</Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Manual question builder */}
+              <Card className="shadow-card">
+                <CardHeader className="py-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-semibold">📝 Questões ({questoes.length})</CardTitle>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setQuestoes(prev => [...prev, emptyMC()])}>+ M.E.</Button>
+                      <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setQuestoes(prev => [...prev, emptyOpen()])}>+ Aberta</Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {questoes.map((q, idx) => (
+                    <div key={q.id} className="rounded-lg border p-2.5 space-y-2 bg-card">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase">
+                          {idx + 1}. {q.type === "mc" ? "Múltipla Escolha" : "Aberta"}
+                        </span>
+                        <div className="flex gap-0.5">
+                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === 0} onClick={() => moveQuestion(idx, -1)}><MoveUp className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === questoes.length - 1} onClick={() => moveQuestion(idx, 1)}><MoveDown className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeQuestion(q.id)}><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                      <Textarea value={q.content} onChange={e => updateQuestion(q.id, { content: e.target.value })} placeholder="Enunciado da questão" className="min-h-[40px] text-xs" />
+                      
+                      {q.type === "mc" && (
+                        <div className="space-y-1">
+                          {q.alternatives.map((alt, ai) => (
+                            <div key={ai} className="flex gap-1 items-center">
+                              <input
+                                type="radio"
+                                name={`correct-exam-${q.id}`}
+                                checked={q.correctIndex === ai}
+                                onChange={() => updateQuestion(q.id, { correctIndex: ai })}
+                                className="h-3 w-3 accent-primary"
+                                title="Resposta correta"
+                              />
+                              <span className="text-[10px] font-mono w-4">{String.fromCharCode(65 + ai)})</span>
+                              <Input
+                                value={alt}
+                                onChange={e => {
+                                  const alts = [...q.alternatives];
+                                  alts[ai] = e.target.value;
+                                  updateQuestion(q.id, { alternatives: alts });
+                                }}
+                                className="h-6 text-[11px]"
+                                placeholder={`Alternativa ${String.fromCharCode(65 + ai)}`}
+                              />
+                            </div>
+                          ))}
+                          <p className="text-[9px] text-muted-foreground">🔘 Selecione a alternativa correta</p>
+                        </div>
+                      )}
+                      
+                      {q.type === "open" && (
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[10px]">Linhas:</Label>
+                          <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {questoes.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">Gere questões com IA ou adicione manualmente</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* RIGHT - Preview */}
+            <div className="overflow-auto max-h-[calc(100vh-200px)]">
+              <div className="bg-muted/30 rounded-lg p-4 flex justify-center">
+                <div
+                  id="prova-print-area"
+                  className="bg-white text-black shadow-lg"
+                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                >
+                  {/* Header */}
+                  {showHeader && escola && (
+                    <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
+                      {escola}
+                    </div>
+                  )}
+
+                  {/* Title */}
+                  <h1 style={{ textAlign: "center", fontSize: "14pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
+                    {titulo || "Prova"}
+                  </h1>
+
+                  {/* Info fields */}
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
+                    {professor && <span><strong>Professor(a):</strong> {professor}</span>}
+                    {turma && <span><strong>Turma:</strong> {turma}</span>}
+                  </div>
+                  <div style={{ display: "flex", gap: "10mm", fontSize: "10pt", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "4mm" }}>
+                    <span>Nome: ________________________________________</span>
+                    <span>Data: ___/___/___</span>
+                    <span>Nota: _____</span>
+                  </div>
+
+                  {/* Questions */}
+                  {questoes.map((q, idx) => (
+                    <div key={q.id} style={{ marginBottom: "6mm" }}>
+                      <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
+                        {idx + 1}) {q.content || "Enunciado da questão"}
+                      </p>
+                      {q.type === "mc" && q.alternatives.map((alt, ai) => (
+                        <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
+                          <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span>{" "}
+                          {alt || `Alternativa ${String.fromCharCode(65 + ai)}`}
+                        </p>
+                      ))}
+                      {q.type === "open" && Array.from({ length: q.lines }).map((_, li) => (
+                        <div key={li} style={{ borderBottom: "1px solid #d1d5db", height: "8mm", marginBottom: "1mm" }} />
+                      ))}
+                    </div>
+                  ))}
+
+                  {/* QR Code */}
+                  {gerarQr && questoes.some(q => q.type === "mc") && (
+                    <div style={{ marginTop: "10mm", borderTop: "1px solid #e2e8f0", paddingTop: "4mm", display: "flex", alignItems: "center", gap: "4mm" }}>
+                      <canvas ref={qrCanvasRef} style={{ width: "25mm", height: "25mm" }} />
+                      <span style={{ fontSize: "8pt", color: "#94a3b8" }}>QR Code para correção automática</span>
+                    </div>
+                  )}
+
+                  {questoes.length === 0 && (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", color: "#94a3b8", fontSize: "10pt" }}>
+                      Gere questões com IA ou adicione manualmente
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Nível de ensino</Label>
-                  <Select value={nivel} onValueChange={v => { setNivel(v); setSerie(""); }}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(niveis).map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Série / Ano</Label>
-                  <Select value={serie} onValueChange={setSerie} disabled={!nivel}>
-                    <SelectTrigger><SelectValue placeholder="Série" /></SelectTrigger>
-                    <SelectContent>
-                      {(niveis[nivel] || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Nº de questões</Label>
-                  <Input type="number" min={1} max={50} value={numQuestoes} onChange={e => setNumQuestoes(parseInt(e.target.value) || 10)} />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Tipo de questões</Label>
-                  <Select value={tipoQuestoes} onValueChange={setTipoQuestoes}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
-                      <SelectItem value="aberta">Só Abertas</SelectItem>
-                      <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Arquivo base <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                  <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                    <Upload className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground truncate">{arquivo ? arquivo.name : "PDF, DOCX ou TXT"}</span>
-                    <input type="file" accept=".pdf,.docx,.txt,.doc" className="hidden" onChange={handleFileUpload} />
-                  </label>
-                </div>
-              </div>
-
-              {/* Branding & header */}
-              <div className="space-y-3 border-t pt-4">
-                <h4 className="text-sm font-semibold">Cabeçalho da Prova</h4>
-                <div className="flex items-center gap-2">
-                  <Switch checked={showHeader} onCheckedChange={setShowHeader} id="exam-header" />
-                  <Label htmlFor="exam-header" className="text-sm flex items-center gap-1"><Building2 className="h-4 w-4" /> Timbre da escola</Label>
-                </div>
-                {showHeader && <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} />}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input placeholder="Professor(a)" value={professor} onChange={e => setProfessor(e.target.value)} />
-                  <Input placeholder="Turma (opcional)" />
-                </div>
-                <p className="text-xs text-muted-foreground">Campos impressos: Nome do aluno _______ | Data ___/___/___ | Nota _____</p>
-              </div>
-
-              <div className="flex items-center gap-2 border-t pt-4">
-                <Switch checked={gerarQr} onCheckedChange={setGerarQr} id="qr-switch" />
-                <Label htmlFor="qr-switch" className="text-sm flex items-center gap-1"><QrCode className="h-4 w-4" /> Gerar QR Code para correção automática</Label>
-              </div>
-              {gerarQr && (
-                <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
-                  Um QR Code será inserido na prova com o gabarito codificado. Na aba "Corrigir por QR Code", escaneie o código para corrigir automaticamente.
-                </p>
-              )}
-
-              <Button size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" disabled={loading || !tema.trim()}>
-                {loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gerando prova...</> : <><Sparkles className="mr-2 h-5 w-5" /> Gerar Prova com IA</>}
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="corrigir">
-          <Card className="shadow-card mt-4">
-            <CardHeader><CardTitle className="font-display text-lg">Correção por QR Code</CardTitle></CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 py-12">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                <QrCode className="h-10 w-10 text-primary" />
-              </div>
-              <p className="text-muted-foreground text-center max-w-sm">
-                Escaneie o QR Code da prova para carregar o gabarito automaticamente. Em seguida, insira as respostas do aluno para correção instantânea.
-              </p>
-              <Button className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                <QrCode className="mr-2 h-4 w-4" /> Escanear QR Code
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="max-w-2xl mx-auto space-y-4">
+            <Card className="shadow-card">
+              <CardHeader><CardTitle className="font-display text-lg">Correção por QR Code</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Cole o conteúdo do QR Code da prova</Label>
+                  <Textarea value={qrInput} onChange={e => setQrInput(e.target.value)} placeholder='{"titulo":"Prova...","gabarito":[{"q":1,"correct":0},...]}' className="min-h-[80px] text-xs font-mono" />
+                  <Button onClick={handleDecodeQr} className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                    <QrCode className="mr-2 h-4 w-4" /> Carregar Gabarito
+                  </Button>
+                </div>
+
+                {correctionGabarito.length > 0 && (
+                  <div className="space-y-3 border-t pt-4">
+                    <h4 className="text-sm font-semibold">Respostas do Aluno ({correctionGabarito.length} questões)</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {correctionGabarito.map(item => (
+                        <div key={item.q} className="flex items-center gap-2">
+                          <span className="text-xs font-mono w-8">Q{item.q}:</span>
+                          <Select value={studentAnswers[item.q]?.toString()} onValueChange={v => setStudentAnswers(prev => ({ ...prev, [item.q]: parseInt(v) }))}>
+                            <SelectTrigger className="h-7 text-xs w-20"><SelectValue placeholder="?" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">A</SelectItem>
+                              <SelectItem value="1">B</SelectItem>
+                              <SelectItem value="2">C</SelectItem>
+                              <SelectItem value="3">D</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {correctionResult && (
+                            studentAnswers[item.q] === item.correct 
+                              ? <CheckCircle2 className="h-4 w-4 text-green-500" /> 
+                              : <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Button onClick={handleCorrect} size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                      <CheckCircle2 className="mr-2 h-5 w-5" /> Corrigir Prova
+                    </Button>
+
+                    {correctionResult && (
+                      <Card className="bg-muted/50">
+                        <CardContent className="pt-4 text-center space-y-2">
+                          <p className="text-3xl font-bold text-primary">{correctionResult.percentage}%</p>
+                          <p className="text-sm text-muted-foreground">
+                            {correctionResult.correct} de {correctionResult.total} questões corretas
+                          </p>
+                          <p className="text-lg font-semibold">
+                            Nota: {((correctionResult.correct / correctionResult.total) * 10).toFixed(1)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

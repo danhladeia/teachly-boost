@@ -42,7 +42,6 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
   }, []);
 
   const imageSizeMap = { small: "30%", medium: "50%", large: "80%" };
-  let questionCounter = 0;
 
   return (
     <div className="bg-muted/30 rounded-lg p-4 flex justify-center">
@@ -81,16 +80,27 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
         {(() => {
           const rendered: JSX.Element[] = [];
           let questionCounter = 0;
+          let alternatingIdx = 0; // for alternating image float
           let i = 0;
+
           while (i < blocks.length) {
             const block = blocks[i];
             const align = block.alignment || "left";
 
-            // Check if next block is an image (or current is image followed by text) — pair them in flexbox
+            // Resolve float direction (handle "alternating")
+            const resolveFloat = (imgBlock: Block) => {
+              const f = imgBlock.imageFloat || "none";
+              if (f === "alternating") {
+                alternatingIdx++;
+                return alternatingIdx % 2 === 1 ? "left" : "right";
+              }
+              return f;
+            };
+
+            // Image + adjacent text pairing
             if (block.type === "image" && block.imageUrl && block.imageFloat !== "none") {
               const size = imageSizeMap[block.imageSize || "medium"];
-              const float = block.imageFloat || "left";
-              // Look ahead for the next text block to pair with
+              const float = resolveFloat(block);
               const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
               if (nextBlock && nextBlock.type === "text") {
                 rendered.push(
@@ -102,7 +112,6 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
                 i += 2;
                 continue;
               }
-              // Image alone (no adjacent text)
               rendered.push(
                 <div key={block.id} style={{ marginBottom: "4mm", textAlign: float === "right" ? "right" : "left" }}>
                   <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm" }} />
@@ -112,12 +121,12 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               continue;
             }
 
-            // Check if current is text and NEXT is a floating image — pair them
+            // Text + next floating image pairing
             if (block.type === "text") {
               const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
               if (nextBlock && nextBlock.type === "image" && nextBlock.imageUrl && nextBlock.imageFloat !== "none") {
                 const size = imageSizeMap[nextBlock.imageSize || "medium"];
-                const float = nextBlock.imageFloat || "left";
+                const float = resolveFloat(nextBlock);
                 rendered.push(
                   <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
                     <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
@@ -134,6 +143,12 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
                 <h1 key={block.id} style={{ textAlign: align, fontSize: "16pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
                   {block.content || "Título da Atividade"}
                 </h1>
+              );
+            } else if (block.type === "separator") {
+              rendered.push(
+                <h2 key={block.id} style={{ textAlign: align, fontSize: "13pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginTop: "8mm", marginBottom: "5mm", borderBottom: "1.5px solid #94a3b8", paddingBottom: "2mm", color: "#1e293b" }}>
+                  {block.content || "Atividades"}
+                </h2>
               );
             } else if (block.type === "text") {
               rendered.push(
