@@ -40,6 +40,7 @@ export default function Activities() {
   const [aiNumAbertas, setAiNumAbertas] = useState(3);
   const [aiNumFechadas, setAiNumFechadas] = useState(2);
   const [aiTamanhoTexto, setAiTamanhoTexto] = useState<"curto" | "medio" | "longo">("medio");
+  const [aiDisciplina, setAiDisciplina] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [showHeader, setShowHeader] = useState(true);
   const [escola, setEscola] = useState("");
@@ -125,10 +126,13 @@ export default function Activities() {
         body: {
           prompt: aiPrompt,
           serie: aiSerie ? `${aiNivel} - ${aiSerie}` : aiNivel,
+          nivel: aiNivel,
+          disciplina: aiDisciplina,
           tipo: aiTipo,
           num_abertas: numAbertas,
           num_fechadas: numFechadas,
           tamanho_texto: aiTamanhoTexto,
+          num_imagens: uploadedImages.length,
         },
       });
       if (error) throw error;
@@ -247,6 +251,11 @@ export default function Activities() {
 
                 <TabsContent value="ia" className="space-y-3 mt-3">
                   <Input placeholder="Tema (ex: Revolução Francesa)" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="text-sm" />
+
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Disciplina</Label>
+                    <Input placeholder="Ex: Matemática, História, Ciências..." value={aiDisciplina} onChange={e => setAiDisciplina(e.target.value)} className="h-8 text-xs" />
+                  </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
