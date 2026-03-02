@@ -78,88 +78,109 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
           </div>
         )}
 
-        {blocks.map((block) => {
-          const align = block.alignment || "left";
+        {(() => {
+          const rendered: JSX.Element[] = [];
+          let questionCounter = 0;
+          let i = 0;
+          while (i < blocks.length) {
+            const block = blocks[i];
+            const align = block.alignment || "left";
 
-          if (block.type === "title") {
-            return (
-              <h1 key={block.id} style={{ textAlign: align, fontSize: "16pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
-                {block.content || "Título da Atividade"}
-              </h1>
-            );
-          }
+            // Check if next block is an image (or current is image followed by text) — pair them in flexbox
+            if (block.type === "image" && block.imageUrl && block.imageFloat !== "none") {
+              const size = imageSizeMap[block.imageSize || "medium"];
+              const float = block.imageFloat || "left";
+              // Look ahead for the next text block to pair with
+              const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
+              if (nextBlock && nextBlock.type === "text") {
+                rendered.push(
+                  <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
+                    <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
+                    <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
+                  </div>
+                );
+                i += 2;
+                continue;
+              }
+              // Image alone (no adjacent text)
+              rendered.push(
+                <div key={block.id} style={{ marginBottom: "4mm", textAlign: float === "right" ? "right" : "left" }}>
+                  <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm" }} />
+                </div>
+              );
+              i++;
+              continue;
+            }
 
-          if (block.type === "text") {
-            return (
-              <div
-                key={block.id}
-                style={{ textAlign: "justify", marginBottom: "4mm", textIndent: "10mm" }}
-                dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto do bloco") }}
-              />
-            );
-          }
+            // Check if current is text and NEXT is a floating image — pair them
+            if (block.type === "text") {
+              const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
+              if (nextBlock && nextBlock.type === "image" && nextBlock.imageUrl && nextBlock.imageFloat !== "none") {
+                const size = imageSizeMap[nextBlock.imageSize || "medium"];
+                const float = nextBlock.imageFloat || "left";
+                rendered.push(
+                  <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
+                    <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
+                    <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
+                  </div>
+                );
+                i += 2;
+                continue;
+              }
+            }
 
-          if (block.type === "question-open") {
-            questionCounter++;
-            const num = autoNumber ? questionCounter : "";
-            return (
-              <div key={block.id} style={{ marginBottom: "6mm" }}>
-                <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
-                  <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
-                </p>
-                {Array.from({ length: block.lines || 4 }).map((_, li) => (
-                  <div key={li} style={{ borderBottom: "1px solid #d1d5db", height: "8mm", marginBottom: "1mm" }} />
-                ))}
-              </div>
-            );
-          }
-
-          if (block.type === "question-mc") {
-            questionCounter++;
-            const num = autoNumber ? questionCounter : "";
-            return (
-              <div key={block.id} style={{ marginBottom: "6mm" }}>
-                <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
-                  <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado")}` }} />
-                </p>
-                {block.alternatives?.map((alt, ai) => (
-                  <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
-                    <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span>{" "}
-                    <span dangerouslySetInnerHTML={{ __html: renderKaTeX(alt || `Alternativa ${String.fromCharCode(65 + ai)}`) }} />
+            if (block.type === "title") {
+              rendered.push(
+                <h1 key={block.id} style={{ textAlign: align, fontSize: "16pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
+                  {block.content || "Título da Atividade"}
+                </h1>
+              );
+            } else if (block.type === "text") {
+              rendered.push(
+                <div key={block.id} style={{ textAlign: "justify", marginBottom: "4mm", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto do bloco") }} />
+              );
+            } else if (block.type === "question-open") {
+              questionCounter++;
+              const num = autoNumber ? questionCounter : "";
+              rendered.push(
+                <div key={block.id} style={{ marginBottom: "6mm" }}>
+                  <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
+                    <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
                   </p>
-                ))}
-              </div>
-            );
-          }
-
-          if (block.type === "image" && block.imageUrl) {
-            const size = imageSizeMap[block.imageSize || "medium"];
-            const float = block.imageFloat || "left";
-
-            if (float !== "none") {
-              // Floating image — rendered inline, next text block will wrap around it
-              return (
-                <img key={block.id} src={block.imageUrl} alt="" style={{
-                  float: float as any,
-                  width: size,
-                  maxHeight: "80mm",
-                  objectFit: "contain",
-                  margin: float === "left" ? "0 5mm 3mm 0" : "0 0 3mm 5mm",
-                  shapeOutside: "margin-box",
-                  borderRadius: "2mm",
-                }} />
+                  {Array.from({ length: block.lines || 4 }).map((_, li) => (
+                    <div key={li} style={{ borderBottom: "1px solid #d1d5db", height: "8mm", marginBottom: "1mm" }} />
+                  ))}
+                </div>
+              );
+            } else if (block.type === "question-mc") {
+              questionCounter++;
+              const num = autoNumber ? questionCounter : "";
+              rendered.push(
+                <div key={block.id} style={{ marginBottom: "6mm" }}>
+                  <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
+                    <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado")}` }} />
+                  </p>
+                  {block.alternatives?.map((alt, ai) => (
+                    <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
+                      <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span>{" "}
+                      <span dangerouslySetInnerHTML={{ __html: renderKaTeX(alt || `Alternativa ${String.fromCharCode(65 + ai)}`) }} />
+                    </p>
+                  ))}
+                </div>
+              );
+            } else if (block.type === "image" && block.imageUrl) {
+              const size = imageSizeMap[block.imageSize || "medium"];
+              rendered.push(
+                <div key={block.id} style={{ textAlign: align, marginBottom: "4mm" }}>
+                  <img src={block.imageUrl} alt="" style={{ maxWidth: size, maxHeight: "80mm", display: "inline-block", objectFit: "contain", borderRadius: "2mm" }} />
+                </div>
               );
             }
 
-            return (
-              <div key={block.id} style={{ textAlign: align, marginBottom: "4mm" }}>
-                <img src={block.imageUrl} alt="" style={{ maxWidth: size, maxHeight: "80mm", display: "inline-block", objectFit: "contain", borderRadius: "2mm" }} />
-              </div>
-            );
+            i++;
           }
-
-          return null;
-        })}
+          return rendered;
+        })()}
       </div>
     </div>
   );
