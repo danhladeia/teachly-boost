@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, AlignLeft, AlignCenter, AlignRight, MoveUp, MoveDown, Image } from "lucide-react";
+import { Trash2, AlignLeft, AlignCenter, AlignRight, MoveUp, MoveDown } from "lucide-react";
 import type { Block } from "./types";
 
 interface BlockEditorProps {
@@ -18,6 +18,7 @@ interface BlockEditorProps {
 const typeLabels: Record<string, string> = {
   title: "Título",
   text: "Texto",
+  separator: "Separador",
   "question-open": "Q. Aberta",
   "question-mc": "Q. Múltipla Escolha",
   image: "Imagem",
@@ -48,7 +49,11 @@ export default function BlockEditor({ block, index, totalBlocks, onUpdate, onRem
         <Textarea
           value={block.content}
           onChange={e => onUpdate({ content: e.target.value })}
-          placeholder={block.type === "title" ? "Título da atividade" : block.type.startsWith("question") ? "Enunciado da questão" : "Texto (use $formula$ para KaTeX)"}
+          placeholder={
+            block.type === "title" ? "Título da atividade" :
+            block.type === "separator" ? "Atividades" :
+            block.type.startsWith("question") ? "Enunciado da questão" : "Texto (use $formula$ para KaTeX)"
+          }
           className="min-h-[50px] text-xs"
         />
       )}
@@ -57,6 +62,14 @@ export default function BlockEditor({ block, index, totalBlocks, onUpdate, onRem
         <div className="space-y-1">
           {block.alternatives.map((alt, ai) => (
             <div key={ai} className="flex gap-1 items-center">
+              <input
+                type="radio"
+                name={`correct-${block.id}`}
+                checked={block.correctIndex === ai}
+                onChange={() => onUpdate({ correctIndex: ai })}
+                className="h-3 w-3 accent-primary"
+                title="Resposta correta"
+              />
               <span className="text-[10px] font-mono w-4">{String.fromCharCode(65 + ai)})</span>
               <Input
                 value={alt}
@@ -70,6 +83,7 @@ export default function BlockEditor({ block, index, totalBlocks, onUpdate, onRem
               />
             </div>
           ))}
+          <p className="text-[9px] text-muted-foreground">🔘 Selecione a alternativa correta</p>
         </div>
       )}
 
@@ -98,8 +112,9 @@ export default function BlockEditor({ block, index, totalBlocks, onUpdate, onRem
                 <SelectTrigger className="h-6 text-[10px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Centralizada</SelectItem>
-                  <SelectItem value="left">Flutuante à Esquerda</SelectItem>
-                  <SelectItem value="right">Flutuante à Direita</SelectItem>
+                  <SelectItem value="left">À Esquerda do Texto</SelectItem>
+                  <SelectItem value="right">À Direita do Texto</SelectItem>
+                  <SelectItem value="alternating">Intercalada (esq/dir)</SelectItem>
                 </SelectContent>
               </Select>
             </>
