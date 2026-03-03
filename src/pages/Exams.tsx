@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { FileCheck, Sparkles, Upload, Loader2, QrCode, Building2, Printer, FileDown, Save, Plus, Trash2, MoveUp, MoveDown, CheckCircle2, XCircle, Camera } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { FileCheck, Sparkles, Upload, Loader2, QrCode, Building2, Printer, FileDown, Save, Plus, Trash2, MoveUp, MoveDown, CheckCircle2, XCircle, Camera, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { exportToPdf } from "@/lib/export-utils";
@@ -52,15 +53,17 @@ export default function Exams() {
   const [gerarQr, setGerarQr] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Questions state
   const [questoes, setQuestoes] = useState<ExamQuestion[]>([]);
   const [mainTab, setMainTab] = useState("criar");
 
   // Correction state
-  const [qrInput, setQrInput] = useState("");
   const [correctionGabarito, setCorrectionGabarito] = useState<{q: number; correct: number}[]>([]);
   const [studentAnswers, setStudentAnswers] = useState<Record<number, number>>({});
   const [correctionResult, setCorrectionResult] = useState<{total: number; correct: number; percentage: number} | null>(null);
+  const [scanningCamera, setScanningCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -123,19 +126,12 @@ export default function Exams() {
   const generateQrCode = async () => {
     const mcQuestions = questoes.filter(q => q.type === "mc");
     if (mcQuestions.length === 0) return null;
-    
-    const gabarito = mcQuestions.map((q, i) => ({
-      q: i + 1,
-      correct: q.correctIndex,
-    }));
+    const gabarito = mcQuestions.map((q, i) => ({ q: i + 1, correct: q.correctIndex }));
     const payload = JSON.stringify({ titulo: titulo || "Prova", gabarito });
-    
     try {
       const QRCode = (await import("qrcode")).default;
       const canvas = qrCanvasRef.current;
-      if (canvas) {
-        await QRCode.toCanvas(canvas, payload, { width: 120, margin: 1 });
-      }
+      if (canvas) await QRCode.toCanvas(canvas, payload, { width: 120, margin: 1 });
       return payload;
     } catch (err) {
       console.error("QR error:", err);
@@ -144,26 +140,94 @@ export default function Exams() {
   };
 
   useEffect(() => {
-    if (gerarQr && questoes.some(q => q.type === "mc")) {
-      generateQrCode();
-    }
+    if (gerarQr && questoes.some(q => q.type === "mc")) generateQrCode();
   }, [questoes, gerarQr]);
 
-  // Correction logic
-  const handleDecodeQr = () => {
-    if (!qrInput.trim()) { toast.error("Cole o conteúdo do QR Code"); return; }
+  // ---- QR Scanning ----
+  const decodeQrPayload = useCallback((payload: string) => {
     try {
-      const parsed = JSON.parse(qrInput);
+      const parsed = JSON.parse(payload);
       if (parsed.gabarito) {
         setCorrectionGabarito(parsed.gabarito);
         setStudentAnswers({});
         setCorrectionResult(null);
         toast.success(`Gabarito carregado: ${parsed.gabarito.length} questões`);
+        return true;
       }
+    } catch {}
+    toast.error("QR Code inválido");
+    return false;
+  }, []);
+
+  const handleFileUploadQr = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const img = new window.Image();
+    img.onload = async () => {
+      const cv = document.createElement("canvas");
+      cv.width = img.width;
+      cv.height = img.height;
+      const ctx = cv.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, cv.width, cv.height);
+      const jsQR = (await import("jsqr")).default;
+      const code = jsQR(imageData.data, cv.width, cv.height);
+      if (code) {
+        decodeQrPayload(code.data);
+      } else {
+        toast.error("QR Code não encontrado na imagem");
+      }
+    };
+    img.src = URL.createObjectURL(file);
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      streamRef.current = stream;
+      setScanningCamera(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          scanFrame();
+        }
+      }, 200);
     } catch {
-      toast.error("QR Code inválido");
+      toast.error("Não foi possível acessar a câmera");
     }
   };
+
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setScanningCamera(false);
+  }, []);
+
+  const scanFrame = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current || !streamRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+      requestAnimationFrame(scanFrame);
+      return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(video, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    import("jsqr").then(({ default: jsQR }) => {
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
+      if (code) {
+        if (decodeQrPayload(code.data)) {
+          stopCamera();
+          return;
+        }
+      }
+      if (streamRef.current) requestAnimationFrame(scanFrame);
+    });
+  }, [decodeQrPayload, stopCamera]);
 
   const handleCorrect = () => {
     if (correctionGabarito.length === 0) return;
@@ -209,6 +273,8 @@ export default function Exams() {
     pw.close();
   };
 
+  const mcQuestoes = questoes.filter(q => q.type === "mc");
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -232,7 +298,7 @@ export default function Exams() {
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList>
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
-          <TabsTrigger value="corrigir">Corrigir por QR Code</TabsTrigger>
+          <TabsTrigger value="corrigir">Corrigir Prova</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
@@ -317,7 +383,7 @@ export default function Exams() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={gerarQr} onCheckedChange={setGerarQr} id="qr-sw" />
-                    <Label htmlFor="qr-sw" className="text-xs flex items-center gap-1"><QrCode className="h-3 w-3" /> QR Code para correção</Label>
+                    <Label htmlFor="qr-sw" className="text-xs flex items-center gap-1"><QrCode className="h-3 w-3" /> QR Code + Gabarito para correção</Label>
                   </div>
                 </CardContent>
               </Card>
@@ -407,12 +473,10 @@ export default function Exams() {
                     </div>
                   )}
 
-                  {/* Title */}
                   <h1 style={{ textAlign: "center", fontSize: "14pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
                     {titulo || "Prova"}
                   </h1>
 
-                  {/* Info fields */}
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
                     {professor && <span><strong>Professor(a):</strong> {professor}</span>}
                     {turma && <span><strong>Turma:</strong> {turma}</span>}
@@ -441,11 +505,43 @@ export default function Exams() {
                     </div>
                   ))}
 
-                  {/* QR Code */}
-                  {gerarQr && questoes.some(q => q.type === "mc") && (
-                    <div style={{ marginTop: "10mm", borderTop: "1px solid #e2e8f0", paddingTop: "4mm", display: "flex", alignItems: "center", gap: "4mm" }}>
-                      <canvas ref={qrCanvasRef} style={{ width: "25mm", height: "25mm" }} />
-                      <span style={{ fontSize: "8pt", color: "#94a3b8" }}>QR Code para correção automática</span>
+                  {/* ========= BUBBLE ANSWER SHEET (Gabarito) ========= */}
+                  {mcQuestoes.length > 0 && gerarQr && (
+                    <div style={{ marginTop: "12mm", borderTop: "2px solid #1e293b", paddingTop: "5mm" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div style={{ flex: 1 }}>
+                          <h2 style={{ fontSize: "12pt", fontWeight: 700, marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif" }}>
+                            ✂️ GABARITO — {titulo || "Prova"}
+                          </h2>
+                          <p style={{ fontSize: "8pt", color: "#64748b", marginBottom: "3mm" }}>
+                            Nome: ________________________________________ Turma: __________
+                          </p>
+                          <p style={{ fontSize: "7pt", color: "#94a3b8", marginBottom: "4mm" }}>
+                            Preencha completamente o círculo da alternativa correta com caneta preta ou azul.
+                          </p>
+                          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(mcQuestoes.length, 10)}, 1fr)`, gap: "3mm", maxWidth: "180mm" }}>
+                            {mcQuestoes.map((_, qi) => (
+                              <div key={qi} style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: "8pt", fontWeight: 700, marginBottom: "2mm", color: "#1e293b" }}>{qi + 1}</div>
+                                {["A", "B", "C", "D"].map((letter, li) => (
+                                  <div key={li} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5mm", marginBottom: "1.5mm" }}>
+                                    <div style={{
+                                      width: "5mm", height: "5mm", borderRadius: "50%",
+                                      border: "1.5px solid #334155", background: "transparent",
+                                    }} />
+                                    <span style={{ fontSize: "7pt", fontWeight: 500 }}>{letter}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {/* QR Code */}
+                        <div style={{ textAlign: "center", marginLeft: "5mm", flexShrink: 0 }}>
+                          <canvas ref={qrCanvasRef} style={{ width: "25mm", height: "25mm" }} />
+                          <p style={{ fontSize: "6pt", color: "#94a3b8", marginTop: "1mm" }}>QR Code</p>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -463,15 +559,33 @@ export default function Exams() {
         <TabsContent value="corrigir">
           <div className="max-w-2xl mx-auto space-y-4">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="font-display text-lg">Correção por QR Code</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="font-display text-lg">Correção de Prova</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Cole o conteúdo do QR Code da prova</Label>
-                  <Textarea value={qrInput} onChange={e => setQrInput(e.target.value)} placeholder='{"titulo":"Prova...","gabarito":[{"q":1,"correct":0},...]}' className="min-h-[80px] text-xs font-mono" />
-                  <Button onClick={handleDecodeQr} className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                    <QrCode className="mr-2 h-4 w-4" /> Carregar Gabarito
+                <p className="text-sm text-muted-foreground">Escaneie o QR Code da prova pela câmera ou envie uma foto para carregar o gabarito automaticamente.</p>
+                
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Button variant="outline" onClick={startCamera} disabled={scanningCamera}>
+                    <Camera className="mr-2 h-4 w-4" /> {scanningCamera ? "Câmera ativa..." : "Escanear com câmera"}
                   </Button>
+                  <label>
+                    <Button variant="outline" className="w-full pointer-events-none">
+                      <Upload className="mr-2 h-4 w-4" /> Enviar foto do QR
+                    </Button>
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUploadQr} />
+                  </label>
                 </div>
+
+                {/* Camera scanner */}
+                {scanningCamera && (
+                  <div className="relative rounded-lg overflow-hidden border bg-black">
+                    <video ref={videoRef} className="w-full max-h-[300px]" playsInline muted />
+                    <canvas ref={canvasRef} className="hidden" />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-40 h-40 border-2 border-primary/60 rounded-lg" />
+                    </div>
+                    <Button size="sm" variant="destructive" className="absolute top-2 right-2" onClick={stopCamera}>Fechar</Button>
+                  </div>
+                )}
 
                 {correctionGabarito.length > 0 && (
                   <div className="space-y-3 border-t pt-4">
