@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,7 @@ interface ExamQuestion {
   alternatives: string[];
   correctIndex: number;
   lines: number;
+  imageUrl?: string;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -74,6 +75,15 @@ export default function Exams() {
       [arr[idx], arr[t]] = [arr[t], arr[idx]];
       return arr;
     });
+  };
+
+  const handleImageUploadForQuestion = (qId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    updateQuestion(qId, { imageUrl: url });
+    toast.success("Imagem inserida na questão!");
+    e.target.value = "";
   };
 
   const handleAiGenerate = async () => {
@@ -124,7 +134,13 @@ export default function Exams() {
     if (!el) return;
     const pw = window.open("", "_blank");
     if (!pw) return;
-    pw.document.write(`<html><head><title>Prova</title><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'Inter', 'Arial', sans-serif; } @page { size: A4; margin: 0; }</style></head><body>`);
+    pw.document.write(`<html><head><title>Prova</title><style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', 'Arial', sans-serif; }
+      .question { page-break-inside: avoid; }
+      .omr-sheet { page-break-before: always; }
+      @page { size: A4; margin: 15mm; }
+    </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
     pw.document.close();
@@ -307,6 +323,17 @@ export default function Exams() {
                           <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
                         </div>
                       )}
+                      {/* Image upload per question */}
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1 cursor-pointer text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                          <Image className="h-3 w-3" /> {q.imageUrl ? "Trocar imagem" : "Inserir imagem"}
+                          <input type="file" accept="image/*" className="hidden" onChange={e => handleImageUploadForQuestion(q.id, e)} />
+                        </label>
+                        {q.imageUrl && (
+                          <button onClick={() => updateQuestion(q.id, { imageUrl: undefined })} className="text-[10px] text-destructive hover:underline">Remover</button>
+                        )}
+                      </div>
+                      {q.imageUrl && <img src={q.imageUrl} alt="" className="h-12 rounded border object-contain" />}
                     </div>
                   ))}
                   {questoes.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Gere questões com IA ou adicione manualmente</p>}
@@ -343,10 +370,15 @@ export default function Exams() {
 
                   {/* Questions */}
                   {questoes.map((q, idx) => (
-                    <div key={q.id} style={{ marginBottom: "6mm" }}>
+                    <div key={q.id} className="question" style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
                       <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                         {idx + 1}) {q.content || "Enunciado da questão"}
                       </p>
+                      {q.imageUrl && (
+                        <div style={{ textAlign: "center", margin: "3mm 0", pageBreakInside: "avoid" }}>
+                          <img src={q.imageUrl} alt="" style={{ maxWidth: "60%", maxHeight: "60mm", objectFit: "contain", borderRadius: "2mm" }} />
+                        </div>
+                      )}
                       {q.type === "mc" && q.alternatives.map((alt, ai) => (
                         <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
                           <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span>{" "}
@@ -359,16 +391,18 @@ export default function Exams() {
                     </div>
                   ))}
 
-                  {/* OMR Answer Sheet */}
+                  {/* OMR Answer Sheet - on new page */}
                   {mcQuestoes.length > 0 && gerarQr && (
-                    <OMRAnswerSheet
-                      titulo={titulo}
-                      escola={escola}
-                      professor={professor}
-                      turma={turma}
-                      numMcQuestions={mcQuestoes.length}
-                      gabarito={gabarito}
-                    />
+                    <div className="omr-sheet" style={{ pageBreakBefore: "always" }}>
+                      <OMRAnswerSheet
+                        titulo={titulo}
+                        escola={escola}
+                        professor={professor}
+                        turma={turma}
+                        numMcQuestions={mcQuestoes.length}
+                        gabarito={gabarito}
+                      />
+                    </div>
                   )}
 
                   {questoes.length === 0 && (

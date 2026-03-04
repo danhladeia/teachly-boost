@@ -26,6 +26,17 @@ function renderKaTeX(text: string): string {
   }
 }
 
+const PAGE_STYLE: React.CSSProperties = {
+  width: "210mm",
+  minHeight: "297mm",
+  padding: "15mm 15mm 20mm 15mm",
+  fontFamily: "'Inter', 'Arial', sans-serif",
+  fontSize: "11pt",
+  lineHeight: 1.6,
+  position: "relative",
+  boxSizing: "border-box",
+};
+
 export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma }: A4PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -49,14 +60,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
         id="atividade-print-area"
         ref={containerRef}
         className="bg-white text-black shadow-lg"
-        style={{
-          width: "210mm",
-          minHeight: "297mm",
-          padding: "15mm",
-          fontFamily: "'Inter', 'Arial', sans-serif",
-          fontSize: "11pt",
-          lineHeight: 1.6,
-        }}
+        style={PAGE_STYLE}
       >
         {showHeader && escola && (
           <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
@@ -80,14 +84,13 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
         {(() => {
           const rendered: JSX.Element[] = [];
           let questionCounter = 0;
-          let alternatingIdx = 0; // for alternating image float
+          let alternatingIdx = 0;
           let i = 0;
 
           while (i < blocks.length) {
             const block = blocks[i];
             const align = block.alignment || "left";
 
-            // Resolve float direction (handle "alternating")
             const resolveFloat = (imgBlock: Block) => {
               const f = imgBlock.imageFloat || "none";
               if (f === "alternating") {
@@ -104,7 +107,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
               if (nextBlock && nextBlock.type === "text") {
                 rendered.push(
-                  <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
+                  <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row", pageBreakInside: "avoid" }}>
                     <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
                     <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
                   </div>
@@ -113,7 +116,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
                 continue;
               }
               rendered.push(
-                <div key={block.id} style={{ marginBottom: "4mm", textAlign: float === "right" ? "right" : "left" }}>
+                <div key={block.id} style={{ marginBottom: "4mm", textAlign: float === "right" ? "right" : "left", pageBreakInside: "avoid" }}>
                   <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm" }} />
                 </div>
               );
@@ -128,7 +131,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
                 const size = imageSizeMap[nextBlock.imageSize || "medium"];
                 const float = resolveFloat(nextBlock);
                 rendered.push(
-                  <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
+                  <div key={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row", pageBreakInside: "avoid" }}>
                     <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
                     <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
                   </div>
@@ -146,7 +149,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               );
             } else if (block.type === "separator") {
               rendered.push(
-                <h2 key={block.id} style={{ textAlign: align, fontSize: "13pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginTop: "8mm", marginBottom: "5mm", borderBottom: "1.5px solid #94a3b8", paddingBottom: "2mm", color: "#1e293b" }}>
+                <h2 key={block.id} style={{ textAlign: align, fontSize: "13pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginTop: "8mm", marginBottom: "5mm", borderBottom: "1.5px solid #94a3b8", paddingBottom: "2mm", color: "#1e293b", pageBreakAfter: "avoid" }}>
                   {block.content || "Atividades"}
                 </h2>
               );
@@ -158,7 +161,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               questionCounter++;
               const num = autoNumber ? questionCounter : "";
               rendered.push(
-                <div key={block.id} style={{ marginBottom: "6mm" }}>
+                <div key={block.id} style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
                   <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                     <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
                   </p>
@@ -171,7 +174,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               questionCounter++;
               const num = autoNumber ? questionCounter : "";
               rendered.push(
-                <div key={block.id} style={{ marginBottom: "6mm" }}>
+                <div key={block.id} style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
                   <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                     <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado")}` }} />
                   </p>
@@ -186,7 +189,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
             } else if (block.type === "image" && block.imageUrl) {
               const size = imageSizeMap[block.imageSize || "medium"];
               rendered.push(
-                <div key={block.id} style={{ textAlign: align, marginBottom: "4mm" }}>
+                <div key={block.id} style={{ textAlign: align, marginBottom: "4mm", pageBreakInside: "avoid" }}>
                   <img src={block.imageUrl} alt="" style={{ maxWidth: size, maxHeight: "80mm", display: "inline-block", objectFit: "contain", borderRadius: "2mm" }} />
                 </div>
               );

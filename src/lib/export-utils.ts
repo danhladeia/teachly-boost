@@ -1,5 +1,5 @@
 import { saveAs } from "file-saver";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, SectionType, PageBreakBefore } from "docx";
 
 export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
@@ -12,7 +12,7 @@ export async function exportToPdf(elementId: string, filename: string) {
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      pagebreak: { mode: ["css", "legacy"], avoid: ["div[style*='page-break-inside: avoid']"] },
     })
     .from(element)
     .save();
@@ -28,6 +28,14 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
     );
   }
 
+  // Title without model type
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    heading: HeadingLevel.HEADING_1,
+    children: [new TextRun({ text: "PLANO DE AULA", bold: true, size: 28, font: "Arial" })],
+    spacing: { after: 300 },
+  }));
+
   const addSection = (title: string, content: string | string[] | undefined) => {
     if (!content) return;
     children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: title, bold: true, size: 24, font: "Arial" })] }));
@@ -39,8 +47,12 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
   };
 
   if (plano.identificacao) {
-    children.push(new Paragraph({ alignment: AlignmentType.CENTER, heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: `PLANO DE AULA: ${plano.identificacao.tema || ""}`, bold: true, size: 28, font: "Arial" })] }));
-    children.push(new Paragraph({ children: [new TextRun({ text: `Disciplina: ${plano.identificacao.disciplina || ""} | Nível: ${plano.identificacao.nivel || ""} | Duração: ${plano.identificacao.duracao || ""}`, size: 20, font: "Arial" })], spacing: { after: 300 } }));
+    addSection("Identificação", [
+      `Disciplina: ${plano.identificacao.disciplina || ""}`,
+      `Nível: ${plano.identificacao.nivel || ""}`,
+      `Duração: ${plano.identificacao.duracao || ""}`,
+      `Tema: ${plano.identificacao.tema || ""}`,
+    ].filter(s => !s.endsWith(": ")));
   }
 
   if (plano.habilidades_bncc?.length) addSection("Habilidades BNCC", plano.habilidades_bncc.map((h: any) => `${h.codigo}: ${h.descricao}`));
@@ -71,7 +83,16 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
   addSection("Avaliação", plano.avaliacao);
   addSection("Referências (ABNT)", plano.referencias);
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          margin: { top: 567, bottom: 567, left: 567, right: 567 }, // ~15mm
+        },
+      },
+      children,
+    }],
+  });
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `plano-de-aula.docx`);
 }
@@ -102,6 +123,12 @@ export async function exportAtividadeToDocx(
         heading: HeadingLevel.HEADING_1,
         children: [new TextRun({ text: block.content || "Título", bold: true, size: 28, font: "Arial" })],
         spacing: { after: 300 },
+      }));
+    } else if (block.type === "separator") {
+      children.push(new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        children: [new TextRun({ text: block.content || "Atividades", bold: true, size: 24, font: "Arial" })],
+        spacing: { before: 300, after: 200 },
       }));
     } else if (block.type === "text") {
       children.push(new Paragraph({
@@ -135,7 +162,16 @@ export async function exportAtividadeToDocx(
     }
   }
 
-  const doc = new Document({ sections: [{ children }] });
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          margin: { top: 567, bottom: 567, left: 567, right: 567 },
+        },
+      },
+      children,
+    }],
+  });
   const blob = await Packer.toBlob(doc);
   saveAs(blob, "atividade.docx");
 }

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { exportToPdf, exportAtividadeToDocx } from "@/lib/export-utils";
@@ -53,6 +54,9 @@ export default function Activities() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [imagePosition, setImagePosition] = useState<ImageFloat>("left");
   const [separatorTitle, setSeparatorTitle] = useState("Atividades");
+  const [aiImageDescriptions, setAiImageDescriptions] = useState<string[]>([]);
+  const [numAiImages, setNumAiImages] = useState(0);
+  const [generatingImages, setGeneratingImages] = useState(false);
 
   useEffect(() => {
     loadSavedPlanos();
@@ -117,8 +121,21 @@ export default function Activities() {
     e.target.value = "";
   };
 
+  const generateAiImage = async (description: string): Promise<string | undefined> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image", {
+        body: { prompt: description, style: "educational illustration" },
+      });
+      if (error) throw error;
+      return data?.image_url || undefined;
+    } catch (err) {
+      console.error("AI image error:", err);
+      return undefined;
+    }
+  };
+
   const handleAiGenerate = async () => {
-    if (!aiPrompt.trim()) { toast.error("Digite um tema"); return; }
+    if (!aiPrompt.trim()) { toast.error("Digite um tema e instruções"); return; }
     setAiLoading(true);
     try {
       const numAbertas = aiTipo === "multipla_escolha" ? 0 : aiNumAbertas;
@@ -133,34 +150,49 @@ export default function Activities() {
           num_abertas: numAbertas,
           num_fechadas: numFechadas,
           tamanho_texto: aiTamanhoTexto,
-          num_imagens: uploadedImages.length,
+          num_imagens: uploadedImages.length + numAiImages,
           separator_title: separatorTitle,
         },
       });
       if (error) throw error;
       if (data?.blocks) {
         const generatedBlocks: Block[] = data.blocks.map((b: any) => ({ ...emptyBlock(b.type), ...b, id: genId() }));
+
+        // Insert uploaded images between text blocks
+        const allImages: string[] = [...uploadedImages];
         
-        // Insert uploaded images between text blocks with chosen position
-        if (uploadedImages.length > 0) {
+        // Generate AI images if requested
+        if (numAiImages > 0 && aiImageDescriptions.length > 0) {
+          setGeneratingImages(true);
+          for (let i = 0; i < Math.min(numAiImages, aiImageDescriptions.length); i++) {
+            if (aiImageDescriptions[i]?.trim()) {
+              toast.info(`Gerando imagem ${i + 1} de ${numAiImages}...`);
+              const imgUrl = await generateAiImage(aiImageDescriptions[i]);
+              if (imgUrl) allImages.push(imgUrl);
+            }
+          }
+          setGeneratingImages(false);
+        }
+
+        if (allImages.length > 0) {
           const finalBlocks: Block[] = [];
           let imgIdx = 0;
           for (const block of generatedBlocks) {
             finalBlocks.push(block);
-            if (block.type === "text" && imgIdx < uploadedImages.length) {
+            if (block.type === "text" && imgIdx < allImages.length) {
               finalBlocks.push({
                 ...emptyBlock("image"),
-                imageUrl: uploadedImages[imgIdx],
+                imageUrl: allImages[imgIdx],
                 imageSize: "medium",
                 imageFloat: imagePosition,
               });
               imgIdx++;
             }
           }
-          while (imgIdx < uploadedImages.length) {
+          while (imgIdx < allImages.length) {
             finalBlocks.push({
               ...emptyBlock("image"),
-              imageUrl: uploadedImages[imgIdx],
+              imageUrl: allImages[imgIdx],
               imageSize: "medium",
               imageFloat: imagePosition,
             });
@@ -177,6 +209,7 @@ export default function Activities() {
       toast.error(err.message || "Erro ao gerar");
     } finally {
       setAiLoading(false);
+      setGeneratingImages(false);
     }
   };
 
@@ -199,7 +232,8 @@ export default function Activities() {
     pw.document.write(`<html><head><title>Atividade</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
-      @page { size: A4; margin: 0; }
+      @page { size: A4; margin: 15mm; }
+      .question { page-break-inside: avoid; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -232,6 +266,15 @@ export default function Activities() {
     exportAtividadeToDocx(blocks, { escola: showHeader ? escola : undefined, professor, turma, autoNumber });
   };
 
+  const handleNumAiImagesChange = (n: number) => {
+    setNumAiImages(n);
+    setAiImageDescriptions(prev => {
+      const newDescs = [...prev];
+      while (newDescs.length < n) newDescs.push("");
+      return newDescs.slice(0, n);
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -262,7 +305,15 @@ export default function Activities() {
                 </TabsList>
 
                 <TabsContent value="ia" className="space-y-3 mt-3">
-                  <Input placeholder="Tema (ex: Revolução Francesa)" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="text-sm" />
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Tema e Instruções</Label>
+                    <Textarea
+                      placeholder="Descreva o tema e como quer que o texto seja gerado. Ex: Revolução Francesa - Quero um texto que explique as causas, o desenrolar e as consequências, com linguagem acessível e exemplos do cotidiano."
+                      value={aiPrompt}
+                      onChange={e => setAiPrompt(e.target.value)}
+                      className="min-h-[80px] text-xs"
+                    />
+                  </div>
 
                   <div className="space-y-1">
                     <Label className="text-[10px]">Disciplina</Label>
@@ -335,12 +386,36 @@ export default function Activities() {
                     <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
                   </div>
 
-                  {/* Image upload */}
+                  {/* AI Image Generation */}
+                  <div className="space-y-2 rounded-lg border border-dashed border-primary/30 p-2">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><Sparkles className="h-3 w-3 text-primary" /> Imagens geradas por IA</Label>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Quantidade de imagens IA</Label>
+                      <Input type="number" min={0} max={5} value={numAiImages} onChange={e => handleNumAiImagesChange(Math.max(0, Math.min(5, parseInt(e.target.value) || 0)))} className="h-8 text-xs" />
+                    </div>
+                    {Array.from({ length: numAiImages }).map((_, i) => (
+                      <div key={i} className="space-y-1">
+                        <Label className="text-[10px]">Descrição da imagem {i + 1}</Label>
+                        <Input
+                          placeholder={`Ex: Mapa da Europa durante a Revolução Francesa`}
+                          value={aiImageDescriptions[i] || ""}
+                          onChange={e => {
+                            const newDescs = [...aiImageDescriptions];
+                            newDescs[i] = e.target.value;
+                            setAiImageDescriptions(newDescs);
+                          }}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Manual Image upload */}
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold flex items-center gap-1"><Image className="h-3 w-3" /> Imagens (inseridas junto ao texto)</Label>
+                    <Label className="text-xs font-semibold flex items-center gap-1"><Image className="h-3 w-3" /> Upload de imagens</Label>
                     <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
                       <Upload className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Carregar imagens antes de gerar</span>
+                      <span className="text-xs text-muted-foreground">Carregar imagens do computador</span>
                       <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
                     </label>
                     {uploadedImages.length > 0 && (
@@ -351,24 +426,26 @@ export default function Activities() {
                           ))}
                           <span className="text-[10px] text-muted-foreground self-center ml-1">{uploadedImages.length} imagem(ns)</span>
                         </div>
-                        <div className="space-y-1 mt-1">
-                          <Label className="text-[10px]">Posição das imagens</Label>
-                          <Select value={imagePosition} onValueChange={v => setImagePosition(v as ImageFloat)}>
-                            <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="left">À Esquerda do Texto</SelectItem>
-                              <SelectItem value="right">À Direita do Texto</SelectItem>
-                              <SelectItem value="none">Centralizada</SelectItem>
-                              <SelectItem value="alternating">Intercalada (esq/dir)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
                       </>
+                    )}
+                    {(uploadedImages.length > 0 || numAiImages > 0) && (
+                      <div className="space-y-1 mt-1">
+                        <Label className="text-[10px]">Posição das imagens</Label>
+                        <Select value={imagePosition} onValueChange={v => setImagePosition(v as ImageFloat)}>
+                          <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="left">À Esquerda do Texto</SelectItem>
+                            <SelectItem value="right">À Direita do Texto</SelectItem>
+                            <SelectItem value="none">Centralizada</SelectItem>
+                            <SelectItem value="alternating">Intercalada (esq/dir)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     )}
                   </div>
 
-                  <Button onClick={handleAiGenerate} disabled={aiLoading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                    {aiLoading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Atividade</>}
+                  <Button onClick={handleAiGenerate} disabled={aiLoading || generatingImages} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                    {aiLoading || generatingImages ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Atividade</>}
                   </Button>
                 </TabsContent>
 
