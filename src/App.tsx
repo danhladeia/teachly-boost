@@ -14,7 +14,7 @@ import Activities from "./pages/Activities";
 import SlidesGenerator from "./pages/SlidesGenerator";
 import GameFactory from "./pages/GameFactory";
 import Exams from "./pages/Exams";
-import DidacticSequence from "./pages/DidacticSequence";
+
 import Branding from "./pages/Branding";
 import AppSettings from "./pages/AppSettings";
 import NotFound from "./pages/NotFound";
@@ -40,7 +40,7 @@ const AppRoutes = () => (
       <Route path="slides" element={<SlidesGenerator />} />
       <Route path="jogos" element={<GameFactory />} />
       <Route path="provas" element={<Exams />} />
-      <Route path="sequencia" element={<DidacticSequence />} />
+      
       <Route path="timbres" element={<Branding />} />
       <Route path="configuracoes" element={<AppSettings />} />
     </Route>

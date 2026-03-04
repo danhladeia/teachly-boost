@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BookOpen, FileText, Presentation, Gamepad2,
-  FileCheck, Calendar, Stamp, Settings, LogOut
+  FileCheck, Stamp, Settings, LogOut
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +18,7 @@ const items = [
   { title: "Gerador de Slides", url: "/app/slides", icon: Presentation },
   { title: "Fábrica de Jogos", url: "/app/jogos", icon: Gamepad2 },
   { title: "Provas e Correção", url: "/app/provas", icon: FileCheck },
-  { title: "Sequência Didática", url: "/app/sequencia", icon: Calendar },
+  
   { title: "Timbres e Branding", url: "/app/timbres", icon: Stamp },
   { title: "Configurações", url: "/app/configuracoes", icon: Settings },
 ];
