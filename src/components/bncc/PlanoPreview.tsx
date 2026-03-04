@@ -45,11 +45,12 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie }:
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Arial', sans-serif; padding: 15mm; font-size: 11pt; line-height: 1.6; color: #1e293b; }
         h1 { font-size: 16pt; text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #2563eb; padding-bottom: 4mm; }
-        h2 { font-size: 13pt; color: #2563eb; margin: 6mm 0 3mm; }
+        h2 { font-size: 13pt; color: #2563eb; margin: 6mm 0 3mm; page-break-after: avoid; }
         p, li { margin-bottom: 2mm; text-align: justify; }
         ul { padding-left: 5mm; }
         .header { text-align: center; margin-bottom: 6mm; font-weight: bold; font-size: 14pt; }
-        @page { size: A4; margin: 10mm; }
+        .section { page-break-inside: avoid; }
+        @page { size: A4; margin: 15mm; }
       </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -115,9 +116,6 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie }:
 
           <h1 style={{ textAlign: "center", fontSize: "16pt", fontWeight: 700, borderBottom: "2px solid #2563eb", paddingBottom: "4mm", marginBottom: "6mm", fontFamily: "'Montserrat', sans-serif" }}>
             PLANO DE AULA
-            <span style={{ display: "block", fontSize: "10pt", color: "#64748b", fontWeight: 400, marginTop: "2mm" }}>
-              {modelo === "simples" ? "⚡ Modelo Simples" : modelo === "criativo" ? "🚀 Modelo Criativo (PBL)" : "📋 Modelo Tradicional"}
-            </span>
           </h1>
 
           {plano.identificacao && (
@@ -172,7 +170,7 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie }:
           {plano.cronograma_aulas?.length > 0 && (
             <PrintSection title={`Cronograma — ${plano.cronograma_aulas.length} Aulas`}>
               {plano.cronograma_aulas.map((a: any, i: number) => (
-                <div key={i} style={{ border: "1px solid #e2e8f0", borderRadius: "4px", padding: "3mm", marginBottom: "3mm" }}>
+                <div key={i} style={{ border: "1px solid #e2e8f0", borderRadius: "4px", padding: "3mm", marginBottom: "3mm", pageBreakInside: "avoid" }}>
                   <p><strong>Aula {a.aula || i + 1}: {a.titulo}</strong> {a.duracao && <span style={{ color: "#64748b", fontSize: "9pt" }}>({a.duracao})</span>}</p>
                   {a.atividades && <p style={{ fontSize: "10pt", ...justifyStyle }}>{a.atividades}</p>}
                 </div>
@@ -206,8 +204,8 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie }:
 
 function PrintSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: "6mm" }}>
-      <h2 style={{ fontSize: "12pt", fontWeight: 700, color: "#2563eb", marginBottom: "2mm", fontFamily: "'Montserrat', sans-serif" }}>{title}</h2>
+    <div style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
+      <h2 style={{ fontSize: "12pt", fontWeight: 700, color: "#2563eb", marginBottom: "2mm", fontFamily: "'Montserrat', sans-serif", pageBreakAfter: "avoid" }}>{title}</h2>
       <div style={{ fontSize: "10.5pt" }}>{children}</div>
     </div>
   );

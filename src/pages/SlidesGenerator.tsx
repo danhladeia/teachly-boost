@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Presentation, Sparkles, Upload, Loader2, ChevronLeft, ChevronRight, Maximize2, Image as ImageIcon, X } from "lucide-react";
+import { Presentation, Sparkles, Upload, Loader2, ChevronLeft, ChevronRight, Maximize2, Image as ImageIcon, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -49,6 +50,8 @@ export default function SlidesGenerator() {
   const [showStyleDialog, setShowStyleDialog] = useState(false);
   const [estiloImagem, setEstiloImagem] = useState("realistic");
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [imageProgress, setImageProgress] = useState(0);
+  const [imageTotal, setImageTotal] = useState(0);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +61,20 @@ export default function SlidesGenerator() {
   const handleGenerate = async () => {
     if (!tema.trim()) { toast.error("Insira o tema da aula"); return; }
     setShowStyleDialog(true);
+  };
+
+  const generateImageForSlide = async (slide: Slide, style: string): Promise<string | undefined> => {
+    if (!slide.image_prompt) return undefined;
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image", {
+        body: { prompt: slide.image_prompt, style },
+      });
+      if (error) throw error;
+      return data?.image_url || undefined;
+    } catch (err) {
+      console.error("Image generation failed for slide:", slide.title, err);
+      return undefined;
+    }
   };
 
   const handleConfirmGenerate = async () => {
@@ -72,7 +89,28 @@ export default function SlidesGenerator() {
       if (data?.slides?.length) {
         setSlides(data.slides);
         setCurrentSlide(0);
-        toast.success(`${data.slides.length} slides gerados!`);
+        toast.success(`${data.slides.length} slides gerados! Gerando imagens...`);
+
+        // Generate images for all slides
+        setGeneratingImages(true);
+        const slidesWithPrompts = data.slides.filter((s: Slide) => s.image_prompt && s.layout !== "title");
+        setImageTotal(slidesWithPrompts.length);
+        setImageProgress(0);
+
+        const updatedSlides = [...data.slides];
+        for (let i = 0; i < updatedSlides.length; i++) {
+          const s = updatedSlides[i];
+          if (s.image_prompt && s.layout !== "title") {
+            const imgUrl = await generateImageForSlide(s, estiloLabel);
+            if (imgUrl) {
+              updatedSlides[i] = { ...s, image_url: imgUrl };
+              setSlides([...updatedSlides]);
+            }
+            setImageProgress(prev => prev + 1);
+          }
+        }
+        setGeneratingImages(false);
+        toast.success("Imagens geradas com sucesso!");
       } else {
         toast.error("Nenhum slide gerado");
       }
@@ -80,6 +118,7 @@ export default function SlidesGenerator() {
       toast.error(err.message || "Erro ao gerar slides");
     } finally {
       setLoading(false);
+      setGeneratingImages(false);
     }
   };
 
@@ -151,7 +190,7 @@ export default function SlidesGenerator() {
         <h1 className="font-display text-2xl font-bold flex items-center gap-2">
           <Presentation className="h-6 w-6 text-primary" /> Gerador de Slides
         </h1>
-        <p className="text-muted-foreground mt-1">Crie apresentações prontas para projetar na sala de aula</p>
+        <p className="text-muted-foreground mt-1">Crie apresentações com imagens geradas por IA automaticamente</p>
       </div>
 
       {slides.length === 0 ? (
@@ -221,7 +260,7 @@ export default function SlidesGenerator() {
             </div>
 
             <Button size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" disabled={loading || !tema.trim()} onClick={handleGenerate}>
-              {loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gerando...</> : <><Sparkles className="mr-2 h-5 w-5" /> Gerar {numSlides} Slides</>}
+              {loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gerando...</> : <><Sparkles className="mr-2 h-5 w-5" /> Gerar {numSlides} Slides com Imagens IA</>}
             </Button>
           </CardContent>
         </Card>
@@ -233,6 +272,13 @@ export default function SlidesGenerator() {
               <ChevronLeft className="mr-1 h-4 w-4" /> Nova Apresentação
             </Button>
             <div className="flex gap-2">
+              {generatingImages && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Gerando imagens {imageProgress}/{imageTotal}...</span>
+                  <Progress value={(imageProgress / Math.max(imageTotal, 1)) * 100} className="w-24 h-2" />
+                </div>
+              )}
               <Button variant="outline" size="sm" onClick={() => setFullscreen(true)}>
                 <Maximize2 className="mr-1 h-4 w-4" /> Apresentar
               </Button>
@@ -268,14 +314,26 @@ export default function SlidesGenerator() {
             ))}
           </div>
 
-          {/* Notes */}
-          {slides[currentSlide]?.notes && (
-            <Card>
-              <CardContent className="pt-4">
-                <Label className="text-xs text-muted-foreground">Notas do apresentador</Label>
-                <p className="text-sm mt-1">{slides[currentSlide].notes}</p>
-              </CardContent>
-            </Card>
+          {/* Notes & Image Prompt */}
+          {slides[currentSlide] && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {slides[currentSlide].notes && (
+                <Card>
+                  <CardContent className="pt-4">
+                    <Label className="text-xs text-muted-foreground">Notas do apresentador</Label>
+                    <p className="text-sm mt-1">{slides[currentSlide].notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+              {slides[currentSlide].image_prompt && (
+                <Card>
+                  <CardContent className="pt-4">
+                    <Label className="text-xs text-muted-foreground">Prompt da imagem</Label>
+                    <p className="text-sm mt-1 text-muted-foreground italic">{slides[currentSlide].image_prompt}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -284,9 +342,9 @@ export default function SlidesGenerator() {
       <Dialog open={showStyleDialog} onOpenChange={setShowStyleDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ImageIcon className="h-5 w-5" /> Estilo das Imagens</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><ImageIcon className="h-5 w-5" /> Estilo das Imagens IA</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">Escolha o estilo visual das imagens que serão geradas para os slides:</p>
+          <p className="text-sm text-muted-foreground">Escolha o estilo visual das imagens que serão geradas por IA para cada slide:</p>
           <div className="grid grid-cols-2 gap-2 py-2">
             {estilosImagem.map(e => (
               <button
@@ -303,7 +361,7 @@ export default function SlidesGenerator() {
             <Button variant="outline" onClick={() => setShowStyleDialog(false)}>Cancelar</Button>
             <Button onClick={handleConfirmGenerate} disabled={loading} className="gradient-primary border-0 text-primary-foreground">
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              Gerar Slides
+              Gerar Slides + Imagens
             </Button>
           </DialogFooter>
         </DialogContent>
