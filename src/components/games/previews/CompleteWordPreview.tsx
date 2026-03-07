@@ -10,7 +10,7 @@ interface Props {
 
 export default function CompleteWordPreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Complete a Palavra: ${data.tema}`} subtitle={`${data.items.length} palavras`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Complete a Palavra: ${data.tema}`} subtitle={`${data.items.length} palavras`}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm" }}>
         {data.items.map((item, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: "3mm", fontSize: "14pt", fontFamily: "monospace", fontWeight: 600, padding: "2mm 0" }}>

@@ -10,7 +10,7 @@ interface Props {
 
 export default function ClassificationTablePreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Tabela de Classificação: ${data.tema}`} subtitle="Organize os itens nas categorias corretas" difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Tabela de Classificação: ${data.tema}`} subtitle="Organize os itens nas categorias corretas">
       {/* Items to classify */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "3mm", justifyContent: "center", marginBottom: "6mm" }}>
         {data.items.map((item, i) => (

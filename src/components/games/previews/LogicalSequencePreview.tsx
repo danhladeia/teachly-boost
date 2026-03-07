@@ -10,7 +10,7 @@ interface Props {
 
 export default function LogicalSequencePreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Sequências Lógicas: ${data.tema}`} subtitle={`${data.items.length} sequências`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Sequências Lógicas: ${data.tema}`} subtitle={`${data.items.length} sequências`}>
       <div style={{ display: "flex", flexDirection: "column", gap: "5mm" }}>
         {data.items.map((item, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: "3mm" }}>

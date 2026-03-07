@@ -10,7 +10,7 @@ interface Props {
 
 export default function HangmanPreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Forca: ${data.tema}`} subtitle={`${data.items.length} palavras`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Forca: ${data.tema}`} subtitle={`${data.items.length} palavras`}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6mm" }}>
         {data.items.map((item, i) => (
           <div key={i} style={{ border: "1px solid #000", borderRadius: "2mm", padding: "4mm", pageBreakInside: "avoid" }}>

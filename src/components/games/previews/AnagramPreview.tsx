@@ -10,7 +10,7 @@ interface Props {
 
 export default function AnagramPreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Anagramas: ${data.tema}`} subtitle={`${data.items.length} palavras embaralhadas`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Anagramas: ${data.tema}`} subtitle={`${data.items.length} palavras embaralhadas`}>
       <div style={{ display: "flex", flexDirection: "column", gap: "5mm" }}>
         {data.items.map((item, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: "4mm", fontSize: "14pt" }}>

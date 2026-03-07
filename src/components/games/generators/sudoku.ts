@@ -8,8 +8,8 @@ export interface SudokuData {
 
 function generateSudokuGrid(size: number, removals: number, symbols: string[]): { puzzle: (string | null)[][]; solution: string[][] } {
   const numGrid: number[][] = Array.from({ length: size }, () => Array(size).fill(0));
-  const boxH = size === 4 ? 2 : size === 6 ? 2 : 3;
-  const boxW = size === 4 ? 2 : size === 6 ? 3 : 3;
+  const boxH = size === 4 ? 2 : size === 6 ? 2 : size === 8 ? 2 : 3;
+  const boxW = size === 4 ? 2 : size === 6 ? 3 : size === 8 ? 4 : 3;
 
   function isValid(r: number, c: number, num: number): boolean {
     for (let i = 0; i < size; i++) {
@@ -54,21 +54,36 @@ function generateSudokuGrid(size: number, removals: number, symbols: string[]): 
 
 export function generateSudoku(config: GameConfig): SudokuData {
   const size = config.sudokuSize || (config.difficulty === "facil" ? 4 : config.difficulty === "medio" ? 6 : 9);
-  const removalsMap: Record<number, Record<Difficulty, number>> = {
-    4: { facil: 4, medio: 6, dificil: 8 },
-    6: { facil: 10, medio: 14, dificil: 18 },
-    9: { facil: 30, medio: 40, dificil: 55 },
-  };
-  const removals = removalsMap[size]?.[config.difficulty] || 30;
-  const count = size <= 6 ? 4 : 2;
+  
+  // Use fillPercent if provided, otherwise use defaults
+  let removals: number;
+  if (config.sudokuFillPercent != null) {
+    const totalCells = size * size;
+    const filledCells = Math.round(totalCells * config.sudokuFillPercent / 100);
+    removals = totalCells - filledCells;
+  } else {
+    const removalsMap: Record<number, Record<Difficulty, number>> = {
+      4: { facil: 4, medio: 6, dificil: 8 },
+      6: { facil: 10, medio: 14, dificil: 18 },
+      8: { facil: 20, medio: 30, dificil: 40 },
+      9: { facil: 30, medio: 40, dificil: 55 },
+    };
+    removals = removalsMap[size]?.[config.difficulty] || 30;
+  }
 
-  let symbols: string[];
+  const count = config.sudokuCount || (size <= 6 ? 4 : 2);
   const contentType = config.sudokuContentType || "numbers";
 
+  let symbols: string[];
   if (contentType === "shapes") {
     const shapes = ["●", "■", "▲", "◆", "★", "♥", "⬟", "⬡", "◉"];
     symbols = shapes.slice(0, size);
-  } else if (contentType === "words" && config.sudokuCustomSymbols?.length === size) {
+  } else if (contentType === "emojis") {
+    const emojis = ["🐶", "🐱", "🐦", "🐟", "🌸", "🌊", "⭐", "🎈", "🍎"];
+    symbols = emojis.slice(0, size);
+  } else if (contentType === "letters") {
+    symbols = "ABCDEFGHI".slice(0, size).split("");
+  } else if ((contentType === "words") && config.sudokuCustomSymbols?.length === size) {
     symbols = config.sudokuCustomSymbols;
   } else {
     symbols = Array.from({ length: size }, (_, i) => String(i + 1));

@@ -11,7 +11,7 @@ interface Props {
 export default function TicTacToePreview({ data, config }: Props) {
   const cellSize = 28;
   return (
-    <GameA4Shell header={config.header} title={`Jogo da Velha Pedagógico: ${data.tema}`} subtitle={`${data.grids.length} tabuleiros`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Jogo da Velha Pedagógico: ${data.tema}`} subtitle={`${data.grids.length} tabuleiros`}>
       <p style={{ fontSize: "9pt", color: "#64748b", textAlign: "center", marginBottom: "4mm" }}>
         Resolva a pergunta/tarefa da célula antes de marcar X ou O.
       </p>

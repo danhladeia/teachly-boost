@@ -1,6 +1,5 @@
 import React from "react";
 import type { GameHeader, ColorMode } from "./types";
-import { difficultyConfig, type Difficulty } from "./types";
 
 const PAGE_STYLE: React.CSSProperties = {
   width: "210mm",
@@ -19,17 +18,23 @@ interface Props {
   header: GameHeader;
   title: string;
   subtitle?: string;
-  difficulty: Difficulty;
   colorMode?: ColorMode;
   children: React.ReactNode;
+  pageId?: string;
 }
 
-export default function GameA4Shell({ header, title, subtitle, difficulty, colorMode = "color", children }: Props) {
-  const dc = difficultyConfig[difficulty];
+export default function GameA4Shell({ header, title, subtitle, colorMode = "color", children, pageId }: Props) {
   const grayscale = colorMode === "grayscale";
+  const highContrast = colorMode === "high-contrast";
 
   return (
-    <div id="game-print-area" style={{ ...PAGE_STYLE, filter: grayscale ? "grayscale(1)" : undefined }}>
+    <div
+      id={pageId || "game-print-area"}
+      style={{
+        ...PAGE_STYLE,
+        filter: grayscale ? "grayscale(1)" : highContrast ? "contrast(1.4)" : undefined,
+      }}
+    >
       {header.showHeader && (
         <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
@@ -64,13 +69,11 @@ export default function GameA4Shell({ header, title, subtitle, difficulty, color
       </h1>
       {subtitle && (
         <p style={{ textAlign: "center", fontSize: "9pt", color: "#64748b", marginBottom: "5mm" }}>
-          {subtitle} • Nível: {dc.label}
+          {subtitle}
         </p>
       )}
 
-      <div style={{ fontSize: dc.fontSize }}>
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   );
 }

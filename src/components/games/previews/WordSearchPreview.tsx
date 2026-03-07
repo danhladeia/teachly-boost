@@ -10,18 +10,26 @@ interface Props {
 
 export default function WordSearchPreview({ data, config }: Props) {
   const gridLen = data.grid.length;
-  const cellSize = Math.max(16, Math.min(28, 480 / gridLen));
+  const maxGridWidth = 480;
+  const baseCell = Math.max(14, Math.min(28, maxGridWidth / gridLen));
+  const cellSize = baseCell * (data.spacing || 1);
+  const isCircle = data.cellFormat === "circle";
 
   return (
     <GameA4Shell
       header={config.header}
       title={`Caça-Palavras: ${data.tema}`}
       subtitle={data.hideWordList ? "Encontre as palavras relacionadas ao tema!" : `Encontre ${data.placedWords.length} palavras`}
-      difficulty={config.difficulty}
       colorMode={config.colorMode}
     >
+      {config.customInstructions && (
+        <p style={{ textAlign: "center", fontSize: "9pt", fontStyle: "italic", marginBottom: "4mm", color: "#555" }}>
+          📝 {config.customInstructions}
+        </p>
+      )}
+
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${gridLen}, ${cellSize}px)`, border: "2px solid #000" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${gridLen}, ${cellSize}px)`, border: isCircle ? "none" : "2px solid #000" }}>
           {data.grid.flat().map((letter, i) => (
             <div
               key={i}
@@ -34,7 +42,10 @@ export default function WordSearchPreview({ data, config }: Props) {
                 fontSize: `${cellSize * 0.5}px`,
                 fontWeight: 600,
                 fontFamily: "monospace",
-                border: "1px solid #d1d5db",
+                border: isCircle ? "none" : "1px solid #d1d5db",
+                borderRadius: isCircle ? "50%" : 0,
+                background: isCircle ? "#f8fafc" : undefined,
+                margin: isCircle ? "1px" : 0,
               }}
             >
               {letter}
@@ -44,7 +55,12 @@ export default function WordSearchPreview({ data, config }: Props) {
       </div>
 
       {!data.hideWordList && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "3mm", justifyContent: "center" }}>
+        <div style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "3mm",
+          justifyContent: "center",
+        }}>
           {data.placedWords.map((w, i) => (
             <span
               key={i}

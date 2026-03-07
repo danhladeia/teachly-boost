@@ -10,7 +10,7 @@ interface Props {
 
 export default function FillBlanksPreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Complete as Lacunas: ${data.tema}`} subtitle="Preencha os espaços em branco" difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Complete as Lacunas: ${data.tema}`} subtitle="Preencha os espaços em branco">
       {data.paragraphs.map((p, pi) => (
         <div key={pi} style={{ marginBottom: "6mm" }}>
           <p style={{ textAlign: "justify", lineHeight: 2.2, fontSize: "12pt" }}>

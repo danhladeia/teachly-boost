@@ -10,7 +10,7 @@ interface Props {
 
 export default function ConnectPairsPreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Ligue os Pares: ${data.tema}`} subtitle={`${data.pairs.length} pares`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Ligue os Pares: ${data.tema}`} subtitle={`${data.pairs.length} pares`}>
       <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10mm" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "5mm" }}>
           {data.pairs.map((p, i) => (

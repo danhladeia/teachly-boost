@@ -10,7 +10,7 @@ interface Props {
 
 export default function TrueFalsePreview({ data, config }: Props) {
   return (
-    <GameA4Shell header={config.header} title={`Verdadeiro ou Falso: ${data.tema}`} subtitle={`${data.items.length} afirmações`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Verdadeiro ou Falso: ${data.tema}`} subtitle={`${data.items.length} afirmações`}>
       <div style={{ display: "flex", flexDirection: "column", gap: "5mm" }}>
         {data.items.map((item, i) => (
           <div key={i} style={{ pageBreakInside: "avoid" }}>
