@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { tema, descricao, nivel, serie, template, num_slides, estilo_imagem } = await req.json();
+    const { tema, descricao, nivel, serie, template, num_slides, estilo_imagem, densidade, texto_base } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -17,30 +17,48 @@ serve(async (req) => {
       moderno: "Estilo moderno e limpo com cores vibrantes, fundo escuro com destaques em azul/roxo.",
       kids: "Estilo colorido e lúdico para crianças, com cores primárias, formas arredondadas e visual divertido.",
       cientifico: "Estilo acadêmico/científico com fundo claro, gráficos e tipografia séria.",
+      tech: "Estilo tecnológico com gradientes escuros, neon, e visual futurista.",
+      minimal: "Estilo minimalista com muito espaço em branco, tipografia elegante e poucos elementos.",
     };
 
     const estiloTemplate = templateStyles[template] || templateStyles.moderno;
 
-    const systemPrompt = `Você é um designer de apresentações educacionais.
+    const densidadeInstr = densidade === "visual"
+      ? "SLIDES VISUAIS: Use pouco texto (máximo 3-4 bullet points curtos por slide). Foco em imagens e elementos visuais. Cada bullet deve ter no máximo 8 palavras."
+      : "SLIDES INFORMATIVOS: Use texto mais detalhado (5-7 bullet points por slide). Inclua dados, definições e explicações mais completas para estudo.";
+
+    const textoBaseInstr = texto_base
+      ? `\n\nTEXTO BASE DO PROFESSOR (use como fonte principal de conteúdo, extraia os pontos-chave):\n"""${texto_base}"""\n`
+      : "";
+
+    const systemPrompt = `Você é um designer de apresentações educacionais de alta qualidade.
 Crie uma apresentação com exatamente ${num_slides || 8} slides sobre o tema: "${tema}".
 ${descricao ? `Instruções adicionais: ${descricao}` : ""}
 ${serie ? `Para ${serie}.` : ""}
 ${nivel ? `Nível de ensino: ${nivel}.` : ""}
+${textoBaseInstr}
 
 ESTILO VISUAL: ${estiloTemplate}
 ${estilo_imagem ? `ESTILO DAS IMAGENS: ${estilo_imagem}` : ""}
 
+${densidadeInstr}
+
+ESTRUTURA PEDAGÓGICA OBRIGATÓRIA:
+- Slide 1: CAPA (layout "title") com título impactante e subtítulo
+- Slide 2: OBJETIVOS DE APRENDIZAGEM (layout "content") com 3-5 objetivos claros
+- Slides 3 a ${(num_slides || 8) - 3}: CONTEÚDO PRINCIPAL com layouts variados
+- Slide ${(num_slides || 8) - 2}: EXEMPLO PRÁTICO ou ESTUDO DE CASO (layout "image-left" ou "image-right")
+- Slide ${(num_slides || 8) - 1}: RESUMO / PONTOS-CHAVE (layout "two-columns")
+- Slide ${num_slides || 8}: QUIZ ou ENCERRAMENTO (layout "title") com 2-3 perguntas de revisão no content
+
 Para cada slide, gere:
 - title: título do slide
-- content: conteúdo principal em bullet points (use \\n para separar items)
-- notes: notas do apresentador
-- image_prompt: prompt descritivo em INGLÊS para gerar uma imagem ilustrativa para este slide. Seja específico e visual.
-- layout: "title" (slide de capa), "content" (conteúdo padrão), "image-left" (imagem à esquerda), "image-right" (imagem à direita), "two-columns" (duas colunas), "quote" (citação em destaque)
+- content: conteúdo principal em bullet points (use \\n para separar items). Use • para bullets.
+- notes: notas detalhadas do apresentador (roteiro de fala com 3-5 frases explicando o que dizer)
+- image_prompt: prompt descritivo em INGLÊS para gerar uma imagem ilustrativa. Seja específico e visual.
+- layout: "title", "content", "image-left", "image-right", "two-columns", "quote"
 
-O primeiro slide deve ter layout "title" (slide de abertura).
-O último slide pode ser "title" com título "Obrigado!" ou "Dúvidas?".
-
-Responda APENAS com JSON:
+Responda APENAS com JSON válido:
 {
   "slides": [
     { "title": "...", "content": "...", "notes": "...", "image_prompt": "...", "layout": "title" }
@@ -66,20 +84,30 @@ Sem markdown, apenas JSON puro.`;
     if (!response.ok) {
       const t = await response.text();
       console.error("AI error:", response.status, t);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de requisições excedido, tente novamente em instantes." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao seu workspace." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ error: "Erro ao gerar slides" }), {
-        status: response.status === 429 ? 429 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
-    
+
     let parsed;
     try {
-      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       parsed = JSON.parse(jsonStr);
     } catch {
+      console.error("Failed to parse AI response:", content);
       parsed = { slides: [] };
     }
 
