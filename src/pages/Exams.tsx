@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Upload } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,11 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { exportToPdf } from "@/lib/export-utils";
+import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@/lib/shuffle-utils";
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
+import { useAuth } from "@/hooks/useAuth";
 
 const niveis: Record<string, string[]> = {
   "Fundamental - Séries Iniciais": ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
@@ -28,6 +31,23 @@ interface ExamQuestion {
   correctIndex: number;
   lines: number;
   imageUrl?: string;
+  dbId?: string; // id from questoes table
+}
+
+interface SavedProva {
+  id: string;
+  titulo: string;
+  status: string;
+  created_at: string;
+  temas: string | null;
+}
+
+interface SavedVersao {
+  id: string;
+  versao_label: string;
+  qr_code_id: string;
+  mapa_questoes: MapaQuestaoItem[];
+  created_at: string;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -35,6 +55,7 @@ const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alt
 const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4 });
 
 export default function Exams() {
+  const { user } = useAuth();
   const [titulo, setTitulo] = useState("");
   const [temas, setTemas] = useState("");
   const [nivel, setNivel] = useState("");
@@ -52,17 +73,84 @@ export default function Exams() {
   const [questoes, setQuestoes] = useState<ExamQuestion[]>([]);
   const [mainTab, setMainTab] = useState("criar");
 
+  // DB persistence state
+  const [currentProvaId, setCurrentProvaId] = useState<string | null>(null);
+  const [savedProvas, setSavedProvas] = useState<SavedProva[]>([]);
+  const [versoes, setVersoes] = useState<SavedVersao[]>([]);
+  const [selectedVersaoId, setSelectedVersaoId] = useState<string | null>(null);
+  const [shuffling, setShuffling] = useState(false);
+  const [loadingProvas, setLoadingProvas] = useState(false);
+
+  // Load profile data
   useEffect(() => {
+    if (!user) return;
     (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase.from("profiles").select("escola, nome").eq("user_id", user.id).single();
-        if (data?.escola) setEscola(data.escola);
-        if (data?.nome) setProfessor(data.nome);
-      } catch {}
+      const { data } = await supabase.from("profiles").select("escola, nome").eq("user_id", user.id).single();
+      if (data?.escola) setEscola(data.escola);
+      if (data?.nome) setProfessor(data.nome);
     })();
-  }, []);
+    loadSavedProvas();
+  }, [user]);
+
+  const loadSavedProvas = async () => {
+    if (!user) return;
+    setLoadingProvas(true);
+    try {
+      const { data } = await supabase
+        .from("provas")
+        .select("id, titulo, status, created_at, temas")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setSavedProvas((data as SavedProva[]) || []);
+    } catch {} finally { setLoadingProvas(false); }
+  };
+
+  const loadProva = async (provaId: string) => {
+    try {
+      const [{ data: prova }, { data: questoesData }, { data: versoesData }] = await Promise.all([
+        supabase.from("provas").select("*").eq("id", provaId).single(),
+        supabase.from("questoes").select("*").eq("prova_id", provaId).order("ordem"),
+        supabase.from("versoes_prova").select("*").eq("prova_id", provaId).order("created_at"),
+      ]);
+
+      if (!prova) { toast.error("Prova não encontrada"); return; }
+
+      setCurrentProvaId(provaId);
+      setTitulo(prova.titulo || "");
+      setTemas(prova.temas || "");
+      setNivel(prova.nivel || "");
+      setSerie(prova.serie || "");
+      setTipoQuestoes(prova.tipo_questoes || "mista");
+      setEscola(prova.escola || "");
+      setProfessor(prova.professor || "");
+      setTurma(prova.turma || "");
+
+      if (questoesData) {
+        setQuestoes(questoesData.map((q: any) => ({
+          id: genId(),
+          dbId: q.id,
+          type: q.tipo === "open" ? "open" : "mc",
+          content: q.conteudo || "",
+          alternatives: (q.alternativas as string[]) || ["", "", "", ""],
+          correctIndex: q.resposta_correta ?? 0,
+          lines: q.linhas || 4,
+          imageUrl: q.imagem_url || undefined,
+        })));
+      }
+
+      setVersoes((versoesData as any[] || []).map((v: any) => ({
+        id: v.id,
+        versao_label: v.versao_label,
+        qr_code_id: v.qr_code_id,
+        mapa_questoes: v.mapa_questoes as MapaQuestaoItem[],
+        created_at: v.created_at,
+      })));
+      setSelectedVersaoId(null);
+      toast.success(`Prova "${prova.titulo}" carregada`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao carregar prova");
+    }
+  };
 
   const updateQuestion = (id: string, updates: Partial<ExamQuestion>) =>
     setQuestoes(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
@@ -106,6 +194,9 @@ export default function Exams() {
           lines: q.lines || 4,
         }));
         setQuestoes(mapped);
+        setCurrentProvaId(null); // new unsaved exam
+        setVersoes([]);
+        setSelectedVersaoId(null);
         toast.success(`${mapped.length} questões geradas!`);
       }
     } catch (err: any) {
@@ -114,19 +205,120 @@ export default function Exams() {
   };
 
   const handleSave = async () => {
+    if (!user) { toast.error("Faça login"); return; }
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Faça login"); return; }
-      await supabase.from("documentos_salvos").insert({
-        user_id: user.id, tipo: "prova", titulo: titulo || "Prova sem título",
+      const provaData = {
+        user_id: user.id,
+        titulo: titulo || "Prova sem título",
+        temas: temas || null,
         nivel: nivel || null,
-        conteudo: { questoes, settings: { showHeader, escola, professor, turma, gerarQr } } as any,
-      });
-      toast.success("Prova salva!");
+        serie: serie || null,
+        tipo_questoes: tipoQuestoes,
+        escola: escola || null,
+        professor: professor || null,
+        turma: turma || null,
+      };
+
+      let provaId = currentProvaId;
+
+      if (provaId) {
+        // Update existing
+        await supabase.from("provas").update(provaData).eq("id", provaId);
+        // Delete old questions and re-insert
+        await supabase.from("questoes").delete().eq("prova_id", provaId);
+      } else {
+        // Insert new
+        const { data: newProva, error } = await supabase.from("provas").insert(provaData).select("id").single();
+        if (error) throw error;
+        provaId = newProva.id;
+        setCurrentProvaId(provaId);
+      }
+
+      // Insert questions
+      if (questoes.length > 0) {
+        const questoesInsert = questoes.map((q, idx) => ({
+          prova_id: provaId!,
+          ordem: idx,
+          tipo: q.type,
+          conteudo: q.content,
+          alternativas: q.type === "mc" ? q.alternatives : null,
+          resposta_correta: q.type === "mc" ? q.correctIndex : null,
+          linhas: q.type === "open" ? q.lines : null,
+          imagem_url: q.imageUrl || null,
+        }));
+        const { error: qErr } = await supabase.from("questoes").insert(questoesInsert);
+        if (qErr) throw qErr;
+      }
+
+      await loadSavedProvas();
+      toast.success("Prova salva no banco de dados!");
     } catch (err: any) {
-      toast.error(err.message || "Erro");
+      toast.error(err.message || "Erro ao salvar");
     } finally { setSaving(false); }
+  };
+
+  const handleShuffle = async () => {
+    if (!currentProvaId) {
+      toast.error("Salve a prova primeiro antes de embaralhar");
+      return;
+    }
+    if (questoes.filter(q => q.type === "mc").length === 0) {
+      toast.error("Adicione questões de múltipla escolha para embaralhar");
+      return;
+    }
+
+    setShuffling(true);
+    try {
+      // Re-fetch questoes from DB to get their UUIDs
+      const { data: dbQuestoes } = await supabase
+        .from("questoes")
+        .select("id, tipo, alternativas, resposta_correta")
+        .eq("prova_id", currentProvaId)
+        .order("ordem");
+
+      if (!dbQuestoes || dbQuestoes.length === 0) {
+        toast.error("Salve a prova primeiro");
+        setShuffling(false);
+        return;
+      }
+
+      const mappedQ = dbQuestoes.map(q => ({
+        id: q.id,
+        tipo: q.tipo,
+        alternativas: q.alternativas as string[] | null,
+        resposta_correta: q.resposta_correta,
+      }));
+
+      const mapa = generateVersionMap(mappedQ);
+      const existingLabels = versoes.map(v => v.versao_label);
+      const nextLabel = getNextVersionLabel(existingLabels);
+
+      const { data: newVersao, error } = await supabase
+        .from("versoes_prova")
+        .insert({
+          prova_id: currentProvaId,
+          versao_label: nextLabel,
+          mapa_questoes: mapa as any,
+        })
+        .select("*")
+        .single();
+
+      if (error) throw error;
+
+      const v: SavedVersao = {
+        id: newVersao.id,
+        versao_label: newVersao.versao_label,
+        qr_code_id: newVersao.qr_code_id,
+        mapa_questoes: newVersao.mapa_questoes as MapaQuestaoItem[],
+        created_at: newVersao.created_at,
+      };
+      setVersoes(prev => [...prev, v]);
+      setSelectedVersaoId(v.id);
+      toast.success(`Versão ${nextLabel} gerada com embaralhamento!`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao embaralhar");
+    } finally { setShuffling(false); }
   };
 
   const handlePrint = () => {
@@ -139,7 +331,7 @@ export default function Exams() {
       body { font-family: 'Inter', 'Arial', sans-serif; }
       .question { page-break-inside: avoid; }
       .omr-sheet { page-break-before: always; }
-      @page { size: A4; margin: 15mm; }
+      @page { size: A4; margin: 10mm; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -149,7 +341,47 @@ export default function Exams() {
     pw.close();
   };
 
-  const mcQuestoes = questoes.filter(q => q.type === "mc");
+  const handleNewExam = () => {
+    setCurrentProvaId(null);
+    setTitulo("");
+    setTemas("");
+    setQuestoes([]);
+    setVersoes([]);
+    setSelectedVersaoId(null);
+  };
+
+  // Get the currently selected version for preview
+  const selectedVersao = versoes.find(v => v.id === selectedVersaoId);
+
+  // Reorder questions based on selected version's mapa
+  const getPreviewQuestions = (): ExamQuestion[] => {
+    if (!selectedVersao) return questoes;
+
+    const mapa = selectedVersao.mapa_questoes;
+    if (!mapa || mapa.length === 0) return questoes;
+
+    // Build reordered list
+    const sorted = [...mapa].sort((a, b) => a.nova_ordem - b.nova_ordem);
+    return sorted.map(item => {
+      // Find original question by dbId or by original order
+      const origQ = questoes[item.ordem_original];
+      if (!origQ) return questoes[0]; // fallback
+
+      if (origQ.type === "mc" && item.mapa_alternativas) {
+        // Reorder alternatives according to the map
+        const newAlts = item.mapa_alternativas.map(origIdx => origQ.alternatives[origIdx] || "");
+        return {
+          ...origQ,
+          alternatives: newAlts,
+          correctIndex: item.resposta_correta_nova ?? 0,
+        };
+      }
+      return origQ;
+    });
+  };
+
+  const previewQuestions = getPreviewQuestions();
+  const mcQuestoes = previewQuestions.filter(q => q.type === "mc");
   const gabarito = mcQuestoes.map((q, i) => ({ q: i + 1, correct: q.correctIndex }));
 
   return (
@@ -166,15 +398,20 @@ export default function Exams() {
             <>
               <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
               <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
+              <Button size="sm" variant="outline" onClick={handleShuffle} disabled={shuffling || !currentProvaId}>
+                <Shuffle className="mr-1 h-4 w-4" /> {shuffling ? "Embaralhando..." : "Embaralhar"}
+              </Button>
               <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}</Button>
             </>
           )}
+          <Button size="sm" variant="ghost" onClick={handleNewExam}><Plus className="mr-1 h-4 w-4" /> Nova</Button>
         </div>
       </div>
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList>
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
+          <TabsTrigger value="minhas">Minhas Provas</TabsTrigger>
           <TabsTrigger value="corrigir">Corrigir Prova</TabsTrigger>
         </TabsList>
 
@@ -261,6 +498,37 @@ export default function Exams() {
                 </CardContent>
               </Card>
 
+              {/* Versions */}
+              {versoes.length > 0 && (
+                <Card className="shadow-card">
+                  <CardContent className="pt-4 space-y-2">
+                    <h3 className="text-xs font-semibold flex items-center gap-1"><Shuffle className="h-3 w-3" /> Versões Embaralhadas</h3>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge
+                        variant={!selectedVersaoId ? "default" : "outline"}
+                        className="cursor-pointer text-[10px]"
+                        onClick={() => setSelectedVersaoId(null)}
+                      >
+                        Original
+                      </Badge>
+                      {versoes.map(v => (
+                        <Badge
+                          key={v.id}
+                          variant={selectedVersaoId === v.id ? "default" : "outline"}
+                          className="cursor-pointer text-[10px]"
+                          onClick={() => setSelectedVersaoId(v.id)}
+                        >
+                          Versão {v.versao_label}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-muted-foreground">
+                      {selectedVersao ? `Visualizando versão ${selectedVersao.versao_label} (QR: ${selectedVersao.qr_code_id.slice(0, 8)}...)` : "Visualizando versão original"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Manual questions */}
               <Card className="shadow-card">
                 <CardHeader className="py-3">
@@ -294,24 +562,9 @@ export default function Exams() {
                         <div className="space-y-1">
                           {q.alternatives.map((alt, ai) => (
                             <div key={ai} className="flex gap-1 items-center">
-                              <input
-                                type="radio"
-                                name={`correct-${q.id}`}
-                                checked={q.correctIndex === ai}
-                                onChange={() => updateQuestion(q.id, { correctIndex: ai })}
-                                className="h-3 w-3 accent-primary"
-                              />
+                              <input type="radio" name={`correct-${q.id}`} checked={q.correctIndex === ai} onChange={() => updateQuestion(q.id, { correctIndex: ai })} className="h-3 w-3 accent-primary" />
                               <span className="text-[10px] font-mono w-4">{String.fromCharCode(65 + ai)})</span>
-                              <Input
-                                value={alt}
-                                onChange={e => {
-                                  const alts = [...q.alternatives];
-                                  alts[ai] = e.target.value;
-                                  updateQuestion(q.id, { alternatives: alts });
-                                }}
-                                className="h-6 text-[11px]"
-                                placeholder={`Alternativa ${String.fromCharCode(65 + ai)}`}
-                              />
+                              <Input value={alt} onChange={e => { const alts = [...q.alternatives]; alts[ai] = e.target.value; updateQuestion(q.id, { alternatives: alts }); }} className="h-6 text-[11px]" placeholder={`Alternativa ${String.fromCharCode(65 + ai)}`} />
                             </div>
                           ))}
                           <p className="text-[9px] text-muted-foreground">🔘 Selecione a alternativa correta</p>
@@ -323,7 +576,6 @@ export default function Exams() {
                           <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
                         </div>
                       )}
-                      {/* Image upload per question */}
                       <div className="flex items-center gap-2">
                         <label className="flex items-center gap-1 cursor-pointer text-[10px] text-muted-foreground hover:text-foreground transition-colors">
                           <Image className="h-3 w-3" /> {q.imageUrl ? "Trocar imagem" : "Inserir imagem"}
@@ -347,7 +599,7 @@ export default function Exams() {
                 <div
                   id="prova-print-area"
                   className="bg-white text-black shadow-lg"
-                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  style={{ width: "210mm", minHeight: "297mm", padding: "10mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {/* School header */}
                   {showHeader && escola && (
@@ -356,7 +608,7 @@ export default function Exams() {
                     </div>
                   )}
                   <h1 style={{ textAlign: "center", fontSize: "14pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
-                    {titulo || "Prova"}
+                    {titulo || "Prova"}{selectedVersao ? ` — Versão ${selectedVersao.versao_label}` : ""}
                   </h1>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
                     {professor && <span><strong>Professor(a):</strong> {professor}</span>}
@@ -369,8 +621,8 @@ export default function Exams() {
                   </div>
 
                   {/* Questions */}
-                  {questoes.map((q, idx) => (
-                    <div key={q.id} className="question" style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
+                  {previewQuestions.map((q, idx) => (
+                    <div key={`${q.id}-${idx}`} className="question" style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
                       <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                         {idx + 1}) {q.content || "Enunciado da questão"}
                       </p>
@@ -391,7 +643,7 @@ export default function Exams() {
                     </div>
                   ))}
 
-                  {/* OMR Answer Sheet - on new page */}
+                  {/* OMR Answer Sheet */}
                   {mcQuestoes.length > 0 && gerarQr && (
                     <div className="omr-sheet" style={{ pageBreakBefore: "always" }}>
                       <OMRAnswerSheet
@@ -400,7 +652,8 @@ export default function Exams() {
                         professor={professor}
                         turma={turma}
                         numMcQuestions={mcQuestoes.length}
-                        gabarito={gabarito}
+                        versaoId={selectedVersao?.qr_code_id}
+                        gabarito={!selectedVersao ? gabarito : undefined}
                       />
                     </div>
                   )}
@@ -413,6 +666,39 @@ export default function Exams() {
                 </div>
               </div>
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="minhas">
+          <div className="max-w-3xl mx-auto space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2"><List className="h-5 w-5" /> Provas Salvas</h2>
+              <Button size="sm" variant="outline" onClick={loadSavedProvas} disabled={loadingProvas}>
+                {loadingProvas ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
+              </Button>
+            </div>
+            {savedProvas.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma prova salva ainda</CardContent></Card>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {savedProvas.map(p => (
+                  <Card key={p.id} className="shadow-card hover:shadow-md transition-shadow cursor-pointer" onClick={() => { loadProva(p.id); setMainTab("criar"); }}>
+                    <CardContent className="pt-4 space-y-1">
+                      <h3 className="font-semibold text-sm">{p.titulo}</h3>
+                      {p.temas && <p className="text-xs text-muted-foreground line-clamp-1">{p.temas}</p>}
+                      <div className="flex items-center justify-between">
+                        <Badge variant={p.status === "rascunho" ? "secondary" : "default"} className="text-[10px]">
+                          {p.status}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
 
