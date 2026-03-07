@@ -6,17 +6,6 @@ const corsHeaders = {
 };
 
 const GAME_PROMPTS: Record<string, (tema: string, difficulty: string, count: number) => string> = {
-  "cruzadinha": (tema, diff, count) => `Gere dados para uma CRUZADINHA pedagógica sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "palavras": ["PALAVRA1","PALAVRA2",...],
-  "dicas": [
-    {"palavra":"PALAVRA1","dica":"Dica contextualizada para a palavra"},
-    ...
-  ]
-}
-Gere ${count} palavras MAIÚSCULAS (sem acentos) relacionadas ao tema. As dicas devem ser pedagógicas e adequadas ao nível.`,
-
   "caca-palavras": (tema, diff, count) => `Gere dados para um CAÇA-PALAVRAS pedagógico sobre "${tema}" (nível: ${diff}).
 Retorne JSON:
 {
@@ -24,46 +13,16 @@ Retorne JSON:
 }
 Gere ${count} palavras MAIÚSCULAS (sem acentos) relacionadas ao tema. Palavras entre 3 e 12 letras.`,
 
-  "forca": (tema, diff, count) => `Gere dados para JOGO DA FORCA pedagógico sobre "${tema}" (nível: ${diff}).
+  "cruzadinha": (tema, diff, count) => `Gere dados para PALAVRAS CRUZADAS pedagógicas sobre "${tema}" (nível: ${diff}).
 Retorne JSON:
 {
-  "items": [
-    {"word":"PALAVRA","hint":"Dica contextualizada"},
+  "palavras": ["PALAVRA1","PALAVRA2",...],
+  "dicas": [
+    {"palavra":"PALAVRA1","dica":"Dica contextualizada"},
     ...
   ]
 }
-Gere ${count} palavras com dicas pedagógicas adequadas ao nível.`,
-
-  "ligue-pares": (tema, diff, count) => `Gere dados para LIGUE OS PARES pedagógico sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "pairs": [
-    {"left":"Conceito A","right":"Correspondência A"},
-    ...
-  ]
-}
-Gere ${count} pares de associação (conceito-definição, causa-efeito, pergunta-resposta, etc). Adeque ao nível.`,
-
-  "complete-palavra": (tema, diff, count) => `Gere dados para COMPLETE A PALAVRA pedagógico sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "palavras": ["PALAVRA1","PALAVRA2",...]
-}
-Gere ${count} palavras MAIÚSCULAS relacionadas ao tema. Adeque complexidade ao nível.`,
-
-  "anagrama": (tema, diff, count) => `Gere dados para ANAGRAMAS pedagógicos sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "palavras": ["PALAVRA1","PALAVRA2",...]
-}
-Gere ${count} palavras MAIÚSCULAS (sem acentos) relacionadas ao tema. Palavras entre 4 e 10 letras.`,
-
-  "velha-pedagogica": (tema, diff, count) => `Gere dados para JOGO DA VELHA PEDAGÓGICO sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "perguntas": ["Pergunta curta 1?","Pergunta curta 2?",...]
-}
-Gere ${count} perguntas CURTAS (máximo 6 palavras cada) sobre o tema. Adeque ao nível.`,
+Gere ${count} palavras MAIÚSCULAS (sem acentos) relacionadas ao tema. As dicas devem ser pedagógicas e adequadas ao nível.`,
 
   "criptograma": (tema, diff) => `Gere dados para um CRIPTOGRAMA pedagógico sobre "${tema}" (nível: ${diff}).
 Retorne JSON:
@@ -72,60 +31,17 @@ Retorne JSON:
 }
 A frase deve ser educativa, relacionada ao tema e adequada ao nível. Máximo 60 caracteres. Sem acentos, apenas letras A-Z e espaços.`,
 
-  "lacunas": (tema, diff) => `Gere dados para PREENCHA AS LACUNAS (cloze test) pedagógico sobre "${tema}" (nível: ${diff}).
+  "labirinto": (tema, diff, count) => `Gere dados para LABIRINTO COM DESAFIOS sobre "${tema}" (nível: ${diff}).
 Retorne JSON:
 {
-  "texto": "Texto educativo com as palavras-chave incluídas normalmente",
-  "palavras_chave": ["palavra1","palavra2","palavra3","palavra4","palavra5"]
-}
-O texto deve conter as palavras_chave naturalmente. Quando o aluno resolver, as palavras_chave serão substituídas por lacunas. Texto de 3-5 frases. Adeque ao nível.`,
-
-  "tabela-classificacao": (tema, diff) => `Gere dados para TABELA DE CLASSIFICAÇÃO pedagógica sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "headers": ["Categoria A","Categoria B","Categoria C"],
-  "items": ["item1","item2","item3","item4","item5","item6","item7","item8","item9"]
-}
-Gere 3 categorias e 9-12 itens que o aluno deve classificar. Adeque ao nível.`,
-
-  "verdadeiro-falso": (tema, diff, count) => `Gere dados para VERDADEIRO OU FALSO pedagógico sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "items": [
-    {"statement":"Afirmação sobre o tema.","answer":true,"justification":"Explicação do gabarito"},
+  "questions": [
+    {"question":"Pergunta sobre o tema?","alternatives":["Opção A","Opção B","Opção C","Opção D"],"correctIndex":0},
     ...
   ]
 }
-Gere ${count} afirmações (misture verdadeiras e falsas ~50/50). Inclua justificativa para o gabarito do professor. Adeque ao nível.`,
-
-  "sequencia": (tema, diff, count) => `Gere dados para SEQUÊNCIAS LÓGICAS pedagógicas (nível: ${diff}).
-Retorne JSON:
-{
-  "items": [
-    {"sequence":["2","4","6","8","10","?"],"answer":"12","type":"number"},
-    {"sequence":["A","C","E","G","I","?"],"answer":"K","type":"letter"},
-    ...
-  ]
-}
-Gere ${count} sequências lógicas variadas (numéricas, alfabéticas e de padrões). O último elemento deve ser "?". Adeque complexidade ao nível.`,
-
-  "cruzadinha-simples": (tema, diff, count) => `Gere dados para CRUZADINHA SIMPLIFICADA sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "palavras": ["PALAVRA1","PALAVRA2",...]
-}
-Gere ${count} palavras MAIÚSCULAS (sem acentos) para revisão de vocabulário do tema.`,
-
-  "pixel-art": (tema, diff) => `Gere dados para PIXEL ART/DESENHO GUIADO sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "titulo": "Nome do desenho",
-  "instrucoes": "Pinte as coordenadas indicadas para revelar o desenho"
-}
-Apenas retorne título e instruções curtas.`,
+Gere ${Math.min(count, 5)} perguntas de múltipla escolha (4 alternativas cada) sobre o tema. Adeque ao nível.`,
 
   "sudoku": () => `Retorne JSON: {"generated": true}`,
-  "labirinto": () => `Retorne JSON: {"generated": true}`,
 };
 
 serve(async (req) => {
