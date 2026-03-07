@@ -128,12 +128,197 @@ export type Database = {
         }
         Relationships: []
       }
+      provas: {
+        Row: {
+          config_tempo: number | null
+          created_at: string
+          escola: string | null
+          id: string
+          nivel: string | null
+          professor: string | null
+          serie: string | null
+          status: string | null
+          temas: string | null
+          tipo_questoes: string | null
+          tipo_tempo: string | null
+          titulo: string
+          turma: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config_tempo?: number | null
+          created_at?: string
+          escola?: string | null
+          id?: string
+          nivel?: string | null
+          professor?: string | null
+          serie?: string | null
+          status?: string | null
+          temas?: string | null
+          tipo_questoes?: string | null
+          tipo_tempo?: string | null
+          titulo?: string
+          turma?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config_tempo?: number | null
+          created_at?: string
+          escola?: string | null
+          id?: string
+          nivel?: string | null
+          professor?: string | null
+          serie?: string | null
+          status?: string | null
+          temas?: string | null
+          tipo_questoes?: string | null
+          tipo_tempo?: string | null
+          titulo?: string
+          turma?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      questoes: {
+        Row: {
+          alternativas: Json | null
+          conteudo: string
+          created_at: string
+          id: string
+          imagem_url: string | null
+          linhas: number | null
+          ordem: number
+          prova_id: string
+          resposta_correta: number | null
+          tipo: string
+        }
+        Insert: {
+          alternativas?: Json | null
+          conteudo?: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          linhas?: number | null
+          ordem?: number
+          prova_id: string
+          resposta_correta?: number | null
+          tipo?: string
+        }
+        Update: {
+          alternativas?: Json | null
+          conteudo?: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          linhas?: number | null
+          ordem?: number
+          prova_id?: string
+          resposta_correta?: number | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questoes_prova_id_fkey"
+            columns: ["prova_id"]
+            isOneToOne: false
+            referencedRelation: "provas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      respostas_alunos: {
+        Row: {
+          created_at: string
+          id: string
+          nome_aluno: string
+          nota: number | null
+          prova_id: string
+          respostas_json: Json | null
+          tempo_gasto: number | null
+          versao_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_aluno: string
+          nota?: number | null
+          prova_id: string
+          respostas_json?: Json | null
+          tempo_gasto?: number | null
+          versao_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_aluno?: string
+          nota?: number | null
+          prova_id?: string
+          respostas_json?: Json | null
+          tempo_gasto?: number | null
+          versao_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "respostas_alunos_prova_id_fkey"
+            columns: ["prova_id"]
+            isOneToOne: false
+            referencedRelation: "provas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "respostas_alunos_versao_id_fkey"
+            columns: ["versao_id"]
+            isOneToOne: false
+            referencedRelation: "versoes_prova"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      versoes_prova: {
+        Row: {
+          created_at: string
+          id: string
+          mapa_questoes: Json
+          prova_id: string
+          qr_code_id: string
+          versao_label: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mapa_questoes?: Json
+          prova_id: string
+          qr_code_id?: string
+          versao_label?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mapa_questoes?: Json
+          prova_id?: string
+          qr_code_id?: string
+          versao_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "versoes_prova_prova_id_fkey"
+            columns: ["prova_id"]
+            isOneToOne: false
+            referencedRelation: "provas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       is_own_profile: { Args: { profile_user_id: string }; Returns: boolean }
+      is_prova_owner: { Args: { p_prova_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
