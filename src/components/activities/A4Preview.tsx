@@ -162,6 +162,11 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               const num = autoNumber ? questionCounter : "";
               rendered.push(
                 <div key={block.id} style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
+                  {block.questionImageUrl && (
+                    <div style={{ marginBottom: "3mm", textAlign: "center" }}>
+                      <img src={block.questionImageUrl} alt="" style={{ maxWidth: "60%", maxHeight: "50mm", objectFit: "contain", borderRadius: "2mm" }} />
+                    </div>
+                  )}
                   <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                     <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
                   </p>
@@ -175,12 +180,60 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               const num = autoNumber ? questionCounter : "";
               rendered.push(
                 <div key={block.id} style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
+                  {block.questionImageUrl && (
+                    <div style={{ marginBottom: "3mm", textAlign: "center" }}>
+                      <img src={block.questionImageUrl} alt="" style={{ maxWidth: "60%", maxHeight: "50mm", objectFit: "contain", borderRadius: "2mm" }} />
+                    </div>
+                  )}
                   <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                     <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado")}` }} />
                   </p>
                   {block.alternatives?.map((alt, ai) => (
                     <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
                       <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span>{" "}
+                      <span dangerouslySetInnerHTML={{ __html: renderKaTeX(alt || `Alternativa ${String.fromCharCode(65 + ai)}`) }} />
+                    </p>
+                  ))}
+                </div>
+              );
+            } else if (block.type === "question-enem") {
+              questionCounter++;
+              const num = autoNumber ? questionCounter : "";
+              rendered.push(
+                <div key={block.id} style={{ marginBottom: "8mm", pageBreakInside: "avoid" }}>
+                  {/* ENEM Texto Base */}
+                  {block.textoBase && (
+                    <div style={{
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "2mm",
+                      padding: "3mm 4mm",
+                      marginBottom: "3mm",
+                      backgroundColor: "#f8fafc",
+                      fontSize: "10pt",
+                      lineHeight: 1.5,
+                    }}>
+                      <div style={{ textAlign: "justify" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.textoBase) }} />
+                      {block.fonte && (
+                        <p style={{ textAlign: "right", fontSize: "8pt", color: "#64748b", marginTop: "2mm", fontStyle: "italic" }}>
+                          {block.fonte}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {/* Question image */}
+                  {block.questionImageUrl && (
+                    <div style={{ marginBottom: "3mm", textAlign: "center" }}>
+                      <img src={block.questionImageUrl} alt="" style={{ maxWidth: "70%", maxHeight: "60mm", objectFit: "contain", borderRadius: "2mm", border: "1px solid #e2e8f0" }} />
+                    </div>
+                  )}
+                  {/* Enunciado/Comando */}
+                  <p style={{ fontWeight: 600, marginBottom: "3mm", textAlign: "justify" }}>
+                    <span dangerouslySetInnerHTML={{ __html: `${num ? `<strong>QUESTÃO ${num}</strong> — ` : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
+                  </p>
+                  {/* 5 alternatives A-E */}
+                  {block.alternatives?.map((alt, ai) => (
+                    <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1.5mm", lineHeight: 1.5 }}>
+                      <span style={{ fontWeight: 700, marginRight: "2mm" }}>({String.fromCharCode(65 + ai)})</span>
                       <span dangerouslySetInnerHTML={{ __html: renderKaTeX(alt || `Alternativa ${String.fromCharCode(65 + ai)}`) }} />
                     </p>
                   ))}
