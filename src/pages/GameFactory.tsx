@@ -1,137 +1,137 @@
-import { useState, useCallback, useEffect } from "react";
-import { Gamepad2, Search as SearchIcon, Grid3X3, Hash, MapPin, Palette, Lock, Sparkles, Loader2, Printer, RotateCcw } from "lucide-react";
+import { useState, useCallback } from "react";
+import {
+  Gamepad2, Search as SearchIcon, Grid3X3, Hash, MapPin, Palette,
+  Sparkles, Loader2, Printer, RotateCcw, FileDown, ArrowLeft,
+  Link2, PenLine, Brain, Table2, CheckSquare, Lock, Type, AlignLeft,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { difficultyConfig, defaultHeader, type Difficulty, type GameConfig, type GameHeader } from "@/components/games/types";
 
-type Difficulty = "facil" | "medio" | "dificil";
+// Generators
+import { generateWordSearch } from "@/components/games/generators/wordSearch";
+import { generateCrossword } from "@/components/games/generators/crossword";
+import { generateSudoku } from "@/components/games/generators/sudoku";
+import { generateMaze } from "@/components/games/generators/maze";
+import { generateHangman } from "@/components/games/generators/hangman";
+import { generateConnectPairs } from "@/components/games/generators/connectPairs";
+import { generateCompleteWord } from "@/components/games/generators/completeWord";
+import { generateAnagram } from "@/components/games/generators/anagram";
+import { generateLogicalSequence } from "@/components/games/generators/logicalSequence";
+import { generateSimpleCrossword } from "@/components/games/generators/simpleCrossword";
+import { generateTicTacToe } from "@/components/games/generators/ticTacToe";
+import { generateCryptogram } from "@/components/games/generators/cryptogram";
+import { generateFillBlanks } from "@/components/games/generators/fillBlanks";
+import { generateClassificationTable } from "@/components/games/generators/classificationTable";
+import { generateTrueFalse } from "@/components/games/generators/trueFalse";
+import { generatePixelArt } from "@/components/games/generators/pixelArt";
 
-const difficultyConfig: Record<Difficulty, { label: string; color: string; gridSize: number; wordCount: number }> = {
-  facil: { label: "Fácil", color: "bg-green-500/10 text-green-600", gridSize: 10, wordCount: 6 },
-  medio: { label: "Médio", color: "bg-yellow-500/10 text-yellow-600", gridSize: 13, wordCount: 10 },
-  dificil: { label: "Difícil", color: "bg-red-500/10 text-red-600", gridSize: 16, wordCount: 15 },
-};
+// Previews
+import WordSearchPreview from "@/components/games/previews/WordSearchPreview";
+import CrosswordPreview from "@/components/games/previews/CrosswordPreview";
+import SudokuPreview from "@/components/games/previews/SudokuPreview";
+import MazePreview from "@/components/games/previews/MazePreview";
+import HangmanPreview from "@/components/games/previews/HangmanPreview";
+import ConnectPairsPreview from "@/components/games/previews/ConnectPairsPreview";
+import CompleteWordPreview from "@/components/games/previews/CompleteWordPreview";
+import AnagramPreview from "@/components/games/previews/AnagramPreview";
+import LogicalSequencePreview from "@/components/games/previews/LogicalSequencePreview";
+import SimpleCrosswordPreview from "@/components/games/previews/SimpleCrosswordPreview";
+import TicTacToePreview from "@/components/games/previews/TicTacToePreview";
+import CryptogramPreview from "@/components/games/previews/CryptogramPreview";
+import FillBlanksPreview from "@/components/games/previews/FillBlanksPreview";
+import ClassificationTablePreview from "@/components/games/previews/ClassificationTablePreview";
+import TrueFalsePreview from "@/components/games/previews/TrueFalsePreview";
+import PixelArtPreview from "@/components/games/previews/PixelArtPreview";
 
-const games = [
-  { id: "caca-palavras", title: "Caça-Palavras", icon: SearchIcon, desc: "Encontre palavras escondidas na grade", available: true },
-  { id: "cruzadinha", title: "Cruzadinha", icon: Hash, desc: "Preencha a grade com as dicas", available: true },
-  { id: "sudoku", title: "Sudoku Temático", icon: Grid3X3, desc: "Sudoku com temas personalizados", available: true },
-  { id: "labirinto", title: "Labirinto", icon: MapPin, desc: "Encontre o caminho do início ao fim", available: true },
-  { id: "pixel-art", title: "Pixel Art Matemático", icon: Palette, desc: "Pinte coordenadas e revele o desenho", available: true },
-  { id: "quiz", title: "Quiz Interativo", icon: Hash, desc: "Perguntas e respostas temáticas", available: true },
-  { id: "memoria", title: "Jogo da Memória", icon: Grid3X3, desc: "Pares de cartas temáticas", available: true },
-  { id: "forca", title: "Forca", icon: Hash, desc: "Adivinhe a palavra letra por letra", available: true },
+const GAMES = [
+  { id: "cruzadinha", title: "Cruzadinha", icon: Hash, desc: "Grade com dicas horizontais e verticais", category: "words" as const, needsWords: true },
+  { id: "caca-palavras", title: "Caça-Palavras", icon: SearchIcon, desc: "Encontre palavras escondidas na grade", category: "words" as const, needsWords: true },
+  { id: "forca", title: "Forca", icon: Lock, desc: "6 forcas com dicas e linhas em branco", category: "words" as const, needsWords: true },
+  { id: "sudoku", title: "Sudoku", icon: Grid3X3, desc: "Puzzles 4x4, 6x6 ou 9x9", category: "logic" as const },
+  { id: "ligue-pares", title: "Ligue os Pares", icon: Link2, desc: "Associe colunas esquerda e direita", category: "words" as const, needsWords: true },
+  { id: "complete-palavra", title: "Complete a Palavra", icon: PenLine, desc: "Preencha letras faltantes", category: "words" as const, needsWords: true },
+  { id: "anagrama", title: "Anagramas", icon: Type, desc: "Descubra a palavra embaralhada", category: "words" as const, needsWords: true },
+  { id: "sequencia", title: "Sequências Lógicas", icon: Brain, desc: "Complete o padrão numérico/visual", category: "logic" as const },
+  { id: "cruzadinha-simples", title: "Cruzadinha Simplificada", icon: Grid3X3, desc: "Grade 10x10 aberta para vocabulário", category: "grid" as const, needsWords: true },
+  { id: "velha-pedagogica", title: "Jogo da Velha Pedagógico", icon: Hash, desc: "Resolva antes de marcar X ou O", category: "grid" as const, needsWords: true },
+  { id: "criptograma", title: "Criptograma", icon: Lock, desc: "Decifre a mensagem com tabela de códigos", category: "logic" as const },
+  { id: "lacunas", title: "Preencha as Lacunas", icon: AlignLeft, desc: "Texto com espaços para completar (cloze)", category: "text" as const, needsWords: true },
+  { id: "tabela-classificacao", title: "Tabela de Classificação", icon: Table2, desc: "Organize itens em 3 categorias", category: "text" as const, needsWords: true },
+  { id: "verdadeiro-falso", title: "Verdadeiro ou Falso", icon: CheckSquare, desc: "Afirmações com [V] [F] + justificativa", category: "text" as const, needsWords: true },
+  { id: "labirinto", title: "Labirinto", icon: MapPin, desc: "Encontre o caminho do início ao fim", category: "grid" as const },
+  { id: "pixel-art", title: "Pixel Art", icon: Palette, desc: "Pinte coordenadas e revele o desenho", category: "grid" as const },
 ];
 
-// --- Word Search Generator ---
-function generateWordSearch(words: string[], gridSize: number): { grid: string[][]; placedWords: string[] } {
-  const grid: string[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(""));
-  const directions = [[0, 1], [1, 0], [1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1], [-1, 1]];
-  const placedWords: string[] = [];
-
-  const sortedWords = [...words].sort((a, b) => b.length - a.length);
-
-  for (const word of sortedWords) {
-    const clean = word.toUpperCase().replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, "");
-    if (clean.length === 0 || clean.length > gridSize) continue;
-    let placed = false;
-    for (let attempt = 0; attempt < 100 && !placed; attempt++) {
-      const dir = directions[Math.floor(Math.random() * directions.length)];
-      const startR = Math.floor(Math.random() * gridSize);
-      const startC = Math.floor(Math.random() * gridSize);
-      let fits = true;
-      for (let k = 0; k < clean.length; k++) {
-        const r = startR + dir[0] * k;
-        const c = startC + dir[1] * k;
-        if (r < 0 || r >= gridSize || c < 0 || c >= gridSize) { fits = false; break; }
-        if (grid[r][c] !== "" && grid[r][c] !== clean[k]) { fits = false; break; }
-      }
-      if (fits) {
-        for (let k = 0; k < clean.length; k++) {
-          grid[startR + dir[0] * k][startC + dir[1] * k] = clean[k];
-        }
-        placedWords.push(word);
-        placed = true;
-      }
-    }
-  }
-
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (grid[r][c] === "") grid[r][c] = letters[Math.floor(Math.random() * letters.length)];
-    }
-  }
-  return { grid, placedWords };
-}
-
-// --- Maze Generator (DFS) ---
-function generateMaze(size: number): boolean[][] {
-  const maze: boolean[][] = Array.from({ length: size }, () => Array(size).fill(true));
-  const visited: boolean[][] = Array.from({ length: size }, () => Array(size).fill(false));
-  
-  function carve(r: number, c: number) {
-    visited[r][c] = true;
-    maze[r][c] = false;
-    const dirs = [[0, 2], [2, 0], [0, -2], [-2, 0]].sort(() => Math.random() - 0.5);
-    for (const [dr, dc] of dirs) {
-      const nr = r + dr, nc = c + dc;
-      if (nr >= 0 && nr < size && nc >= 0 && nc < size && !visited[nr][nc]) {
-        maze[r + dr / 2][c + dc / 2] = false;
-        carve(nr, nc);
-      }
-    }
-  }
-  carve(1, 1);
-  maze[0][1] = false; // entrance
-  maze[size - 1][size - 2] = false; // exit
-  return maze;
-}
+const CATEGORY_LABELS: Record<string, string> = {
+  words: "📝 Palavras",
+  logic: "🧠 Lógica",
+  grid: "📐 Grades",
+  text: "📄 Texto",
+};
 
 export default function GameFactory() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [tema, setTema] = useState("");
   const [palavras, setPalavras] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty>("facil");
+  const [header, setHeader] = useState<GameHeader>({ ...defaultHeader });
   const [generating, setGenerating] = useState(false);
+  const [gameData, setGameData] = useState<any>(null);
 
-  // Game states
-  const [wsGrid, setWsGrid] = useState<string[][] | null>(null);
-  const [wsWords, setWsWords] = useState<string[]>([]);
-  const [mazeGrid, setMazeGrid] = useState<boolean[][] | null>(null);
+  const getConfig = useCallback((): GameConfig => ({
+    tema, palavras, difficulty, header,
+  }), [tema, palavras, difficulty, header]);
+
+  const selectedGameDef = GAMES.find(g => g.id === selectedGame);
 
   const handleGenerate = () => {
-    if (!tema.trim() && selectedGame !== "sudoku") { toast.error("Insira o tema"); return; }
-    setGenerating(true);
+    if (!tema.trim() && selectedGame !== "sudoku" && selectedGame !== "sequencia") {
+      toast.error("Insira o tema"); return;
+    }
+    if (selectedGameDef?.needsWords && !palavras.trim()) {
+      toast.error("Insira as palavras-chave separadas por vírgula"); return;
+    }
 
+    setGenerating(true);
     setTimeout(() => {
       try {
-        if (selectedGame === "caca-palavras") {
-          const wordList = palavras.split(",").map(w => w.trim()).filter(Boolean);
-          if (wordList.length < 3) { toast.error("Insira pelo menos 3 palavras"); setGenerating(false); return; }
-          const config = difficultyConfig[difficulty];
-          const { grid, placedWords } = generateWordSearch(wordList.slice(0, config.wordCount), config.gridSize);
-          setWsGrid(grid);
-          setWsWords(placedWords);
-          toast.success(`Caça-palavras gerado com ${placedWords.length} palavras!`);
-        } else if (selectedGame === "labirinto") {
-          const sizes: Record<Difficulty, number> = { facil: 11, medio: 17, dificil: 25 };
-          setMazeGrid(generateMaze(sizes[difficulty]));
-          toast.success("Labirinto gerado!");
-        } else {
-          toast.info("Jogo gerado com sucesso! (preview em breve)");
+        const config = getConfig();
+        const generators: Record<string, (c: GameConfig) => any> = {
+          "cruzadinha": generateCrossword,
+          "caca-palavras": generateWordSearch,
+          "forca": generateHangman,
+          "sudoku": generateSudoku,
+          "ligue-pares": generateConnectPairs,
+          "complete-palavra": generateCompleteWord,
+          "anagrama": generateAnagram,
+          "sequencia": generateLogicalSequence,
+          "cruzadinha-simples": generateSimpleCrossword,
+          "velha-pedagogica": generateTicTacToe,
+          "criptograma": generateCryptogram,
+          "lacunas": generateFillBlanks,
+          "tabela-classificacao": generateClassificationTable,
+          "verdadeiro-falso": generateTrueFalse,
+          "labirinto": generateMaze,
+          "pixel-art": generatePixelArt,
+        };
+        const gen = generators[selectedGame!];
+        if (gen) {
+          setGameData(gen(config));
+          toast.success("Jogo gerado com sucesso!");
         }
-      } catch (err) {
-        toast.error("Erro ao gerar jogo");
+      } catch {
+        toast.error("Erro ao gerar o jogo");
       } finally {
         setGenerating(false);
       }
-    }, 300);
+    }, 200);
   };
 
   const handlePrint = () => {
@@ -139,10 +139,10 @@ export default function GameFactory() {
     if (!el) return;
     const pw = window.open("", "_blank");
     if (!pw) return;
-    pw.document.write(`<html><head><title>Jogo - ${tema}</title><style>
+    pw.document.write(`<html><head><title>${tema || "Jogo"}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Inter', 'Arial', sans-serif; padding: 15mm; }
-      @page { size: A4; margin: 15mm; }
+      @page { size: A4; margin: 10mm; }
+      body { font-family: 'Inter', 'Arial', sans-serif; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -152,183 +152,206 @@ export default function GameFactory() {
     pw.close();
   };
 
-  const resetGame = () => {
-    setWsGrid(null);
-    setWsWords([]);
-    setMazeGrid(null);
+  const handlePDF = async () => {
+    const el = document.getElementById("game-print-area");
+    if (!el) return;
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      html2pdf().set({
+        margin: [10, 10, 10, 10],
+        filename: `${tema || "jogo"}-${selectedGame}.pdf`,
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      }).from(el).save();
+      toast.success("PDF exportado!");
+    } catch {
+      toast.error("Erro ao exportar PDF");
+    }
   };
 
-  const renderGameConfig = () => {
-    if (!selectedGame) return null;
-    const game = games.find(g => g.id === selectedGame);
-    if (!game) return null;
+  const renderPreview = () => {
+    if (!gameData || !selectedGame) return null;
+    const config = getConfig();
+    const previews: Record<string, React.ReactNode> = {
+      "caca-palavras": <WordSearchPreview data={gameData} config={config} />,
+      "cruzadinha": <CrosswordPreview data={gameData} config={config} />,
+      "sudoku": <SudokuPreview data={gameData} config={config} />,
+      "labirinto": <MazePreview data={gameData} config={config} />,
+      "forca": <HangmanPreview data={gameData} config={config} />,
+      "ligue-pares": <ConnectPairsPreview data={gameData} config={config} />,
+      "complete-palavra": <CompleteWordPreview data={gameData} config={config} />,
+      "anagrama": <AnagramPreview data={gameData} config={config} />,
+      "sequencia": <LogicalSequencePreview data={gameData} config={config} />,
+      "cruzadinha-simples": <SimpleCrosswordPreview data={gameData} config={config} />,
+      "velha-pedagogica": <TicTacToePreview data={gameData} config={config} />,
+      "criptograma": <CryptogramPreview data={gameData} config={config} />,
+      "lacunas": <FillBlanksPreview data={gameData} config={config} />,
+      "tabela-classificacao": <ClassificationTablePreview data={gameData} config={config} />,
+      "verdadeiro-falso": <TrueFalsePreview data={gameData} config={config} />,
+      "pixel-art": <PixelArtPreview data={gameData} config={config} />,
+    };
+    return previews[selectedGame] || null;
+  };
 
+  // --- GAME SELECTOR GRID ---
+  if (!selectedGame) {
+    const categories = [...new Set(GAMES.map(g => g.category))];
     return (
-      <Card className="shadow-card max-w-3xl">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-display text-lg flex items-center gap-2">
-              <game.icon className="h-5 w-5 text-primary" /> {game.title}
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => { setSelectedGame(null); resetGame(); }}>
-              ← Voltar
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Tema do jogo</Label>
-            <Input placeholder="Ex: Sistema Solar, Animais, Cores" value={tema} onChange={e => setTema(e.target.value)} />
-          </div>
-
-          {(selectedGame === "caca-palavras" || selectedGame === "cruzadinha") && (
-            <div className="space-y-2">
-              <Label>Palavras-chave (separadas por vírgula)</Label>
-              <Textarea
-                placeholder="Ex: sol, lua, terra, marte, jupiter, saturno, venus, netuno"
-                value={palavras}
-                onChange={e => setPalavras(e.target.value)}
-                className="min-h-[60px]"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label className="font-semibold">Nível de Dificuldade</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {(Object.entries(difficultyConfig) as [Difficulty, typeof difficultyConfig.facil][]).map(([key, cfg]) => (
-                <button
-                  key={key}
-                  onClick={() => setDifficulty(key)}
-                  className={`rounded-lg border-2 p-3 text-center transition-all ${difficulty === key ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-muted-foreground/40"}`}
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <Gamepad2 className="h-6 w-6 text-primary" /> Fábrica de Jogos Pedagógicos
+          </h1>
+          <p className="text-muted-foreground mt-1">15 atividades impressas de alta qualidade em formato A4</p>
+        </div>
+        {categories.map(cat => (
+          <div key={cat}>
+            <h2 className="font-display font-bold text-sm text-muted-foreground mb-3">{CATEGORY_LABELS[cat]}</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {GAMES.filter(g => g.category === cat).map(game => (
+                <Card
+                  key={game.id}
+                  className="shadow-card cursor-pointer transition-all hover:shadow-elevated hover:scale-[1.02]"
+                  onClick={() => { setSelectedGame(game.id); setGameData(null); }}
                 >
-                  <span className="text-sm font-semibold">{cfg.label}</span>
-                  {selectedGame === "caca-palavras" && (
-                    <p className="text-[10px] text-muted-foreground mt-1">{cfg.gridSize}x{cfg.gridSize} • {cfg.wordCount} palavras</p>
-                  )}
-                  {selectedGame === "labirinto" && (
-                    <p className="text-[10px] text-muted-foreground mt-1">{key === "facil" ? "Simples" : key === "medio" ? "Intermediário" : "Complexo"}</p>
-                  )}
-                </button>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <game.icon className="h-4 w-4" />
+                      </div>
+                      <Badge variant="secondary" className="text-[10px]">A4</Badge>
+                    </div>
+                    <h3 className="font-display font-bold text-sm">{game.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{game.desc}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
-
-          <div className="flex gap-3">
-            <Button onClick={handleGenerate} disabled={generating} className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
-              {generating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-2 h-4 w-4" /> Gerar Jogo</>}
-            </Button>
-            {(wsGrid || mazeGrid) && (
-              <>
-                <Button variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
-                <Button variant="outline" onClick={() => { resetGame(); handleGenerate(); }}><RotateCcw className="mr-1 h-4 w-4" /> Novo</Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
     );
-  };
+  }
 
-  const renderGamePreview = () => {
-    if (selectedGame === "caca-palavras" && wsGrid) {
-      const cellSize = Math.max(20, Math.min(30, 400 / wsGrid.length));
-      return (
-        <Card className="shadow-card max-w-3xl">
-          <CardContent className="pt-6">
-            <div id="game-print-area">
-              <h2 style={{ textAlign: "center", fontSize: "16pt", fontWeight: 700, marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif" }}>
-                Caça-Palavras: {tema}
-              </h2>
-              <p style={{ textAlign: "center", fontSize: "10pt", color: "#64748b", marginBottom: "6mm" }}>
-                Nível: {difficultyConfig[difficulty].label} • Encontre {wsWords.length} palavras
-              </p>
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: "6mm" }}>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${wsGrid.length}, ${cellSize}px)`, gap: "1px", border: "2px solid #1e293b" }}>
-                  {wsGrid.flat().map((letter, i) => (
-                    <div key={i} style={{ width: cellSize, height: cellSize, display: "flex", alignItems: "center", justifyContent: "center", fontSize: `${cellSize * 0.5}px`, fontWeight: 600, fontFamily: "monospace", border: "1px solid #e2e8f0" }}>
-                      {letter}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "3mm", justifyContent: "center" }}>
-                {wsWords.map((w, i) => (
-                  <span key={i} style={{ padding: "2mm 4mm", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "10pt", fontWeight: 600 }}>{w}</span>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    if (selectedGame === "labirinto" && mazeGrid) {
-      const cellSize = Math.max(10, Math.min(20, 500 / mazeGrid.length));
-      return (
-        <Card className="shadow-card max-w-3xl">
-          <CardContent className="pt-6">
-            <div id="game-print-area">
-              <h2 style={{ textAlign: "center", fontSize: "16pt", fontWeight: 700, marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif" }}>
-                Labirinto: {tema}
-              </h2>
-              <p style={{ textAlign: "center", fontSize: "10pt", color: "#64748b", marginBottom: "6mm" }}>
-                Nível: {difficultyConfig[difficulty].label} • Encontre a saída!
-              </p>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${mazeGrid[0].length}, ${cellSize}px)` }}>
-                  {mazeGrid.flat().map((wall, i) => (
-                    <div key={i} style={{ width: cellSize, height: cellSize, background: wall ? "#1e293b" : "#ffffff", border: wall ? "none" : "1px solid #f1f5f9" }} />
-                  ))}
-                </div>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4mm", fontSize: "10pt", fontWeight: 600 }}>
-                <span>↓ ENTRADA</span>
-                <span>SAÍDA →</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return null;
-  };
-
+  // --- SPLIT-SCREEN EDITOR ---
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <Gamepad2 className="h-6 w-6 text-primary" /> Fábrica de Jogos
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={() => { setSelectedGame(null); setGameData(null); }}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Jogos
+        </Button>
+        <h1 className="font-display text-lg font-bold flex items-center gap-2">
+          {selectedGameDef && <selectedGameDef.icon className="h-5 w-5 text-primary" />}
+          {selectedGameDef?.title}
         </h1>
-        <p className="text-muted-foreground mt-1">Jogos pedagógicos personalizados com níveis de dificuldade</p>
       </div>
 
-      {!selectedGame && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {games.map((game) => (
-            <Card
-              key={game.id}
-              className={`shadow-card cursor-pointer transition-all hover:shadow-elevated hover:scale-[1.02]`}
-              onClick={() => { setSelectedGame(game.id); resetGame(); }}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <game.icon className="h-5 w-5" />
-                  </div>
-                  <Badge variant="secondary" className="text-xs">{game.available ? "Disponível" : "Em breve"}</Badge>
-                </div>
-                <h3 className="font-display font-bold text-sm">{game.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{game.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div className="flex gap-4 items-start" style={{ minHeight: "calc(100vh - 180px)" }}>
+        {/* LEFT: Config Panel (sticky) */}
+        <div className="w-[340px] shrink-0 sticky top-4 space-y-3 overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
+          <Card className="shadow-card">
+            <CardContent className="p-4 space-y-3">
+              {/* Header toggle */}
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Cabeçalho Escolar</Label>
+                <Switch checked={header.showHeader} onCheckedChange={v => setHeader(h => ({ ...h, showHeader: v }))} />
+              </div>
 
-      {renderGameConfig()}
-      {renderGamePreview()}
+              {header.showHeader && (
+                <div className="space-y-2 border-t pt-2">
+                  <Input placeholder="Nome da Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-8 text-xs" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-8 text-xs" />
+                    <Input placeholder="Disciplina" value={header.disciplina} onChange={e => setHeader(h => ({ ...h, disciplina: e.target.value }))} className="h-8 text-xs" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input placeholder="Série/Turma" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-8 text-xs" />
+                    <Input placeholder="Data" value={header.data} onChange={e => setHeader(h => ({ ...h, data: e.target.value }))} className="h-8 text-xs" />
+                  </div>
+                </div>
+              )}
+
+              {/* Theme */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Tema</Label>
+                <Input placeholder="Ex: Sistema Solar, Animais" value={tema} onChange={e => setTema(e.target.value)} className="h-8 text-xs" />
+              </div>
+
+              {/* Words input */}
+              {selectedGameDef?.needsWords && (
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Palavras-chave (vírgula)</Label>
+                  <Textarea
+                    placeholder="sol, lua, terra, marte, jupiter"
+                    value={palavras}
+                    onChange={e => setPalavras(e.target.value)}
+                    className="min-h-[50px] text-xs"
+                  />
+                </div>
+              )}
+
+              {/* Difficulty */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Nível de Dificuldade</Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(Object.entries(difficultyConfig) as [Difficulty, typeof difficultyConfig.facil][]).map(([key, cfg]) => (
+                    <button
+                      key={key}
+                      onClick={() => setDifficulty(key)}
+                      className={`rounded-md border p-2 text-center transition-all text-[10px] ${
+                        difficulty === key
+                          ? "border-primary bg-primary/5 shadow-sm font-bold"
+                          : "border-border hover:border-muted-foreground/40"
+                      }`}
+                    >
+                      {cfg.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 pt-2 border-t">
+                <Button onClick={handleGenerate} disabled={generating} className="gradient-primary border-0 text-primary-foreground hover:opacity-90 h-9 text-xs">
+                  {generating ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-3 w-3" /> Gerar Jogo</>}
+                </Button>
+                {gameData && (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <Button variant="outline" size="sm" onClick={() => { setGameData(null); handleGenerate(); }} className="h-8 text-[10px]">
+                      <RotateCcw className="h-3 w-3 mr-1" /> Novo
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handlePrint} className="h-8 text-[10px]">
+                      <Printer className="h-3 w-3 mr-1" /> Print
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handlePDF} className="h-8 text-[10px]">
+                      <FileDown className="h-3 w-3 mr-1" /> PDF
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT: A4 Live Preview */}
+        <div className="flex-1 min-w-0">
+          <div className="bg-muted/30 rounded-lg p-4 flex justify-center overflow-auto">
+            {gameData ? (
+              <div className="shadow-elevated">
+                {renderPreview()}
+              </div>
+            ) : (
+              <div className="bg-card shadow-lg flex items-center justify-center text-muted-foreground text-sm" style={{ width: "210mm", minHeight: "297mm", borderRadius: "4px" }}>
+                <div className="text-center space-y-2">
+                  <Gamepad2 className="h-12 w-12 mx-auto opacity-20" />
+                  <p>Configure e clique em "Gerar Jogo"</p>
+                  <p className="text-xs">O preview A4 aparecerá aqui</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
