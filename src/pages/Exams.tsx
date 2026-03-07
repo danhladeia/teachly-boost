@@ -310,7 +310,7 @@ export default function Exams() {
         id: newVersao.id,
         versao_label: newVersao.versao_label,
         qr_code_id: newVersao.qr_code_id,
-        mapa_questoes: newVersao.mapa_questoes as MapaQuestaoItem[],
+        mapa_questoes: (newVersao.mapa_questoes as unknown) as MapaQuestaoItem[],
         created_at: newVersao.created_at,
       };
       setVersoes(prev => [...prev, v]);
