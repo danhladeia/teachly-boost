@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ export const emptyBlock = (type: BlockType): Block => ({
   content: type === "separator" ? "Atividades" : "",
   alignment: type === "title" || type === "separator" ? "center" : "left",
   ...(type === "question-mc" ? { alternatives: ["", "", "", ""], correctIndex: 0 } : {}),
+  ...(type === "question-enem" ? { alternatives: ["", "", "", "", ""], correctIndex: 0, textoBase: "", fonte: "" } : {}),
   ...(type === "question-open" ? { lines: 4 } : {}),
 });
 
@@ -49,7 +50,7 @@ export default function Activities() {
   const [turma, setTurma] = useState("");
   const [autoNumber, setAutoNumber] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savedPlanos, setSavedPlanos] = useState<any[]>([]);
+  const [savedDocs, setSavedDocs] = useState<any[]>([]);
   const [tab, setTab] = useState("ia");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [imagePosition, setImagePosition] = useState<ImageFloat>("left");
@@ -57,11 +58,22 @@ export default function Activities() {
   const [aiImageDescriptions, setAiImageDescriptions] = useState<string[]>([]);
   const [numAiImages, setNumAiImages] = useState(0);
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [modoEnem, setModoEnem] = useState(false);
+  const [textoImportado, setTextoImportado] = useState("");
+  const [importFileName, setImportFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadSavedPlanos();
+    loadSavedDocs();
     loadProfile();
   }, []);
+
+  // Auto-enable ENEM mode when Ensino Médio is selected
+  useEffect(() => {
+    if (aiNivel === "Ensino Médio") {
+      setModoEnem(true);
+    }
+  }, [aiNivel]);
 
   const loadProfile = async () => {
     try {
@@ -73,12 +85,12 @@ export default function Activities() {
     } catch {}
   };
 
-  const loadSavedPlanos = async () => {
+  const loadSavedDocs = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("documentos_salvos").select("id, titulo, created_at, conteudo").eq("user_id", user.id).eq("tipo", "plano").order("created_at", { ascending: false }).limit(20);
-      if (data) setSavedPlanos(data);
+      const { data } = await supabase.from("documentos_salvos").select("id, titulo, created_at, conteudo, tipo").eq("user_id", user.id).in("tipo", ["plano", "atividade"]).order("created_at", { ascending: false }).limit(30);
+      if (data) setSavedDocs(data);
     } catch {}
   };
 
@@ -134,34 +146,111 @@ export default function Activities() {
     }
   };
 
+  // File import handler (PDF/DOCX → text extraction)
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    setImportFileName(file.name);
+
+    if (name.endsWith(".txt") || name.endsWith(".md")) {
+      const text = await file.text();
+      setTextoImportado(text);
+      toast.success(`Arquivo "${file.name}" importado!`);
+    } else if (name.endsWith(".pdf") || name.endsWith(".docx") || name.endsWith(".doc")) {
+      // For PDF/DOCX, read as text (basic extraction)
+      try {
+        if (name.endsWith(".pdf")) {
+          // Read PDF as ArrayBuffer and extract text lines
+          const buffer = await file.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+          let text = "";
+          // Simple text extraction from PDF binary
+          const decoder = new TextDecoder("latin1");
+          const raw = decoder.decode(bytes);
+          // Extract text between BT and ET markers
+          const btMatches = raw.matchAll(/BT\s([\s\S]*?)ET/g);
+          for (const match of btMatches) {
+            const inner = match[1];
+            const tjMatches = inner.matchAll(/\(([^)]*)\)\s*Tj/g);
+            for (const tj of tjMatches) {
+              text += tj[1];
+            }
+            const tdMatches = inner.matchAll(/\[([^\]]*)\]\s*TJ/g);
+            for (const td of tdMatches) {
+              const parts = td[1].matchAll(/\(([^)]*)\)/g);
+              for (const p of parts) {
+                text += p[1];
+              }
+            }
+            text += "\n";
+          }
+          if (text.trim().length < 20) {
+            text = "⚠️ Não foi possível extrair texto deste PDF. Tente copiar e colar o conteúdo diretamente no campo de texto abaixo.";
+          }
+          setTextoImportado(text.trim());
+          toast.success(`PDF "${file.name}" importado! Revise o texto extraído.`);
+        } else {
+          // DOCX: extract text from word/document.xml
+          const JSZip = (await import("file-saver")).default;
+          // Simple approach: read as text
+          const text = await file.text();
+          // Extract readable content
+          const cleanText = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+          if (cleanText.length > 50) {
+            setTextoImportado(cleanText.substring(0, 10000));
+          } else {
+            setTextoImportado("⚠️ Não foi possível extrair texto deste arquivo. Cole o conteúdo manualmente.");
+          }
+          toast.success(`Arquivo "${file.name}" importado!`);
+        }
+      } catch {
+        toast.error("Erro ao processar arquivo. Tente colar o texto manualmente.");
+      }
+    } else {
+      toast.error("Formato não suportado. Use PDF, DOCX ou TXT.");
+    }
+    e.target.value = "";
+  };
+
   const handleAiGenerate = async () => {
-    if (!aiPrompt.trim()) { toast.error("Digite um tema e instruções"); return; }
+    if (!aiPrompt.trim() && !textoImportado.trim()) { toast.error("Digite um tema ou importe um texto"); return; }
     setAiLoading(true);
     try {
-      const numAbertas = aiTipo === "multipla_escolha" ? 0 : aiNumAbertas;
-      const numFechadas = aiTipo === "aberta" ? 0 : aiNumFechadas;
+      const numAbertas = modoEnem ? 0 : (aiTipo === "multipla_escolha" ? 0 : aiNumAbertas);
+      const numFechadas = modoEnem ? aiNumFechadas : (aiTipo === "aberta" ? 0 : aiNumFechadas);
       const { data, error } = await supabase.functions.invoke("generate-atividade", {
         body: {
-          prompt: aiPrompt,
+          prompt: aiPrompt || `Atividade baseada no texto importado`,
           serie: aiSerie ? `${aiNivel} - ${aiSerie}` : aiNivel,
           nivel: aiNivel,
           disciplina: aiDisciplina,
-          tipo: aiTipo,
+          tipo: modoEnem ? "enem" : aiTipo,
           num_abertas: numAbertas,
           num_fechadas: numFechadas,
           tamanho_texto: aiTamanhoTexto,
           num_imagens: uploadedImages.length + numAiImages,
           separator_title: separatorTitle,
+          modo_enem: modoEnem,
+          texto_importado: textoImportado || undefined,
         },
       });
       if (error) throw error;
       if (data?.blocks) {
-        const generatedBlocks: Block[] = data.blocks.map((b: any) => ({ ...emptyBlock(b.type), ...b, id: genId() }));
+        const generatedBlocks: Block[] = data.blocks.map((b: any) => ({
+          ...emptyBlock(b.type),
+          ...b,
+          id: genId(),
+          // Ensure ENEM questions have 5 alternatives
+          ...(b.type === "question-enem" && b.alternatives?.length !== 5 ? {
+            alternatives: [...(b.alternatives || []), ...Array(5 - (b.alternatives?.length || 0)).fill("")].slice(0, 5)
+          } : {}),
+        }));
 
         // Insert uploaded images between text blocks
         const allImages: string[] = [...uploadedImages];
         
-        // Generate AI images if requested
         if (numAiImages > 0 && aiImageDescriptions.length > 0) {
           setGeneratingImages(true);
           for (let i = 0; i < Math.min(numAiImages, aiImageDescriptions.length); i++) {
@@ -203,7 +292,7 @@ export default function Activities() {
         } else {
           setBlocks(generatedBlocks);
         }
-        toast.success("Atividade gerada!");
+        toast.success(modoEnem ? "Atividade ENEM gerada!" : "Atividade gerada!");
       }
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar");
@@ -213,9 +302,25 @@ export default function Activities() {
     }
   };
 
-  const handleImportPlano = (plano: any) => {
+  const handleImportPlano = (doc: any) => {
     const newBlocks: Block[] = [];
-    const p = plano.conteudo || plano;
+    const p = doc.conteudo || doc;
+
+    // If it's a saved activity, restore blocks directly
+    if (p.blocks && Array.isArray(p.blocks)) {
+      setBlocks(p.blocks.map((b: any) => ({ ...b, id: genId() })));
+      if (p.settings) {
+        if (p.settings.autoNumber !== undefined) setAutoNumber(p.settings.autoNumber);
+        if (p.settings.showHeader !== undefined) setShowHeader(p.settings.showHeader);
+        if (p.settings.escola) setEscola(p.settings.escola);
+        if (p.settings.professor) setProfessor(p.settings.professor);
+        if (p.settings.turma) setTurma(p.settings.turma);
+      }
+      toast.success("Atividade restaurada!");
+      return;
+    }
+
+    // Lesson plan import
     if (p.identificacao?.tema) newBlocks.push({ ...emptyBlock("title"), content: p.identificacao.tema });
     if (p.desenvolvimento) newBlocks.push({ ...emptyBlock("text"), content: p.desenvolvimento });
     if (p.objetivos?.length) newBlocks.push({ ...emptyBlock("text"), content: p.objetivos.join("\n") });
@@ -255,6 +360,7 @@ export default function Activities() {
       });
       if (error) throw error;
       toast.success("Atividade salva na biblioteca!");
+      loadSavedDocs();
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar");
     } finally {
@@ -308,12 +414,29 @@ export default function Activities() {
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold">Tema e Instruções</Label>
                     <Textarea
-                      placeholder="Descreva o tema e como quer que o texto seja gerado. Ex: Revolução Francesa - Quero um texto que explique as causas, o desenrolar e as consequências, com linguagem acessível e exemplos do cotidiano."
+                      placeholder="Descreva o tema e como quer que o texto seja gerado. Ex: Revolução Francesa - Quero um texto que explique as causas, o desenrolar e as consequências."
                       value={aiPrompt}
                       onChange={e => setAiPrompt(e.target.value)}
                       className="min-h-[80px] text-xs"
                     />
                   </div>
+
+                  {/* Imported text preview */}
+                  {textoImportado && (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold flex items-center gap-1"><FileUp className="h-3 w-3" /> Texto importado{importFileName ? `: ${importFileName}` : ""}</Label>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setTextoImportado(""); setImportFileName(""); }}>✕</Button>
+                      </div>
+                      <Textarea
+                        value={textoImportado}
+                        onChange={e => setTextoImportado(e.target.value)}
+                        className="min-h-[60px] text-[10px] bg-background"
+                        placeholder="Texto importado (edite se necessário)..."
+                      />
+                      <p className="text-[9px] text-muted-foreground">A IA usará este texto como base para gerar a atividade.</p>
+                    </div>
+                  )}
 
                   <div className="space-y-1">
                     <Label className="text-[10px]">Disciplina</Label>
@@ -341,31 +464,53 @@ export default function Activities() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Tipo de questões</Label>
-                    <Select value={aiTipo} onValueChange={setAiTipo}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
-                        <SelectItem value="aberta">Só Abertas</SelectItem>
-                        <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* ENEM Mode Toggle */}
+                  {aiNivel === "Ensino Médio" && (
+                    <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-2.5 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={modoEnem} onCheckedChange={setModoEnem} id="enem-mode" />
+                        <Label htmlFor="enem-mode" className="text-xs font-semibold flex items-center gap-1">
+                          <GraduationCap className="h-4 w-4 text-primary" /> Modo ENEM
+                        </Label>
+                      </div>
+                      {modoEnem && (
+                        <div className="text-[9px] text-muted-foreground space-y-0.5">
+                          <p>🎯 Questões no padrão ENEM com:</p>
+                          <p>• Texto-base (notícia, tirinha, gráfico, etc.)</p>
+                          <p>• Enunciado como frase incompleta</p>
+                          <p>• 5 alternativas (A-E) com distratores</p>
+                          <p>• Avaliação por competências e habilidades</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Question type - hidden in ENEM mode */}
+                  {!modoEnem && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Tipo de questões</Label>
+                      <Select value={aiTipo} onValueChange={setAiTipo}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
+                          <SelectItem value="aberta">Só Abertas</SelectItem>
+                          <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-2">
-                    {aiTipo !== "multipla_escolha" && (
+                    {!modoEnem && aiTipo !== "multipla_escolha" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Questões abertas</Label>
                         <Input type="number" min={0} max={20} value={aiNumAbertas} onChange={e => setAiNumAbertas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
                       </div>
                     )}
-                    {aiTipo !== "aberta" && (
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Questões fechadas</Label>
-                        <Input type="number" min={0} max={20} value={aiNumFechadas} onChange={e => setAiNumFechadas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
-                      </div>
-                    )}
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Questões fechadas"}</Label>
+                      <Input type="number" min={0} max={20} value={aiNumFechadas} onChange={e => setAiNumFechadas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                    </div>
                   </div>
 
                   <div className="space-y-1">
@@ -445,7 +590,7 @@ export default function Activities() {
                   </div>
 
                   <Button onClick={handleAiGenerate} disabled={aiLoading || generatingImages} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                    {aiLoading || generatingImages ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Atividade</>}
+                    {aiLoading || generatingImages ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> {modoEnem ? "Gerar Atividade ENEM" : "Gerar Atividade"}</>}
                   </Button>
                 </TabsContent>
 
@@ -457,6 +602,7 @@ export default function Activities() {
                     <Button variant="outline" size="sm" onClick={() => addBlock("separator")}><SeparatorHorizontal className="mr-1 h-3 w-3" /> Separador</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-open")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Aberta</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-mc")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Múltipla</Button>
+                    <Button variant="outline" size="sm" onClick={() => addBlock("question-enem")} className="border-primary/30 text-primary"><GraduationCap className="mr-1 h-3 w-3" /> Q. ENEM</Button>
                   </div>
                   <div className="space-y-1">
                     <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
@@ -468,19 +614,37 @@ export default function Activities() {
                   <p className="text-xs text-muted-foreground">Dica: Use <code className="bg-muted px-1 rounded">$E=mc^2$</code> para fórmulas.</p>
                 </TabsContent>
 
-                <TabsContent value="importar" className="mt-3 space-y-2">
-                  <p className="text-xs text-muted-foreground">Importe conteúdo dos seus planos de aula salvos:</p>
-                  {savedPlanos.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Nenhum plano salvo ainda.</p>
-                  ) : (
-                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
-                      {savedPlanos.map(p => (
-                        <Button key={p.id} variant="ghost" size="sm" className="w-full justify-start text-xs h-8" onClick={() => handleImportPlano(p)}>
-                          <BookOpen className="mr-1 h-3 w-3" /> {p.titulo}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
+                <TabsContent value="importar" className="mt-3 space-y-3">
+                  {/* File upload */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><FileUp className="h-3 w-3" /> Importar arquivo</Label>
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border-2 border-dashed border-primary/30 px-3 py-3 hover:bg-primary/5 transition-colors">
+                      <Upload className="h-5 w-5 text-primary" />
+                      <div>
+                        <span className="text-xs font-medium">Carregar PDF, DOCX ou TXT</span>
+                        <p className="text-[9px] text-muted-foreground">O texto será extraído e usado como base para a IA</p>
+                      </div>
+                      <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt,.md" className="hidden" onChange={handleFileImport} />
+                    </label>
+                  </div>
+
+                  {/* Saved documents */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><BookOpen className="h-3 w-3" /> Documentos salvos</Label>
+                    {savedDocs.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Nenhum documento salvo ainda.</p>
+                    ) : (
+                      <div className="space-y-1 max-h-[250px] overflow-y-auto">
+                        {savedDocs.map(doc => (
+                          <Button key={doc.id} variant="ghost" size="sm" className="w-full justify-start text-xs h-8" onClick={() => handleImportPlano(doc)}>
+                            {doc.tipo === "atividade" ? <FileText className="mr-1 h-3 w-3 text-primary" /> : <BookOpen className="mr-1 h-3 w-3 text-green-600" />}
+                            <span className="truncate">{doc.titulo}</span>
+                            <span className="ml-auto text-[9px] text-muted-foreground">{doc.tipo === "atividade" ? "Atividade" : "Plano"}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
               </Tabs>
             </CardContent>
