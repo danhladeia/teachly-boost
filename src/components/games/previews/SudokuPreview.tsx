@@ -11,8 +11,8 @@ interface Props {
 export default function SudokuPreview({ data, config }: Props) {
   const gridSize = data.grids[0]?.size || 4;
   const cellSize = gridSize <= 4 ? 34 : gridSize <= 6 ? 28 : 22;
-  const boxH = gridSize === 4 ? 2 : gridSize === 6 ? 2 : 3;
-  const boxW = gridSize === 4 ? 2 : gridSize === 6 ? 3 : 3;
+  const boxH = gridSize === 4 ? 2 : gridSize === 6 ? 2 : gridSize === 8 ? 2 : 3;
+  const boxW = gridSize === 4 ? 2 : gridSize === 6 ? 3 : gridSize === 8 ? 4 : 3;
   const isText = data.contentType !== "numbers";
 
   return (
@@ -20,7 +20,6 @@ export default function SudokuPreview({ data, config }: Props) {
       header={config.header}
       title={`Sudoku ${gridSize}×${gridSize}`}
       subtitle={`${data.grids.length} puzzles • ${isText ? "Temático" : "Numérico"}`}
-      difficulty={config.difficulty}
       colorMode={config.colorMode}
     >
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10mm", justifyContent: "center" }}>
@@ -67,7 +66,13 @@ export default function SudokuPreview({ data, config }: Props) {
         ))}
       </div>
 
-      {/* Legend for themed sudoku */}
+      {config.sudokuShowScratch && (
+        <div style={{ marginTop: "8mm", borderTop: "1px dashed #999", paddingTop: "4mm" }}>
+          <p style={{ fontSize: "9pt", fontWeight: 600, marginBottom: "3mm" }}>📝 Espaço para rascunho:</p>
+          <div style={{ height: "30mm", border: "1px solid #ddd", borderRadius: "2mm" }} />
+        </div>
+      )}
+
       {isText && (
         <div style={{ marginTop: "6mm", textAlign: "center", fontSize: "9pt", color: "#555" }}>
           <strong>Símbolos:</strong>{" "}

@@ -9,8 +9,8 @@ interface Props {
 }
 
 export default function MazePreview({ data, config }: Props) {
-  const mazeWidth = 480;
-  const cellSize = Math.floor(mazeWidth / data.size);
+  const maxWidth = data.mazeSize === "small" ? 280 : data.mazeSize === "large" ? 520 : 420;
+  const cellSize = Math.floor(maxWidth / data.size);
   const hasQuestions = data.questions.length > 0;
 
   return (
@@ -18,10 +18,8 @@ export default function MazePreview({ data, config }: Props) {
       header={config.header}
       title={`Labirinto${data.tema ? `: ${data.tema}` : ""}`}
       subtitle={hasQuestions ? "Resolva as perguntas nos checkpoints para avançar!" : "Encontre o caminho da entrada à saída!"}
-      difficulty={config.difficulty}
       colorMode={config.colorMode}
     >
-      {/* Maze grid */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
         <div
           style={{
@@ -63,7 +61,6 @@ export default function MazePreview({ data, config }: Props) {
         <span>SAÍDA →</span>
       </div>
 
-      {/* Questions at checkpoints */}
       {hasQuestions && (
         <div style={{ borderTop: "2px solid #000", paddingTop: "4mm" }}>
           <p style={{ fontWeight: 700, fontSize: "11pt", marginBottom: "3mm" }}>

@@ -14,52 +14,57 @@ export default function CryptogramPreview({ data, config }: Props) {
       header={config.header}
       title={`Criptograma: ${data.tema}`}
       subtitle="Decifre a mensagem secreta usando a tabela de códigos"
-      difficulty={config.difficulty}
       colorMode={config.colorMode}
     >
-      {/* Cipher table */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1.5mm",
-          justifyContent: "center",
-          marginBottom: "6mm",
-          border: "2px solid #000",
-          padding: "4mm",
-          borderRadius: "2mm",
-          background: "#fafafa",
-        }}
-      >
-        {data.cipherTable.map((entry, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              width: data.isComplex ? "14mm" : "8mm",
-              fontSize: "8pt",
-            }}
-          >
-            <span style={{ fontWeight: 700, fontSize: "11pt" }}>{entry.letter}</span>
-            <span
+      {data.cipherTable.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "1.5mm",
+            justifyContent: "center",
+            marginBottom: "6mm",
+            border: "2px solid #000",
+            padding: "4mm",
+            borderRadius: "2mm",
+            background: "#fafafa",
+          }}
+        >
+          {data.cipherTable.map((entry, i) => (
+            <div
+              key={i}
               style={{
-                borderTop: "1.5px solid #000",
-                width: "100%",
-                textAlign: "center",
-                fontFamily: "monospace",
-                fontSize: data.isComplex ? "7pt" : "9pt",
-                paddingTop: "1mm",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                width: data.isComplex ? "14mm" : "8mm",
+                fontSize: "8pt",
               }}
             >
-              {entry.code}
-            </span>
-          </div>
-        ))}
-      </div>
+              <span style={{ fontWeight: 700, fontSize: "11pt" }}>{entry.letter}</span>
+              <span
+                style={{
+                  borderTop: "1.5px solid #000",
+                  width: "100%",
+                  textAlign: "center",
+                  fontFamily: "monospace",
+                  fontSize: data.isComplex ? "7pt" : "9pt",
+                  paddingTop: "1mm",
+                }}
+              >
+                {entry.code}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Encoded message */}
+      {data.showTable === "hidden" && (
+        <p style={{ textAlign: "center", fontSize: "9pt", fontStyle: "italic", color: "#666", marginBottom: "6mm" }}>
+          🔍 Descubra o código por dedução! Analise o padrão da mensagem.
+        </p>
+      )}
+
       <div style={{ textAlign: "center", marginBottom: "4mm" }}>
         <p style={{ fontWeight: 700, fontSize: "11pt", marginBottom: "4mm" }}>📩 Mensagem Codificada:</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "2mm", justifyContent: "center" }}>
@@ -76,7 +81,6 @@ export default function CryptogramPreview({ data, config }: Props) {
         </div>
       </div>
 
-      {/* Answer space */}
       <div style={{ marginTop: "8mm", borderTop: "1px dashed #999", paddingTop: "4mm" }}>
         <p style={{ fontSize: "9pt", fontWeight: 600, marginBottom: "3mm" }}>✍️ Mensagem decifrada:</p>
         {Array.from({ length: 3 }).map((_, i) => (

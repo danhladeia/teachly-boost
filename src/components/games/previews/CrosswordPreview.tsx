@@ -16,7 +16,6 @@ export default function CrosswordPreview({ data, config }: Props) {
       header={config.header}
       title={`Palavras Cruzadas: ${data.tema}`}
       subtitle={`${data.clues.length} palavras`}
-      difficulty={config.difficulty}
       colorMode={config.colorMode}
     >
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
@@ -50,23 +49,19 @@ export default function CrosswordPreview({ data, config }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm", fontSize: "10pt" }}>
         <div>
           <strong>→ Horizontal:</strong>
-          {data.clues
-            .filter(c => c.direction === "across")
-            .map(c => (
-              <p key={c.number} style={{ marginLeft: "3mm", marginTop: "1mm" }}>
-                <strong>{c.number}.</strong> {c.hint}
-              </p>
-            ))}
+          {data.clues.filter(c => c.direction === "across").map(c => (
+            <p key={c.number} style={{ marginLeft: "3mm", marginTop: "1mm" }}>
+              <strong>{c.number}.</strong> {c.hint}
+            </p>
+          ))}
         </div>
         <div>
           <strong>↓ Vertical:</strong>
-          {data.clues
-            .filter(c => c.direction === "down")
-            .map(c => (
-              <p key={c.number} style={{ marginLeft: "3mm", marginTop: "1mm" }}>
-                <strong>{c.number}.</strong> {c.hint}
-              </p>
-            ))}
+          {data.clues.filter(c => c.direction === "down").map(c => (
+            <p key={c.number} style={{ marginLeft: "3mm", marginTop: "1mm" }}>
+              <strong>{c.number}.</strong> {c.hint}
+            </p>
+          ))}
         </div>
       </div>
     </GameA4Shell>
