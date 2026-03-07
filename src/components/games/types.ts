@@ -15,6 +15,16 @@ export interface GameConfig {
   palavras: string;
   difficulty: Difficulty;
   header: GameHeader;
+  // AI enrichment fields (populated when generating with AI)
+  _aiHints?: { palavra: string; dica: string }[];
+  _aiHangmanItems?: { word: string; hint: string }[];
+  _aiPairs?: { left: string; right: string }[];
+  _aiCryptogramMessage?: string;
+  _aiFillText?: string;
+  _aiFillWords?: string[];
+  _aiHeaders?: string[];
+  _aiTrueFalseItems?: { statement: string; answer: boolean; justification: string }[];
+  _aiSequenceItems?: { sequence: string[]; answer: string; type: string }[];
 }
 
 export interface GameModule {
