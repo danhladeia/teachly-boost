@@ -3,8 +3,9 @@ import {
   Gamepad2, Search as SearchIcon, Grid3X3, Hash, MapPin, Palette,
   Sparkles, Loader2, Printer, RotateCcw, FileDown, ArrowLeft,
   Link2, PenLine, Brain, Table2, CheckSquare, Lock, Type, AlignLeft,
+  Wand2, Edit3,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { difficultyConfig, defaultHeader, type Difficulty, type GameConfig, type GameHeader } from "@/components/games/types";
 
 // Generators
@@ -51,22 +53,22 @@ import TrueFalsePreview from "@/components/games/previews/TrueFalsePreview";
 import PixelArtPreview from "@/components/games/previews/PixelArtPreview";
 
 const GAMES = [
-  { id: "cruzadinha", title: "Cruzadinha", icon: Hash, desc: "Grade com dicas horizontais e verticais", category: "words" as const, needsWords: true },
-  { id: "caca-palavras", title: "Caça-Palavras", icon: SearchIcon, desc: "Encontre palavras escondidas na grade", category: "words" as const, needsWords: true },
-  { id: "forca", title: "Forca", icon: Lock, desc: "6 forcas com dicas e linhas em branco", category: "words" as const, needsWords: true },
-  { id: "sudoku", title: "Sudoku", icon: Grid3X3, desc: "Puzzles 4x4, 6x6 ou 9x9", category: "logic" as const },
-  { id: "ligue-pares", title: "Ligue os Pares", icon: Link2, desc: "Associe colunas esquerda e direita", category: "words" as const, needsWords: true },
-  { id: "complete-palavra", title: "Complete a Palavra", icon: PenLine, desc: "Preencha letras faltantes", category: "words" as const, needsWords: true },
-  { id: "anagrama", title: "Anagramas", icon: Type, desc: "Descubra a palavra embaralhada", category: "words" as const, needsWords: true },
-  { id: "sequencia", title: "Sequências Lógicas", icon: Brain, desc: "Complete o padrão numérico/visual", category: "logic" as const },
-  { id: "cruzadinha-simples", title: "Cruzadinha Simplificada", icon: Grid3X3, desc: "Grade 10x10 aberta para vocabulário", category: "grid" as const, needsWords: true },
-  { id: "velha-pedagogica", title: "Jogo da Velha Pedagógico", icon: Hash, desc: "Resolva antes de marcar X ou O", category: "grid" as const, needsWords: true },
-  { id: "criptograma", title: "Criptograma", icon: Lock, desc: "Decifre a mensagem com tabela de códigos", category: "logic" as const },
-  { id: "lacunas", title: "Preencha as Lacunas", icon: AlignLeft, desc: "Texto com espaços para completar (cloze)", category: "text" as const, needsWords: true },
-  { id: "tabela-classificacao", title: "Tabela de Classificação", icon: Table2, desc: "Organize itens em 3 categorias", category: "text" as const, needsWords: true },
-  { id: "verdadeiro-falso", title: "Verdadeiro ou Falso", icon: CheckSquare, desc: "Afirmações com [V] [F] + justificativa", category: "text" as const, needsWords: true },
-  { id: "labirinto", title: "Labirinto", icon: MapPin, desc: "Encontre o caminho do início ao fim", category: "grid" as const },
-  { id: "pixel-art", title: "Pixel Art", icon: Palette, desc: "Pinte coordenadas e revele o desenho", category: "grid" as const },
+  { id: "cruzadinha", title: "Cruzadinha", icon: Hash, desc: "Grade com dicas horizontais e verticais", category: "words" as const, needsWords: true, supportsAI: true },
+  { id: "caca-palavras", title: "Caça-Palavras", icon: SearchIcon, desc: "Encontre palavras escondidas na grade", category: "words" as const, needsWords: true, supportsAI: true },
+  { id: "forca", title: "Forca", icon: Lock, desc: "6 forcas com dicas e linhas em branco", category: "words" as const, needsWords: true, supportsAI: true },
+  { id: "sudoku", title: "Sudoku", icon: Grid3X3, desc: "Puzzles 4x4, 6x6 ou 9x9", category: "logic" as const, supportsAI: false },
+  { id: "ligue-pares", title: "Ligue os Pares", icon: Link2, desc: "Associe colunas esquerda e direita", category: "words" as const, needsWords: true, supportsAI: true },
+  { id: "complete-palavra", title: "Complete a Palavra", icon: PenLine, desc: "Preencha letras faltantes", category: "words" as const, needsWords: true, supportsAI: true },
+  { id: "anagrama", title: "Anagramas", icon: Type, desc: "Descubra a palavra embaralhada", category: "words" as const, needsWords: true, supportsAI: true },
+  { id: "sequencia", title: "Sequências Lógicas", icon: Brain, desc: "Complete o padrão numérico/visual", category: "logic" as const, supportsAI: true },
+  { id: "cruzadinha-simples", title: "Cruzadinha Simplificada", icon: Grid3X3, desc: "Grade 10x10 aberta para vocabulário", category: "grid" as const, needsWords: true, supportsAI: true },
+  { id: "velha-pedagogica", title: "Jogo da Velha Pedagógico", icon: Hash, desc: "Resolva antes de marcar X ou O", category: "grid" as const, needsWords: true, supportsAI: true },
+  { id: "criptograma", title: "Criptograma", icon: Lock, desc: "Decifre a mensagem com tabela de códigos", category: "logic" as const, supportsAI: true },
+  { id: "lacunas", title: "Preencha as Lacunas", icon: AlignLeft, desc: "Texto com espaços para completar (cloze)", category: "text" as const, needsWords: true, supportsAI: true },
+  { id: "tabela-classificacao", title: "Tabela de Classificação", icon: Table2, desc: "Organize itens em 3 categorias", category: "text" as const, needsWords: true, supportsAI: true },
+  { id: "verdadeiro-falso", title: "Verdadeiro ou Falso", icon: CheckSquare, desc: "Afirmações com [V] [F] + justificativa", category: "text" as const, needsWords: true, supportsAI: true },
+  { id: "labirinto", title: "Labirinto", icon: MapPin, desc: "Encontre o caminho do início ao fim", category: "grid" as const, supportsAI: false },
+  { id: "pixel-art", title: "Pixel Art", icon: Palette, desc: "Pinte coordenadas e revele o desenho", category: "grid" as const, supportsAI: false },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -76,6 +78,80 @@ const CATEGORY_LABELS: Record<string, string> = {
   text: "📄 Texto",
 };
 
+// AI data processors: take AI response and inject into config to feed generators
+function processAIData(gameType: string, aiData: any, config: GameConfig): GameConfig {
+  const c = { ...config };
+
+  switch (gameType) {
+    case "cruzadinha":
+    case "caca-palavras":
+    case "complete-palavra":
+    case "anagrama":
+    case "cruzadinha-simples":
+      c.palavras = (aiData.palavras || []).join(", ");
+      // Store hints for crossword
+      if (aiData.dicas) c._aiHints = aiData.dicas;
+      break;
+
+    case "forca":
+      if (aiData.items) {
+        c.palavras = aiData.items.map((it: any) => it.word).join(", ");
+        c._aiHangmanItems = aiData.items;
+      }
+      break;
+
+    case "ligue-pares":
+      if (aiData.pairs) {
+        c.palavras = aiData.pairs.map((p: any) => `${p.left}, ${p.right}`).join(", ");
+        c._aiPairs = aiData.pairs;
+      }
+      break;
+
+    case "velha-pedagogica":
+      if (aiData.perguntas) {
+        c.palavras = aiData.perguntas.join(", ");
+      }
+      break;
+
+    case "criptograma":
+      if (aiData.mensagem) {
+        c.tema = aiData.mensagem;
+        c._aiCryptogramMessage = aiData.mensagem;
+      }
+      break;
+
+    case "lacunas":
+      if (aiData.texto && aiData.palavras_chave) {
+        c.palavras = aiData.palavras_chave.join(", ");
+        c._aiFillText = aiData.texto;
+        c._aiFillWords = aiData.palavras_chave;
+      }
+      break;
+
+    case "tabela-classificacao":
+      if (aiData.headers && aiData.items) {
+        c.palavras = aiData.items.join(", ");
+        c._aiHeaders = aiData.headers;
+      }
+      break;
+
+    case "verdadeiro-falso":
+      if (aiData.items) {
+        c.palavras = aiData.items.map((it: any) => it.statement).join(", ");
+        c._aiTrueFalseItems = aiData.items;
+      }
+      break;
+
+    case "sequencia":
+      if (aiData.items) {
+        c._aiSequenceItems = aiData.items;
+      }
+      break;
+  }
+
+  return c;
+}
+
 export default function GameFactory() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [tema, setTema] = useState("");
@@ -84,6 +160,7 @@ export default function GameFactory() {
   const [header, setHeader] = useState<GameHeader>({ ...defaultHeader });
   const [generating, setGenerating] = useState(false);
   const [gameData, setGameData] = useState<any>(null);
+  const [mode, setMode] = useState<"ai" | "manual">("ai");
 
   const getConfig = useCallback((): GameConfig => ({
     tema, palavras, difficulty, header,
@@ -91,36 +168,36 @@ export default function GameFactory() {
 
   const selectedGameDef = GAMES.find(g => g.id === selectedGame);
 
-  const handleGenerate = () => {
+  const generators: Record<string, (c: GameConfig) => any> = {
+    "cruzadinha": generateCrossword,
+    "caca-palavras": generateWordSearch,
+    "forca": generateHangman,
+    "sudoku": generateSudoku,
+    "ligue-pares": generateConnectPairs,
+    "complete-palavra": generateCompleteWord,
+    "anagrama": generateAnagram,
+    "sequencia": generateLogicalSequence,
+    "cruzadinha-simples": generateSimpleCrossword,
+    "velha-pedagogica": generateTicTacToe,
+    "criptograma": generateCryptogram,
+    "lacunas": generateFillBlanks,
+    "tabela-classificacao": generateClassificationTable,
+    "verdadeiro-falso": generateTrueFalse,
+    "labirinto": generateMaze,
+    "pixel-art": generatePixelArt,
+  };
+
+  const handleGenerateManual = () => {
     if (!tema.trim() && selectedGame !== "sudoku" && selectedGame !== "sequencia") {
       toast.error("Insira o tema"); return;
     }
     if (selectedGameDef?.needsWords && !palavras.trim()) {
       toast.error("Insira as palavras-chave separadas por vírgula"); return;
     }
-
     setGenerating(true);
     setTimeout(() => {
       try {
         const config = getConfig();
-        const generators: Record<string, (c: GameConfig) => any> = {
-          "cruzadinha": generateCrossword,
-          "caca-palavras": generateWordSearch,
-          "forca": generateHangman,
-          "sudoku": generateSudoku,
-          "ligue-pares": generateConnectPairs,
-          "complete-palavra": generateCompleteWord,
-          "anagrama": generateAnagram,
-          "sequencia": generateLogicalSequence,
-          "cruzadinha-simples": generateSimpleCrossword,
-          "velha-pedagogica": generateTicTacToe,
-          "criptograma": generateCryptogram,
-          "lacunas": generateFillBlanks,
-          "tabela-classificacao": generateClassificationTable,
-          "verdadeiro-falso": generateTrueFalse,
-          "labirinto": generateMaze,
-          "pixel-art": generatePixelArt,
-        };
         const gen = generators[selectedGame!];
         if (gen) {
           setGameData(gen(config));
@@ -132,6 +209,119 @@ export default function GameFactory() {
         setGenerating(false);
       }
     }, 200);
+  };
+
+  const handleGenerateAI = async () => {
+    if (!tema.trim()) {
+      toast.error("Insira o tema para gerar com IA"); return;
+    }
+    setGenerating(true);
+    try {
+      const dc = difficultyConfig[difficulty];
+      const { data: aiData, error } = await supabase.functions.invoke("generate-game", {
+        body: {
+          gameType: selectedGame,
+          tema,
+          difficulty,
+          count: dc.wordCount,
+        },
+      });
+
+      if (error) throw error;
+      if (aiData?.error) {
+        toast.error(aiData.error);
+        setGenerating(false);
+        return;
+      }
+
+      // Process AI response into config and generate
+      const config = getConfig();
+      const enrichedConfig = processAIData(selectedGame!, aiData, config);
+
+      // For games with direct AI data (like sequences, true/false), use special generators
+      const gen = generators[selectedGame!];
+      if (gen) {
+        // Update palavras state so user can see/edit what AI generated
+        if (enrichedConfig.palavras !== config.palavras) {
+          setPalavras(enrichedConfig.palavras);
+        }
+
+        // Generate game with enriched config
+        let result;
+
+        // Special handling for games that need AI-enriched data
+        if (selectedGame === "forca" && enrichedConfig._aiHangmanItems) {
+          result = {
+            items: enrichedConfig._aiHangmanItems.map((it: any) => ({
+              word: it.word.toUpperCase(),
+              hint: it.hint,
+            })),
+            tema: enrichedConfig.tema,
+          };
+        } else if (selectedGame === "ligue-pares" && enrichedConfig._aiPairs) {
+          const pairs = enrichedConfig._aiPairs;
+          const shuffledRight = [...pairs.map((p: any) => p.right)].sort(() => Math.random() - 0.5);
+          result = { pairs, shuffledRight, tema: enrichedConfig.tema };
+        } else if (selectedGame === "verdadeiro-falso" && enrichedConfig._aiTrueFalseItems) {
+          result = {
+            items: enrichedConfig._aiTrueFalseItems.map((it: any) => ({
+              statement: it.statement,
+              answer: it.answer,
+              justification: it.justification,
+            })),
+            tema: enrichedConfig.tema,
+          };
+        } else if (selectedGame === "lacunas" && enrichedConfig._aiFillText) {
+          const text = enrichedConfig._aiFillText;
+          const words = enrichedConfig._aiFillWords;
+          const blankedText = words.reduce((t: string, w: string) =>
+            t.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "______"), text);
+          result = {
+            paragraphs: [{ text: blankedText, blanks: words }],
+            tema: enrichedConfig.tema,
+          };
+        } else if (selectedGame === "tabela-classificacao" && enrichedConfig._aiHeaders) {
+          result = {
+            headers: enrichedConfig._aiHeaders,
+            items: enrichedConfig.palavras.split(",").map((w: string) => w.trim()).filter(Boolean),
+            tema: enrichedConfig.tema,
+          };
+        } else if (selectedGame === "sequencia" && enrichedConfig._aiSequenceItems) {
+          result = {
+            items: enrichedConfig._aiSequenceItems,
+            tema: enrichedConfig.tema,
+          };
+        } else if (selectedGame === "cruzadinha" && enrichedConfig._aiHints) {
+          // Generate crossword with AI words but also inject AI hints
+          const baseResult = gen(enrichedConfig);
+          // Replace generic hints with AI-generated ones
+          const hintMap = new Map(enrichedConfig._aiHints.map((h: any) => [h.palavra?.toUpperCase(), h.dica]));
+          baseResult.clues = baseResult.clues.map((clue: any) => ({
+            ...clue,
+            hint: hintMap.get(clue.word) || clue.hint,
+          }));
+          result = baseResult;
+        } else {
+          result = gen(enrichedConfig);
+        }
+
+        setGameData(result);
+        toast.success("🤖 Jogo gerado com IA!");
+      }
+    } catch (e: any) {
+      console.error("AI generation error:", e);
+      toast.error("Erro ao gerar com IA. Tente novamente.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerate = () => {
+    if (mode === "ai" && selectedGameDef?.supportsAI) {
+      handleGenerateAI();
+    } else {
+      handleGenerateManual();
+    }
   };
 
   const handlePrint = () => {
@@ -212,14 +402,17 @@ export default function GameFactory() {
                 <Card
                   key={game.id}
                   className="shadow-card cursor-pointer transition-all hover:shadow-elevated hover:scale-[1.02]"
-                  onClick={() => { setSelectedGame(game.id); setGameData(null); }}
+                  onClick={() => { setSelectedGame(game.id); setGameData(null); setMode(game.supportsAI ? "ai" : "manual"); }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <game.icon className="h-4 w-4" />
                       </div>
-                      <Badge variant="secondary" className="text-[10px]">A4</Badge>
+                      <div className="flex gap-1">
+                        {game.supportsAI && <Badge variant="secondary" className="text-[10px]">🤖 IA</Badge>}
+                        <Badge variant="outline" className="text-[10px]">A4</Badge>
+                      </div>
                     </div>
                     <h3 className="font-display font-bold text-sm">{game.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1">{game.desc}</p>
@@ -232,6 +425,8 @@ export default function GameFactory() {
       </div>
     );
   }
+
+  const showWordsField = mode === "manual" && selectedGameDef?.needsWords;
 
   // --- SPLIT-SCREEN EDITOR ---
   return (
@@ -251,6 +446,42 @@ export default function GameFactory() {
         <div className="w-[340px] shrink-0 sticky top-4 space-y-3 overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
           <Card className="shadow-card">
             <CardContent className="p-4 space-y-3">
+              {/* AI vs Manual Mode Toggle */}
+              {selectedGameDef?.supportsAI && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Modo de Geração</Label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() => setMode("ai")}
+                      className={`flex items-center justify-center gap-1.5 rounded-md border p-2.5 text-[11px] font-medium transition-all ${
+                        mode === "ai"
+                          ? "border-primary bg-primary/10 text-primary shadow-sm"
+                          : "border-border hover:border-muted-foreground/40"
+                      }`}
+                    >
+                      <Wand2 className="h-3.5 w-3.5" />
+                      Gerar com IA
+                    </button>
+                    <button
+                      onClick={() => setMode("manual")}
+                      className={`flex items-center justify-center gap-1.5 rounded-md border p-2.5 text-[11px] font-medium transition-all ${
+                        mode === "manual"
+                          ? "border-primary bg-primary/10 text-primary shadow-sm"
+                          : "border-border hover:border-muted-foreground/40"
+                      }`}
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      Manual
+                    </button>
+                  </div>
+                  {mode === "ai" && (
+                    <p className="text-[10px] text-muted-foreground bg-muted/50 rounded p-2">
+                      🤖 A IA vai gerar palavras, dicas e conteúdo baseados no tema e nível. Você pode editar tudo depois.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Header toggle */}
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold">Cabeçalho Escolar</Label>
@@ -274,13 +505,23 @@ export default function GameFactory() {
               {/* Theme */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Tema</Label>
-                <Input placeholder="Ex: Sistema Solar, Animais" value={tema} onChange={e => setTema(e.target.value)} className="h-8 text-xs" />
+                <Input
+                  placeholder={mode === "ai" ? "Ex: Sistema Solar, Animais, Revolução Industrial" : "Ex: Sistema Solar, Animais"}
+                  value={tema}
+                  onChange={e => setTema(e.target.value)}
+                  className="h-8 text-xs"
+                />
               </div>
 
-              {/* Words input */}
-              {selectedGameDef?.needsWords && (
+              {/* Words input - only in manual mode (or always visible for editing after AI gen) */}
+              {(showWordsField || (selectedGameDef?.needsWords && palavras.trim())) && (
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Palavras-chave (vírgula)</Label>
+                  <Label className="text-xs font-semibold">
+                    Palavras-chave (vírgula)
+                    {mode === "ai" && palavras.trim() && (
+                      <span className="text-muted-foreground font-normal ml-1">— gerado pela IA, edite se quiser</span>
+                    )}
+                  </Label>
                   <Textarea
                     placeholder="sol, lua, terra, marte, jupiter"
                     value={palavras}
@@ -313,11 +554,17 @@ export default function GameFactory() {
               {/* Actions */}
               <div className="flex flex-col gap-2 pt-2 border-t">
                 <Button onClick={handleGenerate} disabled={generating} className="gradient-primary border-0 text-primary-foreground hover:opacity-90 h-9 text-xs">
-                  {generating ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-3 w-3" /> Gerar Jogo</>}
+                  {generating ? (
+                    <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Gerando{mode === "ai" ? " com IA" : ""}...</>
+                  ) : mode === "ai" && selectedGameDef?.supportsAI ? (
+                    <><Wand2 className="mr-1 h-3 w-3" /> Gerar com IA</>
+                  ) : (
+                    <><Sparkles className="mr-1 h-3 w-3" /> Gerar Jogo</>
+                  )}
                 </Button>
                 {gameData && (
                   <div className="grid grid-cols-3 gap-1.5">
-                    <Button variant="outline" size="sm" onClick={() => { setGameData(null); handleGenerate(); }} className="h-8 text-[10px]">
+                    <Button variant="outline" size="sm" onClick={() => { setGameData(null); setTimeout(handleGenerate, 100); }} className="h-8 text-[10px]">
                       <RotateCcw className="h-3 w-3 mr-1" /> Novo
                     </Button>
                     <Button variant="outline" size="sm" onClick={handlePrint} className="h-8 text-[10px]">
@@ -341,12 +588,12 @@ export default function GameFactory() {
                 {renderPreview()}
               </div>
             ) : (
-              <div className="bg-card shadow-lg flex items-center justify-center text-muted-foreground text-sm" style={{ width: "210mm", minHeight: "297mm", borderRadius: "4px" }}>
-                <div className="text-center space-y-2">
-                  <Gamepad2 className="h-12 w-12 mx-auto opacity-20" />
-                  <p>Configure e clique em "Gerar Jogo"</p>
-                  <p className="text-xs">O preview A4 aparecerá aqui</p>
-                </div>
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                <Gamepad2 className="h-12 w-12 mb-3 opacity-30" />
+                <p className="text-sm font-medium">
+                  {mode === "ai" ? "Insira o tema e clique em \"Gerar com IA\"" : "Configure e clique em \"Gerar Jogo\""}
+                </p>
+                <p className="text-xs mt-1">O preview A4 aparecerá aqui</p>
               </div>
             )}
           </div>
