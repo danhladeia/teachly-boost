@@ -142,7 +142,7 @@ export default function Exams() {
         id: v.id,
         versao_label: v.versao_label,
         qr_code_id: v.qr_code_id,
-        mapa_questoes: v.mapa_questoes as MapaQuestaoItem[],
+        mapa_questoes: v.mapa_questoes as unknown as MapaQuestaoItem[],
         created_at: v.created_at,
       })));
       setSelectedVersaoId(null);
