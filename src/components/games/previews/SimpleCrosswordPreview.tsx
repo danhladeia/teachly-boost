@@ -11,7 +11,7 @@ interface Props {
 export default function SimpleCrosswordPreview({ data, config }: Props) {
   const cellSize = 28;
   return (
-    <GameA4Shell header={config.header} title={`Cruzadinha Simplificada: ${data.tema}`} subtitle={`Grade ${data.size}x${data.size}`} difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Cruzadinha Simplificada: ${data.tema}`} subtitle={`Grade ${data.size}x${data.size}`}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)`, border: "2px solid #000" }}>
           {Array.from({ length: data.size * data.size }).map((_, i) => (

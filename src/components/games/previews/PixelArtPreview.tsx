@@ -13,7 +13,7 @@ export default function PixelArtPreview({ data, config }: Props) {
   const filledSet = new Set(data.filledCells.map(([r, c]) => `${r},${c}`));
 
   return (
-    <GameA4Shell header={config.header} title={`Pixel Art: ${data.tema}`} subtitle="Pinte as coordenadas indicadas" difficulty={config.difficulty}>
+    <GameA4Shell header={config.header} title={`Pixel Art: ${data.tema}`} subtitle="Pinte as coordenadas indicadas">
       {/* Grid */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
         <div>
