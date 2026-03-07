@@ -1,8 +1,7 @@
 import React from "react";
-import type { GameHeader } from "./types";
+import type { GameHeader, ColorMode } from "./types";
 import { difficultyConfig, type Difficulty } from "./types";
 
-// Shared A4 styles
 const PAGE_STYLE: React.CSSProperties = {
   width: "210mm",
   minHeight: "297mm",
@@ -21,21 +20,33 @@ interface Props {
   title: string;
   subtitle?: string;
   difficulty: Difficulty;
+  colorMode?: ColorMode;
   children: React.ReactNode;
 }
 
-export default function GameA4Shell({ header, title, subtitle, difficulty, children }: Props) {
+export default function GameA4Shell({ header, title, subtitle, difficulty, colorMode = "color", children }: Props) {
   const dc = difficultyConfig[difficulty];
+  const grayscale = colorMode === "grayscale";
 
   return (
-    <div id="game-print-area" style={PAGE_STYLE}>
+    <div id="game-print-area" style={{ ...PAGE_STYLE, filter: grayscale ? "grayscale(1)" : undefined }}>
       {header.showHeader && (
         <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
-          {header.escola && (
-            <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>
-              {header.escola}
-            </div>
-          )}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
+            {header.logoUrl && (
+              <img
+                src={header.logoUrl}
+                alt="Logo"
+                style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }}
+                crossOrigin="anonymous"
+              />
+            )}
+            {header.escola && (
+              <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>
+                {header.escola}
+              </div>
+            )}
+          </div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "2mm", flexWrap: "wrap", gap: "2mm" }}>
             {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
             {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}

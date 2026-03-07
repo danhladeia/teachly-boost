@@ -1,26 +1,48 @@
-import type { GameConfig, Difficulty } from "../types";
-import { difficultyConfig } from "../types";
+import type { GameConfig, Difficulty, GridSize } from "../types";
 
 export interface WordSearchData {
   grid: string[][];
   placedWords: string[];
   tema: string;
   difficulty: Difficulty;
+  hideWordList: boolean;
+}
+
+function getGridSize(gridSize?: GridSize, difficulty?: Difficulty): number {
+  if (gridSize) {
+    const map: Record<GridSize, number> = { "10x10": 10, "15x15": 15, "20x20": 20 };
+    return map[gridSize];
+  }
+  const fallback: Record<Difficulty, number> = { facil: 10, medio: 15, dificil: 20 };
+  return fallback[difficulty || "medio"];
+}
+
+function getDirections(difficulty: Difficulty): number[][] {
+  switch (difficulty) {
+    case "facil":
+      return [[0, 1], [1, 0]]; // horizontal + vertical only
+    case "medio":
+      return [[0, 1], [1, 0], [1, 1], [-1, 1]]; // + diagonals
+    case "dificil":
+      return [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]]; // + reversed
+  }
 }
 
 export function generateWordSearch(config: GameConfig): WordSearchData {
-  const wordList = config.palavras.split(",").map(w => w.trim().toUpperCase().replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, "")).filter(w => w.length > 0);
-  const dc = difficultyConfig[config.difficulty];
-  const gridSize = dc.gridSize;
+  const gridSize = getGridSize(config.gridSize, config.difficulty);
+  const directions = getDirections(config.difficulty);
+  const wordList = config.palavras
+    .split(",")
+    .map(w => w.trim().toUpperCase().replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, ""))
+    .filter(w => w.length > 1 && w.length <= gridSize);
+
   const grid: string[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(""));
-  const directions = [[0, 1], [1, 0], [1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1], [-1, 1]];
   const placedWords: string[] = [];
-  const sorted = [...wordList].sort((a, b) => b.length - a.length).slice(0, dc.wordCount);
+  const sorted = [...wordList].sort((a, b) => b.length - a.length).slice(0, 20);
 
   for (const word of sorted) {
-    if (word.length > gridSize) continue;
     let placed = false;
-    for (let attempt = 0; attempt < 200 && !placed; attempt++) {
+    for (let attempt = 0; attempt < 300 && !placed; attempt++) {
       const dir = directions[Math.floor(Math.random() * directions.length)];
       const sr = Math.floor(Math.random() * gridSize);
       const sc = Math.floor(Math.random() * gridSize);
@@ -43,5 +65,5 @@ export function generateWordSearch(config: GameConfig): WordSearchData {
     for (let c = 0; c < gridSize; c++)
       if (grid[r][c] === "") grid[r][c] = letters[Math.floor(Math.random() * letters.length)];
 
-  return { grid, placedWords, tema: config.tema, difficulty: config.difficulty };
+  return { grid, placedWords, tema: config.tema, difficulty: config.difficulty, hideWordList: !!config.hideWordList };
 }
