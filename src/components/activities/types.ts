@@ -1,4 +1,4 @@
-export type BlockType = "title" | "text" | "question-open" | "question-mc" | "image" | "separator";
+export type BlockType = "title" | "text" | "question-open" | "question-mc" | "question-enem" | "image" | "separator";
 export type Alignment = "left" | "center" | "right";
 export type ImageFloat = "none" | "left" | "right" | "alternating";
 
@@ -13,4 +13,8 @@ export interface Block {
   imageUrl?: string;
   imageSize?: "small" | "medium" | "large";
   imageFloat?: ImageFloat;
+  // ENEM-specific fields
+  textoBase?: string;
+  fonte?: string;
+  questionImageUrl?: string;
 }
