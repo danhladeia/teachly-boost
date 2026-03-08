@@ -21,6 +21,7 @@ import AppSettings from "./pages/AppSettings";
 import Notepad from "./pages/Notepad";
 import Support from "./pages/Support";
 import SupportAdmin from "./pages/SupportAdmin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -42,6 +43,7 @@ const AppRoutes = () => (
     <Route path="/termos" element={<Terms />} />
     <Route path="/privacidade" element={<Privacy />} />
     <Route path="/suporte-admin" element={<SupportAdmin />} />
+    <Route path="/admin" element={<AdminDashboard />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="bncc" element={<BNCCPlanner />} />
