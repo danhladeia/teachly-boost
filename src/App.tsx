@@ -19,6 +19,8 @@ import Pricing from "./pages/Pricing";
 import Branding from "./pages/Branding";
 import AppSettings from "./pages/AppSettings";
 import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
