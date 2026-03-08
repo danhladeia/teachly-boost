@@ -236,6 +236,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          imagem_gabarito_url: string | null
           nome_aluno: string
           nota: number | null
           prova_id: string
@@ -246,6 +247,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          imagem_gabarito_url?: string | null
           nome_aluno: string
           nota?: number | null
           prova_id: string
@@ -256,6 +258,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          imagem_gabarito_url?: string | null
           nome_aluno?: string
           nota?: number | null
           prova_id?: string
