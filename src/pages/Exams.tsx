@@ -593,10 +593,6 @@ export default function Exams() {
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeQuestion(q.id)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </div>
-                          <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === questoes.length - 1} onClick={() => moveQuestion(idx, 1)}><MoveDown className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeQuestion(q.id)}><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      </div>
                       <Textarea value={q.content} onChange={e => updateQuestion(q.id, { content: e.target.value })} placeholder="Enunciado da questão" className="min-h-[40px] text-xs" />
                       {q.type === "mc" && (
                         <div className="space-y-1">
