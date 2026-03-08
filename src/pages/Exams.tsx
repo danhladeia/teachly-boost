@@ -752,6 +752,10 @@ export default function Exams() {
         <TabsContent value="corrigir">
           <OMRScanner />
         </TabsContent>
+
+        <TabsContent value="camera">
+          <CameraScanner />
+        </TabsContent>
       </Tabs>
     </div>
   );
