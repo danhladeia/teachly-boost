@@ -46,31 +46,62 @@ function applyLetterCase(word: string, letterCase: string): string {
 
 function generateMiniText(words: string[], tema: string): string {
   const shuffled = [...words].sort(() => Math.random() - 0.5);
-  const connectors = [
-    `No estudo sobre ${tema}, é importante conhecer`,
-    `Quando falamos de ${tema}, destacamos`,
-    `Na aula sobre ${tema}, aprendemos que`,
-    `O tema ${tema} envolve conceitos como`,
+  
+  // Much richer, varied pedagogical templates
+  const templates = [
+    // Narrative style
+    () => {
+      const w = shuffled.map(w => w.toUpperCase());
+      if (w.length <= 3) {
+        return `Durante a aula sobre ${tema}, a professora explicou a importância de ${w.join(" e ")}. Agora é sua vez de encontrar essas palavras no caça-palavras!`;
+      }
+      const mid = Math.ceil(w.length / 2);
+      const p1 = w.slice(0, mid);
+      const p2 = w.slice(mid);
+      return `Hoje vamos estudar sobre ${tema}! Na primeira parte da aula, aprendemos sobre ${p1.join(", ")}. Depois, descobrimos que ${p2.slice(0, -1).join(", ")} e ${p2[p2.length - 1]} também são fundamentais para compreender esse assunto. Encontre todas essas palavras no caça-palavras abaixo!`;
+    },
+    // Question-driven style
+    () => {
+      const w = shuffled.map(w => w.toUpperCase());
+      if (w.length <= 3) {
+        return `Você sabia que, quando estudamos ${tema}, precisamos entender conceitos como ${w.join(" e ")}? Procure essas palavras no caça-palavras!`;
+      }
+      const half = Math.ceil(w.length / 2);
+      return `Você já ouviu falar sobre ${tema}? Para compreender esse assunto, é essencial conhecer termos como ${w.slice(0, half).join(", ")}. Mas não para por aí! Também precisamos saber sobre ${w.slice(half, -1).join(", ")} e ${w[w.length - 1]}. Encontre todas no caça-palavras e descubra o quanto você já sabe!`;
+    },
+    // Explorer style
+    () => {
+      const w = shuffled.map(w => w.toUpperCase());
+      if (w.length <= 3) {
+        return `Prepare-se para uma aventura pelo mundo de ${tema}! Nesta exploração, você vai encontrar ${w.join(", ")}. Localize cada palavra escondida no caça-palavras!`;
+      }
+      const third = Math.ceil(w.length / 3);
+      const p1 = w.slice(0, third);
+      const p2 = w.slice(third, third * 2);
+      const p3 = w.slice(third * 2);
+      return `Embarque em uma jornada pelo universo de ${tema}! No primeiro trecho, você encontrará ${p1.join(" e ")}. Continuando a exploração, surgem ${p2.join(", ")}. E na reta final, descubra ${p3.join(" e ")}. Agora, localize todas essas palavras no caça-palavras!`;
+    },
+    // Didactic style
+    () => {
+      const w = shuffled.map(w => w.toUpperCase());
+      if (w.length <= 3) {
+        return `Na aula de hoje sobre ${tema}, vamos revisar conceitos importantes: ${w.join(", ")}. Encontre cada um deles no caça-palavras para fixar o conteúdo!`;
+      }
+      const half = Math.ceil(w.length / 2);
+      return `Para dominar o conteúdo de ${tema}, é necessário conhecer alguns termos-chave. Começamos com ${w.slice(0, half).join(", ")}, que formam a base do assunto. Em seguida, aprofundamos com ${w.slice(half, -1).join(", ")} e ${w[w.length - 1]}. Encontre cada palavra no caça-palavras e fortaleça seu aprendizado!`;
+    },
+    // Challenge style
+    () => {
+      const w = shuffled.map(w => w.toUpperCase());
+      if (w.length <= 3) {
+        return `Desafio sobre ${tema}! Será que você consegue encontrar ${w.join(", ")} escondidas no caça-palavras? Mãos à obra!`;
+      }
+      return `Aceite o desafio! No tema ${tema}, existem ${w.length} palavras-chave escondidas neste caça-palavras: ${w.slice(0, -1).join(", ")} e ${w[w.length - 1]}. Quanto tempo você vai levar para encontrar todas? Boa sorte!`;
+    },
   ];
-  const intro = connectors[Math.floor(Math.random() * connectors.length)];
-  
-  if (shuffled.length <= 3) {
-    return `${intro} ${shuffled.slice(0, -1).join(", ")} e ${shuffled[shuffled.length - 1]}. Encontre essas palavras no caça-palavras!`;
-  }
-  
-  const mid = Math.ceil(shuffled.length / 2);
-  const first = shuffled.slice(0, mid);
-  const second = shuffled.slice(mid);
-  
-  const bridges = [
-    "Além disso, também encontramos",
-    "Outros termos importantes são",
-    "Podemos citar ainda",
-    "Vale destacar também",
-  ];
-  const bridge = bridges[Math.floor(Math.random() * bridges.length)];
-  
-  return `${intro} ${first.join(", ")}. ${bridge} ${second.slice(0, -1).join(", ")} e ${second[second.length - 1]}. Encontre todas essas palavras no caça-palavras abaixo!`;
+
+  const template = templates[Math.floor(Math.random() * templates.length)];
+  return template();
 }
 
 export function generateWordSearch(config: GameConfig): WordSearchData {

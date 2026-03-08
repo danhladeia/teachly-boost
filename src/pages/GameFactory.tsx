@@ -442,6 +442,40 @@ export default function GameFactory() {
           <Card className="shadow-card">
             <CardContent className="p-3 space-y-3">
 
+              {/* Timbre / Branding - at the top */}
+              <Section title="🏫 Timbre da Escola" defaultOpen={header.showHeader}>
+                <div className="flex items-center justify-between mb-1">
+                  <Label className="text-[10px]">Incluir timbre no documento</Label>
+                  <Switch checked={header.showHeader} onCheckedChange={v => setHeader(h => ({ ...h, showHeader: v }))} />
+                </div>
+                {header.showHeader && (
+                  <div className="space-y-1.5">
+                    {(timbre.escola || timbre.logoUrl) && (
+                      <div className="rounded border border-primary/20 bg-primary/5 p-1.5 text-[9px] text-primary flex items-center gap-1.5">
+                        {timbre.logoUrl && <img src={timbre.logoUrl} alt="Logo" className="h-5 object-contain" crossOrigin="anonymous" />}
+                        <span>Timbre carregado: <strong>{timbre.escola || "Logo"}</strong></span>
+                      </div>
+                    )}
+                    {!timbre.logoUrl && (
+                      <div>
+                        <Label className="text-[9px]">Logo (opcional)</Label>
+                        <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
+                        {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
+                      </div>
+                    )}
+                    <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
+                    <div className="grid grid-cols-2 gap-1">
+                      <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
+                      <Input placeholder="Disciplina" value={header.disciplina} onChange={e => setHeader(h => ({ ...h, disciplina: e.target.value }))} className="h-7 text-[9px]" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      <Input placeholder="Série/Turma" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
+                      <Input placeholder="Data" value={header.data} onChange={e => setHeader(h => ({ ...h, data: e.target.value }))} className="h-7 text-[9px]" />
+                    </div>
+                  </div>
+                )}
+              </Section>
+
               {/* Quick/Advanced toggle */}
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold flex items-center gap-1">
@@ -801,9 +835,15 @@ export default function GameFactory() {
                     {mode === "manual" && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
+                          <Label className="text-[10px]">🔒 Incluir perguntas nos checkpoints <Tip text="Opcional — adicione perguntas que bloqueiam o caminho" /></Label>
+                        </div>
+                        <div className="flex items-center justify-between">
                           <Label className="text-[10px] font-semibold">Perguntas ({mazeQuestions.length}/5)</Label>
                           <Button variant="outline" size="sm" onClick={addMazeQuestion} className="h-5 text-[9px] px-2">+ Pergunta</Button>
                         </div>
+                        {mazeQuestions.length === 0 && (
+                          <p className="text-[9px] text-muted-foreground italic">Nenhuma pergunta adicionada. O labirinto será gerado apenas com o caminho.</p>
+                        )}
                         {mazeQuestions.map((q, qi) => (
                           <div key={qi} className="space-y-1 border rounded p-2 bg-muted/30">
                             <div className="flex items-center justify-between">
@@ -828,7 +868,7 @@ export default function GameFactory() {
                 </>
               )}
 
-              {/* Color Mode & Header */}
+              {/* Color Mode */}
               <Section title="🎨 Aparência">
                 <div className="space-y-1">
                   <Label className="text-[10px]">Modo de Cor</Label>
@@ -852,39 +892,6 @@ export default function GameFactory() {
                     </SelectContent>
                   </Select>
                 </div>
-              </Section>
-
-              <Section title="📝 Cabeçalho Escolar" defaultOpen={false}>
-                <div className="flex items-center justify-between mb-1">
-                  <Label className="text-[10px]">Mostrar cabeçalho</Label>
-                  <Switch checked={header.showHeader} onCheckedChange={v => setHeader(h => ({ ...h, showHeader: v }))} />
-                </div>
-                {header.showHeader && (
-                  <div className="space-y-1.5">
-                    {(timbre.escola || timbre.logoUrl) && (
-                      <div className="rounded border border-primary/20 bg-primary/5 p-1.5 text-[9px] text-primary flex items-center gap-1.5">
-                        {timbre.logoUrl && <img src={timbre.logoUrl} alt="Logo" className="h-5 object-contain" crossOrigin="anonymous" />}
-                        <span>Timbre carregado: <strong>{timbre.escola || "Logo"}</strong></span>
-                      </div>
-                    )}
-                    {!timbre.logoUrl && (
-                      <div>
-                        <Label className="text-[9px]">Logo (opcional)</Label>
-                        <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
-                        {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
-                      </div>
-                    )}
-                    <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
-                      <Input placeholder="Disciplina" value={header.disciplina} onChange={e => setHeader(h => ({ ...h, disciplina: e.target.value }))} className="h-7 text-[9px]" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input placeholder="Série/Turma" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
-                      <Input placeholder="Data" value={header.data} onChange={e => setHeader(h => ({ ...h, data: e.target.value }))} className="h-7 text-[9px]" />
-                    </div>
-                  </div>
-                )}
               </Section>
 
               {/* Generate */}
