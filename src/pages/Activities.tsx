@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap } from "lucide-react";
+import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
+import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
