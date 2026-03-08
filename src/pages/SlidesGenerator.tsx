@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Presentation, Sparkles, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCredits } from "@/hooks/useCredits";
 import SlideConfigPanel from "@/components/slides/SlideConfigPanel";
 import SlideEditor from "@/components/slides/SlideEditor";
 import type { Slide, SlideTemplate, SlideDensity } from "@/components/slides/types";
