@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Gamepad2, Search as SearchIcon, Grid3X3, Lock, MapPin,
   Sparkles, Loader2, Printer, RotateCcw, FileDown, ArrowLeft,
@@ -20,13 +20,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTimbre } from "@/hooks/useTimbre";
 import {
   defaultHeader, defaultDirections, etapaConfig, getWordSearchDefaults,
   type Difficulty, type EtapaEscolar, type EditorMode, type GameConfig, type GameHeader,
   type ColorMode, type GridSize, type CryptoSymbolTheme, type CryptoCipherType,
   type WordSearchDirections, type AnswerKeyMode,
 } from "@/components/games/types";
-
 import { generateWordSearch } from "@/components/games/generators/wordSearch";
 import { generateCrossword } from "@/components/games/generators/crossword";
 import { generateCryptogram } from "@/components/games/generators/cryptogram";
@@ -74,6 +74,7 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
 
 export default function GameFactory() {
   const { user } = useAuth();
+  const { timbre } = useTimbre();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [tema, setTema] = useState("");
   const [palavras, setPalavras] = useState("");
@@ -129,6 +130,17 @@ export default function GameFactory() {
 
   const selectedGameDef = GAMES.find(g => g.id === selectedGame);
   const isAdvanced = editorMode === "advanced";
+
+  // Auto-populate header from branding
+  useEffect(() => {
+    if (timbre.escola || timbre.logoUrl) {
+      setHeader(h => ({
+        ...h,
+        escola: h.escola || timbre.escola,
+        logoUrl: h.logoUrl || timbre.logoUrl,
+      }));
+    }
+  }, [timbre]);
 
   // Apply etapa defaults when etapa/difficulty changes for word search
   const applyEtapaDefaults = (e: EtapaEscolar, d: Difficulty) => {
@@ -250,17 +262,38 @@ export default function GameFactory() {
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const container = document.createElement("div");
-      container.appendChild(el.cloneNode(true));
+      const gameClone = el.cloneNode(true) as HTMLElement;
+      // Force exact A4 dimensions on clone to prevent deformation
+      gameClone.style.width = "210mm";
+      gameClone.style.minHeight = "297mm";
+      gameClone.style.padding = "10mm";
+      gameClone.style.boxSizing = "border-box";
+      gameClone.style.overflow = "hidden";
+      container.appendChild(gameClone);
       if (answerKey !== "none") {
         const ak = document.getElementById("answer-key-area");
-        if (ak) container.appendChild(ak.cloneNode(true));
+        if (ak) {
+          const akClone = ak.cloneNode(true) as HTMLElement;
+          akClone.style.width = "210mm";
+          akClone.style.minHeight = "297mm";
+          akClone.style.padding = "10mm";
+          akClone.style.boxSizing = "border-box";
+          akClone.style.pageBreakBefore = "always";
+          container.appendChild(akClone);
+        }
       }
-      html2pdf().set({
+      await html2pdf().set({
         margin: 0,
         filename: `${tema || "jogo"}-${selectedGame}.pdf`,
-        html2canvas: { scale: 2, useCORS: true },
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          width: 794,  // 210mm at 96dpi
+          windowWidth: 794,
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["table", "svg", ".no-break"] },
       }).from(container).save();
       toast.success("PDF exportado!");
     } catch { toast.error("Erro ao exportar PDF"); }
@@ -806,11 +839,19 @@ export default function GameFactory() {
                 </div>
                 {header.showHeader && (
                   <div className="space-y-1.5">
-                    <div>
-                      <Label className="text-[9px]">Logo (opcional)</Label>
-                      <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
-                      {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
-                    </div>
+                    {(timbre.escola || timbre.logoUrl) && (
+                      <div className="rounded border border-primary/20 bg-primary/5 p-1.5 text-[9px] text-primary flex items-center gap-1.5">
+                        {timbre.logoUrl && <img src={timbre.logoUrl} alt="Logo" className="h-5 object-contain" crossOrigin="anonymous" />}
+                        <span>Timbre carregado: <strong>{timbre.escola || "Logo"}</strong></span>
+                      </div>
+                    )}
+                    {!timbre.logoUrl && (
+                      <div>
+                        <Label className="text-[9px]">Logo (opcional)</Label>
+                        <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
+                        {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
+                      </div>
+                    )}
                     <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
                     <div className="grid grid-cols-2 gap-1">
                       <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />

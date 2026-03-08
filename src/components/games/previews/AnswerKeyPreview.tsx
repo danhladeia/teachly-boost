@@ -17,6 +17,7 @@ const PAGE_STYLE: React.CSSProperties = {
   color: "#000",
   boxSizing: "border-box",
   pageBreakBefore: "always",
+  overflow: "hidden",
 };
 
 interface Props {
@@ -28,6 +29,27 @@ interface Props {
 export default function AnswerKeyPreview({ gameType, gameData, config }: Props) {
   return (
     <div id="answer-key-area" style={PAGE_STYLE}>
+      {/* Header from branding if enabled */}
+      {config.header.showHeader && (
+        <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
+            {config.header.logoUrl && (
+              <img
+                src={config.header.logoUrl}
+                alt="Logo"
+                style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }}
+                crossOrigin="anonymous"
+              />
+            )}
+            {config.header.escola && (
+              <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>
+                {config.header.escola}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div style={{ borderBottom: "3px solid #000", paddingBottom: "3mm", marginBottom: "6mm", textAlign: "center" }}>
         <h1 style={{ fontSize: "18pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif" }}>
           📋 GABARITO DO PROFESSOR
@@ -47,9 +69,6 @@ export default function AnswerKeyPreview({ gameType, gameData, config }: Props) 
 }
 
 function WordSearchAnswer({ data }: { data: WordSearchData }) {
-  const gridLen = data.grid.length;
-  const cellSize = Math.max(12, Math.min(20, 400 / gridLen));
-
   return (
     <div>
       <h2 style={{ fontSize: "13pt", fontWeight: 700, marginBottom: "3mm" }}>🔍 Caça-Palavras — Palavras encontradas</h2>
@@ -66,13 +85,13 @@ function WordSearchAnswer({ data }: { data: WordSearchData }) {
 }
 
 function CrosswordAnswer({ data }: { data: CrosswordData }) {
-  const cellSize = Math.max(14, Math.min(22, 380 / data.size));
+  const cellSize = Math.max(14, Math.min(20, 480 / data.size));
 
   return (
     <div>
       <h2 style={{ fontSize: "13pt", fontWeight: 700, marginBottom: "3mm" }}>✏️ Palavras Cruzadas — Gabarito</h2>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)` }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)`, maxWidth: "100%" }}>
           {data.grid.flat().map((cell, i) => (
             <div
               key={i}
@@ -142,14 +161,17 @@ function CryptogramAnswer({ data }: { data: CryptogramData }) {
 
 function SudokuAnswer({ data }: { data: SudokuData }) {
   const gridSize = data.grids[0]?.size || 4;
-  const cellSize = gridSize <= 4 ? 24 : gridSize <= 6 ? 20 : 16;
+  const count = data.grids.length;
+  const maxPerRow = count > 2 ? 2 : count;
+  const availableWidth = 520 / maxPerRow - 16;
+  const cellSize = Math.max(12, Math.min(22, availableWidth / gridSize));
   const boxH = gridSize === 4 ? 2 : gridSize === 6 ? 2 : 3;
   const boxW = gridSize === 4 ? 2 : gridSize === 6 ? 3 : 3;
 
   return (
     <div>
       <h2 style={{ fontSize: "13pt", fontWeight: 700, marginBottom: "3mm" }}>🧩 Sudoku — Soluções</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8mm", justifyContent: "center" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6mm", justifyContent: "center", overflow: "hidden" }}>
         {data.grids.map((g, gi) => (
           <div key={gi}>
             <p style={{ textAlign: "center", fontWeight: 700, fontSize: "9pt", marginBottom: "1mm" }}>Puzzle {gi + 1}</p>

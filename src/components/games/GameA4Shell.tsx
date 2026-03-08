@@ -4,6 +4,7 @@ import type { GameHeader, ColorMode } from "./types";
 const PAGE_STYLE: React.CSSProperties = {
   width: "210mm",
   minHeight: "297mm",
+  maxHeight: "297mm",
   padding: "10mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
   fontSize: "11pt",
@@ -12,6 +13,9 @@ const PAGE_STYLE: React.CSSProperties = {
   boxSizing: "border-box",
   background: "#fff",
   color: "#000",
+  overflow: "hidden",
+  pageBreakAfter: "always",
+  pageBreakInside: "avoid",
 };
 
 interface Props {
@@ -73,7 +77,7 @@ export default function GameA4Shell({ header, title, subtitle, colorMode = "colo
         </p>
       )}
 
-      <div>{children}</div>
+      <div style={{ overflow: "hidden" }}>{children}</div>
     </div>
   );
 }

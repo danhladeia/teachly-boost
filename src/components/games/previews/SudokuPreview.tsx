@@ -10,7 +10,11 @@ interface Props {
 
 export default function SudokuPreview({ data, config }: Props) {
   const gridSize = data.grids[0]?.size || 4;
-  const cellSize = gridSize <= 4 ? 34 : gridSize <= 6 ? 28 : 22;
+  const count = data.grids.length;
+  // Scale cells to fit within printable area
+  const maxPerRow = count > 2 ? 2 : count;
+  const availableWidth = 560 / maxPerRow - 20;
+  const cellSize = Math.max(14, Math.min(gridSize <= 4 ? 34 : gridSize <= 6 ? 28 : 22, availableWidth / gridSize));
   const boxH = gridSize === 4 ? 2 : gridSize === 6 ? 2 : gridSize === 8 ? 2 : 3;
   const boxW = gridSize === 4 ? 2 : gridSize === 6 ? 3 : gridSize === 8 ? 4 : 3;
   const isText = data.contentType !== "numbers";
@@ -22,7 +26,7 @@ export default function SudokuPreview({ data, config }: Props) {
       subtitle={`${data.grids.length} puzzles • ${isText ? "Temático" : "Numérico"}`}
       colorMode={config.colorMode}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "10mm", justifyContent: "center" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8mm", justifyContent: "center", overflow: "hidden" }}>
         {data.grids.map((g, gi) => (
           <div key={gi}>
             <p style={{ textAlign: "center", fontWeight: 700, fontSize: "10pt", marginBottom: "2mm" }}>
