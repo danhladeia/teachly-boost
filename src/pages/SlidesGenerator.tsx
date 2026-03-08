@@ -67,27 +67,31 @@ export default function SlidesGenerator() {
       if (error) throw error;
       if (data?.slides?.length) {
         setSlides(data.slides);
-        toast.success(`${data.slides.length} slides gerados! Gerando imagens...`);
 
-        setGeneratingImages(true);
-        const withPrompts = data.slides.filter((s: Slide) => s.image_prompt && s.layout !== "title");
-        setImageTotal(withPrompts.length);
-        setImageProgress(0);
+        if (gerarImagens) {
+          toast.success(`${data.slides.length} slides gerados! Gerando imagens...`);
+          setGeneratingImages(true);
+          const withPrompts = data.slides.filter((s: Slide) => s.image_prompt && s.layout !== "title");
+          setImageTotal(withPrompts.length);
+          setImageProgress(0);
 
-        const updated = [...data.slides];
-        for (let i = 0; i < updated.length; i++) {
-          const s = updated[i];
-          if (s.image_prompt && s.layout !== "title") {
-            const imgUrl = await generateImageForSlide(s, estiloLabel);
-            if (imgUrl) {
-              updated[i] = { ...s, image_url: imgUrl };
-              setSlides([...updated]);
+          const updated = [...data.slides];
+          for (let i = 0; i < updated.length; i++) {
+            const s = updated[i];
+            if (s.image_prompt && s.layout !== "title") {
+              const imgUrl = await generateImageForSlide(s, estiloLabel);
+              if (imgUrl) {
+                updated[i] = { ...s, image_url: imgUrl };
+                setSlides([...updated]);
+              }
+              setImageProgress(prev => prev + 1);
             }
-            setImageProgress(prev => prev + 1);
           }
+          setGeneratingImages(false);
+          toast.success("Imagens geradas!");
+        } else {
+          toast.success(`${data.slides.length} slides gerados!`);
         }
-        setGeneratingImages(false);
-        toast.success("Imagens geradas!");
       } else {
         toast.error("Nenhum slide gerado");
       }
