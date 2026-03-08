@@ -136,9 +136,6 @@ export default function Landing() {
                 5 créditos grátis • Sem cartão de crédito
               </motion.p>
             </motion.div>
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mt-16 w-full max-w-5xl">
-              <img src={heroBg} alt="GoPedagoX plataforma" className="w-full rounded-2xl shadow-elevated border border-white/10" />
-            </motion.div>
           </div>
         </div>
       </section>
