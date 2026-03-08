@@ -302,7 +302,7 @@ export default function OMRScanner() {
         prova_id: sheet.prova_info.prova_id,
         versao_id: sheet.prova_info.versao_id || null,
         nome_aluno: sheet.nome_aluno || "Aluno não identificado",
-        nota: parseFloat(((sheet.correctionResult.correct / sheet.correctionResult.total) * 10).toFixed(1)),
+        nota: parseFloat(((sheet.correctionResult.earnedPoints / sheet.correctionResult.totalPoints) * 10).toFixed(1)),
         respostas_json: Object.entries(finalAnswers).map(([q, a]) => ({ q: parseInt(q), a })),
         imagem_gabarito_url: sheet.imagem_url,
       });
