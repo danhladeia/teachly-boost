@@ -220,6 +220,11 @@ export default function Landing() {
                     MAIS POPULAR
                   </div>
               }
+                {plan.originalPrice &&
+              <div className="absolute top-3 right-3 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                    -25%
+                  </div>
+              }
                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                   <plan.icon className={`h-5 w-5 ${plan.color}`} />
                 </div>
