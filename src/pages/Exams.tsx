@@ -502,7 +502,7 @@ export default function Exams() {
                     {tipoQuestoes !== "aberta" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Q. Múltipla Escolha</Label>
-                        <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                        <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
                   </div>
