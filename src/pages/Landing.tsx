@@ -188,12 +188,17 @@ export default function Landing() {
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) =>
-            <motion.div key={f.title} variants={fadeUp} className="group rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-shadow">
+            <motion.div key={f.title} variants={fadeUp} className="group relative rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-shadow">
+                {f.tag && (
+                  <span className="absolute top-4 right-4 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {f.tag}
+                  </span>
+                )}
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:gradient-primary group-hover:text-primary-foreground transition-all">
                   <f.icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-lg font-bold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
               </motion.div>
             )}
           </motion.div>
