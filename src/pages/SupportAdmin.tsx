@@ -215,7 +215,7 @@ export default function SupportAdmin() {
             </Select>
           </div>
 
-          <div className="space-y-2 max-h-[calc(100vh-180px)] overflow-auto">
+          <div className="space-y-2">
             {tickets.map((t) => {
               const st = statusMap[t.status] || statusMap.open;
               const pr = priorityMap[t.priority] || priorityMap.normal;
