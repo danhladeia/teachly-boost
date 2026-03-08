@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import logoPedagox from "@/assets/logo-pedagox.png";
+import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
