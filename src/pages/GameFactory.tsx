@@ -261,14 +261,20 @@ export default function GameFactory() {
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const container = document.createElement("div");
+
+      // Clone game page
       const gameClone = el.cloneNode(true) as HTMLElement;
-      // Force exact A4 dimensions on clone to prevent deformation
       gameClone.style.width = "210mm";
       gameClone.style.minHeight = "297mm";
+      gameClone.style.maxHeight = "297mm";
       gameClone.style.padding = "10mm";
       gameClone.style.boxSizing = "border-box";
       gameClone.style.overflow = "hidden";
+      gameClone.style.background = "#fff";
+      gameClone.style.position = "relative";
       container.appendChild(gameClone);
+
+      // Clone answer key if enabled
       if (answerKey !== "none") {
         const ak = document.getElementById("answer-key-area");
         if (ak) {
@@ -278,9 +284,20 @@ export default function GameFactory() {
           akClone.style.padding = "10mm";
           akClone.style.boxSizing = "border-box";
           akClone.style.pageBreakBefore = "always";
+          akClone.style.background = "#fff";
           container.appendChild(akClone);
         }
       }
+
+      // Force all table cells and grid cells to have centered text
+      container.querySelectorAll("td, div").forEach((node) => {
+        const el = node as HTMLElement;
+        if (el.style.textAlign === "center" || el.style.display === "flex") {
+          el.style.textAlign = "center";
+          el.style.verticalAlign = "middle";
+        }
+      });
+
       await html2pdf().set({
         margin: 0,
         filename: `${tema || "jogo"}-${selectedGame}.pdf`,
@@ -290,6 +307,7 @@ export default function GameFactory() {
           useCORS: true,
           width: 794,  // 210mm at 96dpi
           windowWidth: 794,
+          letterRendering: true,
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"], avoid: ["table", "svg", ".no-break"] },
