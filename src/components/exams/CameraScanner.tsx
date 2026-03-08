@@ -354,17 +354,17 @@ export default function CameraScanner() {
       {/* STEP 2: Camera */}
       {step === "camera" && (
         <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Camera className="h-4 w-4 text-primary" />
-              Fotografar Gabarito
-              {provaInfo && <Badge variant="secondary" className="text-[10px] ml-auto font-normal">{provaInfo.titulo}</Badge>}
+          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-1.5 sm:gap-2">
+              <Camera className="h-4 w-4 text-primary shrink-0" />
+              <span className="truncate">Fotografar</span>
+              {provaInfo && <Badge variant="secondary" className="text-[9px] sm:text-[10px] ml-auto font-normal truncate max-w-[120px] sm:max-w-none">{provaInfo.titulo}</Badge>}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
             {!processing ? (
               <>
-                <div className="relative rounded-xl overflow-hidden bg-black aspect-[3/4] max-h-[60vh]">
+                <div className="relative rounded-xl overflow-hidden bg-black aspect-[3/4] max-h-[50vh] sm:max-h-[60vh]">
                   <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
                   {!cameraActive && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted/80">
