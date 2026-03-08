@@ -304,15 +304,15 @@ export default function CameraScanner() {
       {/* STEP 1: Select Gabarito */}
       {step === "select-gabarito" && (
         <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
+          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
               <Search className="h-4 w-4 text-primary" />
               Selecione a Prova
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Carregue o gabarito antes de fotografar a folha de respostas.
+          <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
+            <p className="text-[11px] sm:text-xs text-muted-foreground">
+              Carregue o gabarito antes de fotografar.
             </p>
             <div className="space-y-2">
               <Select value={selectedProvaId} onValueChange={setSelectedProvaId}>
