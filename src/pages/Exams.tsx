@@ -223,6 +223,7 @@ export default function Exams() {
           alternatives: q.alternatives || ["", "", "", ""],
           correctIndex: q.correctIndex ?? 0,
           lines: q.lines || 4,
+          pontos: 1,
         }));
         setQuestoes(mapped);
         setCurrentProvaId(null); // new unsaved exam
