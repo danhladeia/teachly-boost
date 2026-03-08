@@ -154,7 +154,7 @@ export default function GameFactory() {
     gridSize, directions, wordListPosition: wordListPosition as any,
     wordListOrder: wordListOrder as any, cellFormat: cellFormat as any,
     letterCase: letterCase as any, fontStyle: fontStyle as any,
-    spacing, bonusWords: bonusWords || undefined,
+    spacing, bonusWords: bonusWords || undefined, miniText,
     hideWordList: wordListPosition === "hidden",
     hintStyle: hintStyle as any, crosswordSymmetry: crosswordSymmetry as any,
     mysteryWord: mysteryWord || undefined,
