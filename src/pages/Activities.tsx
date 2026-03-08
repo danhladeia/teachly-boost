@@ -542,7 +542,7 @@ export default function Activities() {
                     <Label className="text-xs font-semibold flex items-center gap-1"><Sparkles className="h-3 w-3 text-primary" /> Imagens geradas por IA</Label>
                     <div className="space-y-1">
                       <Label className="text-[10px]">Quantidade de imagens IA</Label>
-                      <Input type="number" min={0} max={5} value={numAiImages} onChange={e => handleNumAiImagesChange(Math.max(0, Math.min(5, parseInt(e.target.value) || 0)))} className="h-8 text-xs" />
+                      <Input type="number" min={0} max={5} value={numAiImages} onChange={e => handleNumAiImagesChange(e.target.value === "" ? 0 : Math.max(0, Math.min(5, parseInt(e.target.value))))} className="h-8 text-xs" />
                     </div>
                     {Array.from({ length: numAiImages }).map((_, i) => (
                       <div key={i} className="space-y-1">
