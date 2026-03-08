@@ -30,9 +30,15 @@ Deno.serve(async (req) => {
     const file = formData.get("image") as File;
     if (!file) throw new Error("Nenhuma imagem enviada");
 
-    // Convert to base64
+    // Convert to base64 (chunked to avoid stack overflow)
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    const base64 = btoa(binary);
     const mimeType = file.type || "image/jpeg";
 
     // Upload original to storage for audit
