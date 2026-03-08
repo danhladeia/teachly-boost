@@ -234,7 +234,7 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         }}
         {...props}>
         
-        <LayoutDashboard className="border-sidebar-primary text-primary px-30 py-0 my-0 mx-0 bg-accent-foreground w-[30px] h-[30px]" />
+        <LayoutDashboard className="border-sidebar-primary text-primary px-30 py-0 my-0 mx-0 w-[30px] h-[30px] bg-black/0" />
         <span className="sr-only">Toggle Sidebar</span>
       </Button>);
 
