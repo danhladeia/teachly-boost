@@ -137,6 +137,7 @@ export default function Exams() {
           alternatives: (q.alternativas as string[]) || ["", "", "", ""],
           correctIndex: q.resposta_correta ?? 0,
           lines: q.linhas || 4,
+          pontos: q.pontos ?? 1,
           imageUrl: q.imagem_url || undefined,
         })));
       }
