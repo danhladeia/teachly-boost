@@ -11,6 +11,7 @@ export interface WordSearchData {
   cellFormat: string;
   letterCase: string;
   spacing: number;
+  miniText?: string; // mini-text with words in UPPERCASE
 }
 
 function getGridSizeNum(gridSize?: GridSize): number {
@@ -41,6 +42,35 @@ function applyLetterCase(word: string, letterCase: string): string {
     case "capitalize": return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     default: return word.toUpperCase();
   }
+}
+
+function generateMiniText(words: string[], tema: string): string {
+  const shuffled = [...words].sort(() => Math.random() - 0.5);
+  const connectors = [
+    `No estudo sobre ${tema}, é importante conhecer`,
+    `Quando falamos de ${tema}, destacamos`,
+    `Na aula sobre ${tema}, aprendemos que`,
+    `O tema ${tema} envolve conceitos como`,
+  ];
+  const intro = connectors[Math.floor(Math.random() * connectors.length)];
+  
+  if (shuffled.length <= 3) {
+    return `${intro} ${shuffled.slice(0, -1).join(", ")} e ${shuffled[shuffled.length - 1]}. Encontre essas palavras no caça-palavras!`;
+  }
+  
+  const mid = Math.ceil(shuffled.length / 2);
+  const first = shuffled.slice(0, mid);
+  const second = shuffled.slice(mid);
+  
+  const bridges = [
+    "Além disso, também encontramos",
+    "Outros termos importantes são",
+    "Podemos citar ainda",
+    "Vale destacar também",
+  ];
+  const bridge = bridges[Math.floor(Math.random() * bridges.length)];
+  
+  return `${intro} ${first.join(", ")}. ${bridge} ${second.slice(0, -1).join(", ")} e ${second[second.length - 1]}. Encontre todas essas palavras no caça-palavras abaixo!`;
 }
 
 export function generateWordSearch(config: GameConfig): WordSearchData {
@@ -94,6 +124,12 @@ export function generateWordSearch(config: GameConfig): WordSearchData {
   const order = config.wordListOrder || "alphabetical";
   const orderedWords = order === "alphabetical" ? [...displayWords].sort() : order === "shuffled" ? [...displayWords].sort(() => Math.random() - 0.5) : displayWords;
 
+  // Generate mini-text if requested
+  let miniText: string | undefined;
+  if (config.miniText && placedWords.length > 0) {
+    miniText = generateMiniText(placedWords, config.tema);
+  }
+
   return {
     grid,
     placedWords: orderedWords,
@@ -105,5 +141,6 @@ export function generateWordSearch(config: GameConfig): WordSearchData {
     cellFormat: config.cellFormat || "square",
     letterCase: lCase,
     spacing: config.spacing || 1,
+    miniText,
   };
 }

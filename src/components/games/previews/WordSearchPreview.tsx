@@ -10,11 +10,12 @@ interface Props {
 
 export default function WordSearchPreview({ data, config }: Props) {
   const gridLen = data.grid.length;
-  // Calculate cell size to fit within A4 printable area (190mm = ~718px at 96dpi)
+  // Calculate cell size to fit within A4 printable area (190mm ≈ 718px at 96dpi)
   const maxGridPx = 560;
-  const baseCell = Math.max(12, Math.min(28, maxGridPx / gridLen));
-  const cellSize = baseCell * (data.spacing || 1);
+  const baseCell = Math.max(14, Math.min(28, Math.floor(maxGridPx / gridLen)));
+  const cellSize = Math.floor(baseCell * (data.spacing || 1));
   const isCircle = data.cellFormat === "circle";
+  const isNoBg = data.cellFormat === "none";
 
   return (
     <GameA4Shell
@@ -29,35 +30,60 @@ export default function WordSearchPreview({ data, config }: Props) {
         </p>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
+      {/* Mini-text with words in UPPERCASE */}
+      {data.miniText && (
         <div style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${gridLen}, ${cellSize}px)`,
-          border: isCircle ? "none" : "2px solid #000",
-          maxWidth: "100%",
+          marginBottom: "5mm",
+          padding: "3mm 4mm",
+          border: "1px solid #ccc",
+          borderRadius: "2mm",
+          background: "#fafafa",
+          fontSize: "10pt",
+          lineHeight: 1.6,
+          textAlign: "justify",
         }}>
-          {data.grid.flat().map((letter, i) => (
-            <div
-              key={i}
-              style={{
-                width: cellSize,
-                height: cellSize,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: `${cellSize * 0.5}px`,
-                fontWeight: 600,
-                fontFamily: "monospace",
-                border: isCircle ? "none" : "1px solid #d1d5db",
-                borderRadius: isCircle ? "50%" : 0,
-                background: isCircle ? "#f8fafc" : undefined,
-                margin: isCircle ? "1px" : 0,
-              }}
-            >
-              {letter}
-            </div>
-          ))}
+          <p style={{ fontWeight: 700, fontSize: "10pt", marginBottom: "2mm" }}>📖 Leia o texto e encontre as palavras em destaque no caça-palavras:</p>
+          <p>{data.miniText}</p>
         </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
+        <table
+          cellSpacing={0}
+          cellPadding={0}
+          style={{
+            borderCollapse: "collapse",
+            border: isCircle || isNoBg ? "none" : "2px solid #000",
+          }}
+        >
+          <tbody>
+            {data.grid.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((letter, ci) => (
+                  <td
+                    key={ci}
+                    style={{
+                      width: `${cellSize}px`,
+                      height: `${cellSize}px`,
+                      textAlign: "center",
+                      verticalAlign: "middle",
+                      fontSize: `${Math.floor(cellSize * 0.5)}px`,
+                      fontWeight: 600,
+                      fontFamily: "monospace",
+                      lineHeight: 1,
+                      padding: 0,
+                      border: isCircle || isNoBg ? "none" : "1px solid #d1d5db",
+                      borderRadius: isCircle ? "50%" : undefined,
+                      background: isCircle ? "#f8fafc" : isNoBg ? "transparent" : undefined,
+                    }}
+                  >
+                    {letter}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {!data.hideWordList && (
@@ -84,7 +110,7 @@ export default function WordSearchPreview({ data, config }: Props) {
         </div>
       )}
 
-      {data.hideWordList && (
+      {data.hideWordList && !data.miniText && (
         <p style={{ textAlign: "center", fontSize: "9pt", fontStyle: "italic", color: "#666", marginTop: "3mm" }}>
           💡 Dica: Todas as palavras estão relacionadas ao tema "{data.tema}".
         </p>
