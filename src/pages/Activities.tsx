@@ -704,7 +704,7 @@ export default function Activities() {
         </div>
 
         {/* RIGHT PANEL - A4 Preview */}
-        <div className="overflow-auto max-h-[calc(100vh-160px)]">
+        <div>
           <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} professor={professor} turma={turma} />
         </div>
       </div>
