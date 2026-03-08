@@ -97,6 +97,7 @@ export type Database = {
           email: string | null
           escola: string | null
           id: string
+          logo_url: string | null
           nome: string | null
           plano: string
           updated_at: string
@@ -109,6 +110,7 @@ export type Database = {
           email?: string | null
           escola?: string | null
           id?: string
+          logo_url?: string | null
           nome?: string | null
           plano?: string
           updated_at?: string
@@ -121,6 +123,7 @@ export type Database = {
           email?: string | null
           escola?: string | null
           id?: string
+          logo_url?: string | null
           nome?: string | null
           plano?: string
           updated_at?: string
