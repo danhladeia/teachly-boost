@@ -74,6 +74,7 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
 
 export default function GameFactory() {
   const { user } = useAuth();
+  const { timbre } = useTimbre();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [tema, setTema] = useState("");
   const [palavras, setPalavras] = useState("");
