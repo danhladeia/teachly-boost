@@ -72,9 +72,6 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
         marginTop: "10mm",
       }}
     >
-      <div style={{ textAlign: "center", fontSize: "7pt", color: "#94a3b8", marginTop: "-3mm", marginBottom: "2mm" }}>
-        ✂️ Recorte aqui — Folha de Respostas
-      </div>
 
       {/* Alignment marks */}
       <div style={{ ...markStyle, top: "10mm", left: "10mm" }} data-omr-mark="tl" />

@@ -364,7 +364,7 @@ export default function Exams() {
       body { font-family: 'Inter', 'Arial', sans-serif; }
       .question { page-break-inside: avoid; }
       .omr-sheet { page-break-before: always; }
-      @page { size: A4; margin: 15mm; }
+      @page { size: A4; margin: 15mm 15mm 15mm 15mm; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
