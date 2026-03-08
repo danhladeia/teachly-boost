@@ -29,10 +29,16 @@ const items = [
 export function AppSidebar() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
 
   const handleLogout = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleNavClick = () => {
+    if (isMobile) setOpenMobile(false);
   };
 
   return (
