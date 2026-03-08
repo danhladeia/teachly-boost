@@ -34,6 +34,14 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 
   const fetchPlan = useCallback(async () => {
     if (!user) { setLoading(false); return; }
+    
+    // Sync subscription status from Stripe
+    try {
+      await supabase.functions.invoke("check-subscription");
+    } catch (e) {
+      // Silently fail - will use local profile data
+    }
+
     const { data } = await supabase
       .from("profiles")
       .select("plan_type, credits_remaining, logos_limit, subscription_status")
