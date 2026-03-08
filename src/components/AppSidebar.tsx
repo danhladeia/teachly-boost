@@ -18,6 +18,8 @@ const items = [
   { title: "Gerador de Slides", url: "/app/slides", icon: Presentation },
   { title: "Fábrica de Jogos", url: "/app/jogos", icon: Gamepad2 },
   { title: "Provas e Correção", url: "/app/provas", icon: FileCheck },
+  { title: "Bloco de Notas", url: "/app/notas", icon: StickyNote },
+  { title: "Suporte", url: "/app/suporte", icon: MessageSquare },
   { title: "Planos", url: "/app/planos", icon: CreditCard },
   { title: "Timbres e Branding", url: "/app/timbres", icon: Stamp },
   { title: "Configurações", url: "/app/configuracoes", icon: Settings },
