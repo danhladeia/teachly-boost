@@ -49,15 +49,16 @@ Deno.serve(async (req) => {
       if (!prova) throw new Error("Prova não encontrada");
 
       if (versao_id) {
-        // Fetch gabarito from version
-        const { data: versao } = await supabase
-          .from("versoes_prova")
-          .select("*")
-          .eq("id", versao_id)
-          .eq("prova_id", prova_id)
-          .single();
+        // Fetch gabarito from version - need questoes for pontos
+        const [{ data: versao }, { data: questoes }] = await Promise.all([
+          supabase.from("versoes_prova").select("*").eq("id", versao_id).eq("prova_id", prova_id).single(),
+          supabase.from("questoes").select("id, pontos").eq("prova_id", prova_id).order("ordem"),
+        ]);
 
-        if (versao) {
+        if (versao && questoes) {
+          const pontosMap: Record<string, number> = {};
+          questoes.forEach((q: any) => { pontosMap[q.id] = q.pontos ?? 1; });
+
           const mapa = versao.mapa_questoes as any[];
           const mcItems = mapa
             .filter((item: any) => item.resposta_correta_nova !== null)
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
           gabarito = mcItems.map((item: any, idx: number) => ({
             q: idx + 1,
             correct: item.resposta_correta_nova,
+            pontos: pontosMap[item.questao_id] ?? 1,
           }));
 
           provaInfo = {
