@@ -21,6 +21,7 @@ import AppSettings from "./pages/AppSettings";
 import Notepad from "./pages/Notepad";
 import Support from "./pages/Support";
 import SupportAdmin from "./pages/SupportAdmin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
