@@ -54,9 +54,9 @@ const features = [
   },
   {
     icon: Brain,
-    title: "Provas com Correção OMR",
-    desc: "Crie provas com questões objetivas e dissertativas, embaralhe automaticamente para gerar versões A, B e C. Corrija gabaritos por foto usando inteligência artificial com leitura OMR.",
-    tag: "OMR",
+    title: "Provas com Correção por IA",
+    desc: "Crie provas com questões objetivas e dissertativas, embaralhe automaticamente para gerar versões A, B e C. Envie fotos dos gabaritos e a IA corrige tudo automaticamente com validação assistida.",
+    tag: "IA",
     highlights: ["Versões A/B/C", "Correção por foto", "QR Code"]
   },
   {

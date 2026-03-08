@@ -521,7 +521,7 @@ export default function Exams() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={gerarQr} onCheckedChange={setGerarQr} id="qr-sw" />
-                    <Label htmlFor="qr-sw" className="text-xs">Gabarito OMR com QR Code</Label>
+                    <Label htmlFor="qr-sw" className="text-xs">Folha de respostas com QR Code</Label>
                   </div>
                 </CardContent>
               </Card>
