@@ -19,6 +19,7 @@ const tipoConfig: Record<string, { label: string; icon: any; color: string; rout
 export default function Dashboard() {
   const [docs, setDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => { loadDocs(); }, []);
@@ -45,7 +46,7 @@ export default function Dashboard() {
     } catch { toast.error("Erro ao excluir"); }
   };
 
-  const counts = {
+  const counts: Record<string, number> = {
     plano: docs.filter(d => d.tipo === "plano").length,
     atividade: docs.filter(d => d.tipo === "atividade").length,
     jogo: docs.filter(d => d.tipo === "jogo").length,
@@ -54,13 +55,23 @@ export default function Dashboard() {
   };
 
   const stats = [
-    { label: "Planos criados", value: String(counts.plano), icon: BookOpen, color: "text-primary" },
-    { label: "Atividades geradas", value: String(counts.atividade), icon: FileText, color: "text-accent-foreground" },
-    { label: "Jogos criados", value: String(counts.jogo), icon: Gamepad2, color: "text-plan-pratico" },
-    { label: "Slides gerados", value: String(counts.slide), icon: Presentation, color: "text-plan-mestre" },
-    { label: "Provas criadas", value: String(counts.prova), icon: FileCheck, color: "text-destructive" },
-    { label: "Total de documentos", value: String(docs.length), icon: TrendingUp, color: "text-primary" },
+    { key: "plano", label: "Planos criados", value: String(counts.plano), icon: BookOpen, color: "text-primary" },
+    { key: "atividade", label: "Atividades geradas", value: String(counts.atividade), icon: FileText, color: "text-accent-foreground" },
+    { key: "jogo", label: "Jogos criados", value: String(counts.jogo), icon: Gamepad2, color: "text-plan-pratico" },
+    { key: "slide", label: "Slides gerados", value: String(counts.slide), icon: Presentation, color: "text-plan-mestre" },
+    { key: "prova", label: "Provas criadas", value: String(counts.prova), icon: FileCheck, color: "text-destructive" },
+    { key: "total", label: "Total de documentos", value: String(docs.length), icon: TrendingUp, color: "text-primary" },
   ];
+
+  const filteredDocs = filterType ? docs.filter(d => d.tipo === filterType) : docs;
+
+  const handleStatClick = (key: string) => {
+    if (key === "total") {
+      setFilterType(null);
+    } else {
+      setFilterType(filterType === key ? null : key);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -74,13 +85,18 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((s) => (
-          <Card key={s.label} className="shadow-card">
+          <Card
+            key={s.label}
+            className={`shadow-card cursor-pointer transition-all hover:shadow-elevated hover:scale-[1.02] ${filterType === s.key ? "ring-2 ring-primary" : ""}`}
+            onClick={() => handleStatClick(s.key)}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">{s.label}</CardTitle>
               <s.icon className={`h-5 w-5 ${s.color}`} />
             </CardHeader>
             <CardContent>
               <p className="font-display text-3xl font-bold">{s.value}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Clique para filtrar</p>
             </CardContent>
           </Card>
         ))}
@@ -88,21 +104,30 @@ export default function Dashboard() {
 
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-display text-lg">📚 Biblioteca Pessoal</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="font-display text-lg">
+              📚 {filterType ? `${tipoConfig[filterType]?.label || "Documentos"}s` : "Biblioteca Pessoal"}
+            </CardTitle>
+            {filterType && (
+              <Button variant="ghost" size="sm" onClick={() => setFilterType(null)} className="text-xs">
+                Ver todos
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-muted-foreground text-sm">Carregando documentos...</p>
-          ) : docs.length === 0 ? (
+          ) : filteredDocs.length === 0 ? (
             <p className="text-muted-foreground">
-              Nenhum documento salvo ainda. Comece criando seu primeiro plano de aula no{" "}
-              <a href="/app/bncc" className="text-primary font-medium hover:underline">Planejador BNCC</a>{" "}
-              ou explore o{" "}
-              <a href="/app/atividades" className="text-primary font-medium hover:underline">Editor de Atividades</a>.
+              {filterType ? `Nenhum(a) ${tipoConfig[filterType]?.label?.toLowerCase() || "documento"} salvo(a) ainda.` : (
+                <>Nenhum documento salvo ainda. Comece criando seu primeiro plano de aula no{" "}
+                <a href="/app/bncc" className="text-primary font-medium hover:underline">Planejador BNCC</a>.</>
+              )}
             </p>
           ) : (
             <div className="space-y-2">
-              {docs.map(doc => {
+              {filteredDocs.map(doc => {
                 const cfg = tipoConfig[doc.tipo] || tipoConfig.plano;
                 const Icon = cfg.icon;
                 return (

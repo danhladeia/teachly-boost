@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import {
   BookOpen, Brain, Gamepad2, Presentation, FileCheck, Calendar,
   Sparkles, CheckCircle2, ArrowRight, ChevronDown,
-  Zap, Clock, HelpCircle, Shield, CreditCard, Bot, Printer, FileText
+  Zap, Clock, HelpCircle, Shield, CreditCard, Bot, Printer, FileText, Tag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import heroBg from "@/assets/hero-bg.jpg";
+import bannerGoPedagoX from "@/assets/banner-gopedagox.png";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 import planStarter from "@/assets/plan-starter.png";
 import planPro from "@/assets/plan-pro.png";
@@ -34,23 +35,23 @@ const features = [
 
 const plans = [
   {
-    name: "Starter", price: "Grátis", originalPrice: null, period: "", image: planStarter,
+    name: "Starter", priceBase: null, priceWithCoupon: null, priceDisplay: "Grátis", period: "", image: planStarter,
     features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
     cta: "Começar grátis",
   },
   {
-    name: "Pro", price: "R$ 18,67", originalPrice: "R$ 24,90", period: "/mês", image: planPro,
+    name: "Pro", priceBase: "R$ 24,90", priceWithCoupon: "R$ 18,67", priceDisplay: "R$ 24,90", period: "/mês", image: planPro,
     features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
     cta: "Assinar Pro",
   },
   {
-    name: "Master", price: "R$ 33,67", originalPrice: "R$ 44,90", period: "/mês", image: planMaster,
+    name: "Master", priceBase: "R$ 44,90", priceWithCoupon: "R$ 33,67", priceDisplay: "R$ 44,90", period: "/mês", image: planMaster,
     popular: true,
     features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master",
   },
   {
-    name: "Ultra", price: "R$ 67,42", originalPrice: "R$ 89,90", period: "/mês", image: planUltra,
+    name: "Ultra", priceBase: "R$ 89,90", priceWithCoupon: "R$ 67,42", priceDisplay: "R$ 89,90", period: "/mês", image: planUltra,
     features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
     cta: "Assinar Ultra",
   },
@@ -94,13 +95,13 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Hero - Large Banner */}
+      {/* Hero - Large Banner Image */}
       <section className="relative overflow-hidden pt-16">
         <div className="gradient-hero">
-          <div className="container relative z-10 flex flex-col items-center py-20 text-center md:py-28 lg:py-36">
+          <div className="container relative z-10 flex flex-col items-center py-16 text-center md:py-24 lg:py-28">
             <motion.div initial="hidden" animate="visible" variants={stagger} className="w-full">
-              <motion.div variants={fadeUp} className="mb-6">
-                <img src={logoGoPedagoX} alt="GoPedagoX" className="mx-auto h-28 w-auto md:h-36 lg:h-44 drop-shadow-2xl" />
+              <motion.div variants={fadeUp} className="mb-8">
+                <img src={bannerGoPedagoX} alt="GoPedagoX" className="mx-auto w-full max-w-3xl drop-shadow-2xl" />
               </motion.div>
               <motion.div variants={fadeUp} className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm text-primary-foreground/80">
                 <Zap className="h-4 w-4" /> Planejamento com IA • 100% alinhado à BNCC
@@ -128,9 +129,6 @@ export default function Landing() {
               <motion.p variants={fadeUp} className="mt-4 text-sm text-primary-foreground/50">
                 5 créditos grátis • Sem cartão de crédito
               </motion.p>
-            </motion.div>
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mt-16 w-full max-w-5xl">
-              <img src={heroBg} alt="GoPedagoX plataforma" className="w-full rounded-2xl shadow-elevated border border-white/10" />
             </motion.div>
           </div>
         </div>
@@ -196,10 +194,25 @@ export default function Landing() {
       {/* Pricing */}
       <section id="pricing" className="py-20 bg-background">
         <div className="container">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-6">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos para cada necessidade</motion.h2>
             <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Comece grátis, evolua quando precisar</motion.p>
           </motion.div>
+
+          {/* Coupon banner */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="max-w-xl mx-auto mb-10">
+            <div className="rounded-xl border-2 border-dashed border-green-500/50 bg-green-50 dark:bg-green-950/20 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Tag className="h-5 w-5 text-green-600" />
+                <span className="font-display text-lg font-bold text-green-700 dark:text-green-400">25% OFF com o cupom</span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-lg bg-green-100 dark:bg-green-900/40 px-4 py-2 border border-green-300 dark:border-green-700">
+                <span className="font-mono text-xl font-extrabold tracking-widest text-green-800 dark:text-green-300">GOPEDAGOX</span>
+              </div>
+              <p className="text-xs text-green-600 dark:text-green-500 mt-2">Aplique na página de planos após criar sua conta</p>
+            </div>
+          </motion.div>
+
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) => (
               <motion.div key={plan.name} variants={fadeUp} className={`relative rounded-2xl border p-6 bg-card shadow-card ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
@@ -212,13 +225,20 @@ export default function Landing() {
                   <img src={plan.image} alt={`Plano ${plan.name}`} className="h-24 w-auto" />
                 </div>
                 <div className="text-center">
-                  {plan.originalPrice && (
-                    <p className="text-sm text-muted-foreground line-through">{plan.originalPrice}</p>
+                  {plan.priceBase ? (
+                    <>
+                      <p className="text-sm text-muted-foreground line-through">{plan.priceBase}</p>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="font-display text-3xl font-extrabold text-green-600">{plan.priceWithCoupon}</span>
+                        <span className="text-sm text-muted-foreground">{plan.period}</span>
+                      </div>
+                      <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50 dark:bg-green-950/30 text-[10px]">
+                        com cupom GOPEDAGOX
+                      </Badge>
+                    </>
+                  ) : (
+                    <span className="font-display text-3xl font-extrabold">{plan.priceDisplay}</span>
                   )}
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="font-display text-3xl font-extrabold">{plan.price}</span>
-                    <span className="text-sm text-muted-foreground">{plan.period}</span>
-                  </div>
                 </div>
                 <ul className="mt-6 space-y-2.5">
                   {plan.features.map((f) => (
