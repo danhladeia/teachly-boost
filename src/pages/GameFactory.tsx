@@ -835,9 +835,15 @@ export default function GameFactory() {
                     {mode === "manual" && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
+                          <Label className="text-[10px]">🔒 Incluir perguntas nos checkpoints <Tip text="Opcional — adicione perguntas que bloqueiam o caminho" /></Label>
+                        </div>
+                        <div className="flex items-center justify-between">
                           <Label className="text-[10px] font-semibold">Perguntas ({mazeQuestions.length}/5)</Label>
                           <Button variant="outline" size="sm" onClick={addMazeQuestion} className="h-5 text-[9px] px-2">+ Pergunta</Button>
                         </div>
+                        {mazeQuestions.length === 0 && (
+                          <p className="text-[9px] text-muted-foreground italic">Nenhuma pergunta adicionada. O labirinto será gerado apenas com o caminho.</p>
+                        )}
                         {mazeQuestions.map((q, qi) => (
                           <div key={qi} className="space-y-1 border rounded p-2 bg-muted/30">
                             <div className="flex items-center justify-between">
