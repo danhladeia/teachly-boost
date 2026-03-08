@@ -36,6 +36,8 @@ const AppRoutes = () => (
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/termos" element={<Terms />} />
+    <Route path="/privacidade" element={<Privacy />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="bncc" element={<BNCCPlanner />} />
