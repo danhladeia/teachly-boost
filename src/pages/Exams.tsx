@@ -578,7 +578,7 @@ export default function Exams() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
+                <CardContent className="space-y-2">
                   {questoes.map((q, idx) => (
                     <div key={q.id} className="rounded-lg border p-2.5 space-y-2 bg-card">
                       <div className="flex items-center justify-between">
