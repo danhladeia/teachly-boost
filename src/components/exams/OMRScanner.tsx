@@ -630,10 +630,13 @@ export default function OMRScanner() {
                           <div className="text-center space-y-1">
                             <p className="text-4xl font-bold text-primary">{current.correctionResult.percentage}%</p>
                             <p className="text-sm text-muted-foreground">
-                              {current.correctionResult.correct} de {current.correctionResult.total} questões corretas
+                              {current.correctionResult.earnedPoints} de {current.correctionResult.totalPoints} pontos
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              ({current.correctionResult.correct} de {current.correctionResult.total} questões corretas)
                             </p>
                             <p className="text-xl font-semibold">
-                              Nota: {((current.correctionResult.correct / current.correctionResult.total) * 10).toFixed(1)}
+                              Nota: {current.correctionResult.totalPoints > 0 ? ((current.correctionResult.earnedPoints / current.correctionResult.totalPoints) * 10).toFixed(1) : "0.0"}
                             </p>
                           </div>
                           <div className="border-t pt-3 grid grid-cols-5 sm:grid-cols-10 gap-1">
@@ -645,6 +648,7 @@ export default function OMRScanner() {
                               }`}>
                                 <div className="font-bold">{d.q}</div>
                                 <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
+                                {d.pontos !== 1 && <div className="text-[8px]">{d.pontos}pt</div>}
                               </div>
                             ))}
                           </div>
