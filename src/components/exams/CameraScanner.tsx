@@ -420,54 +420,51 @@ export default function CameraScanner() {
       {/* STEP 3: Validate answers */}
       {step === "validate" && (
         <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Eye className="h-4 w-4 text-primary" />
-              Validar Leitura
+          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-1.5 sm:gap-2">
+              <Eye className="h-4 w-4 text-primary shrink-0" />
+              <span>Validar</span>
               {hasLowConfidence && (
-                <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-600 ml-auto">
-                  <AlertTriangle className="h-3 w-3 mr-1" /> Requer atenção
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] border-amber-500 text-amber-600 ml-auto">
+                  <AlertTriangle className="h-3 w-3 mr-0.5" /> Atenção
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Info row */}
-            <div className="flex items-start gap-3">
+          <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
+            {/* Info row - compact on mobile */}
+            <div className="flex items-start gap-2 sm:gap-3">
               {capturedImage && (
-                <img src={capturedImage} alt="Captura" className="w-20 h-28 object-cover rounded-lg border shrink-0" />
+                <img src={capturedImage} alt="Captura" className="w-14 h-20 sm:w-20 sm:h-28 object-cover rounded-lg border shrink-0" />
               )}
-              <div className="space-y-1.5 flex-1 min-w-0">
-                {provaInfo && <p className="text-xs font-semibold text-primary truncate">{provaInfo.titulo}</p>}
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Nome do aluno</Label>
-                  <Input
-                    value={nomeAluno || ""}
-                    placeholder="Digite o nome"
-                    onChange={e => setNomeAluno(e.target.value || null)}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="flex gap-1.5 flex-wrap">
-                  <Badge variant={qrDetected ? "default" : "secondary"} className="text-[9px]">
+              <div className="space-y-1 flex-1 min-w-0">
+                {provaInfo && <p className="text-[11px] sm:text-xs font-semibold text-primary truncate">{provaInfo.titulo}</p>}
+                <Input
+                  value={nomeAluno || ""}
+                  placeholder="Nome do aluno"
+                  onChange={e => setNomeAluno(e.target.value || null)}
+                  className="h-7 sm:h-8 text-xs sm:text-sm"
+                />
+                <div className="flex gap-1 flex-wrap">
+                  <Badge variant={qrDetected ? "default" : "secondary"} className="text-[8px] sm:text-[9px]">
                     {qrDetected ? "✓ QR" : "✗ QR"}
                   </Badge>
-                  <Badge variant="secondary" className="text-[9px]">
-                    {respostas.filter(r => r.alternativa !== null).length}/{gabarito?.length || "?"} respostas
+                  <Badge variant="secondary" className="text-[8px] sm:text-[9px]">
+                    {respostas.filter(r => r.alternativa !== null).length}/{gabarito?.length || "?"} lidas
                   </Badge>
                 </div>
               </div>
             </div>
 
-            {/* Instruction */}
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-2">
-              <p className="text-[11px] text-amber-800 dark:text-amber-300">
-                <strong>Revise as respostas abaixo.</strong> Itens em <span className="text-amber-500 font-bold">amarelo</span> tiveram leitura duvidosa. Clique para corrigir antes de prosseguir.
+            {/* Instruction - compact */}
+            <div className="rounded-md bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 px-2 py-1.5">
+              <p className="text-[10px] sm:text-[11px] text-amber-800 dark:text-amber-300">
+                Revise abaixo. <span className="text-amber-500 font-bold">Amarelo</span> = duvidosa. Toque para corrigir.
               </p>
             </div>
 
-            {/* Answer grid */}
-            <div className="grid grid-cols-2 gap-1.5">
+            {/* Answer grid - responsive columns */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-1">
               {(gabarito || respostas).map((item) => {
                 const qNum = "q" in item ? item.q : item.questao;
                 const detected = respostas.find(r => r.questao === qNum);
@@ -477,17 +474,17 @@ export default function CameraScanner() {
                 const isNone = detected?.confianca === "none" || detected?.alternativa === null;
 
                 return (
-                  <div key={qNum} className={`flex items-center gap-1 rounded p-1 ${
+                  <div key={qNum} className={`flex items-center gap-0.5 sm:gap-1 rounded p-0.5 sm:p-1 ${
                     isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 ring-1 ring-amber-300" :
                     isNone && !isManual ? "bg-red-50 dark:bg-red-900/10 ring-1 ring-red-300" : ""
                   }`}>
-                    <span className="text-xs font-mono w-5 text-right font-bold">{qNum}.</span>
+                    <span className="text-[10px] sm:text-xs font-mono w-4 sm:w-5 text-right font-bold shrink-0">{qNum}.</span>
                     <div className="flex gap-0.5">
                       {[0, 1, 2, 3].map(alt => (
                         <button
                           key={alt}
                           onClick={() => updateOverride(qNum, alt)}
-                          className={`w-8 h-8 rounded-full text-[11px] font-bold border-2 transition-all ${
+                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full text-[10px] sm:text-[11px] font-bold border-2 transition-all ${
                             finalAlt === alt
                               ? isManual
                                 ? "border-amber-500 bg-amber-500 text-white"
@@ -506,18 +503,19 @@ export default function CameraScanner() {
               })}
             </div>
 
-            <div className="flex items-center gap-2 text-[9px] text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" /> Leitura OK</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Duvidosa</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /> Manual</span>
+            {/* Legend - single line */}
+            <div className="flex items-center gap-2 text-[8px] sm:text-[9px] text-muted-foreground">
+              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary inline-block" /> OK</span>
+              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400 inline-block" /> Duvidosa</span>
+              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-500 inline-block" /> Manual</span>
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={retakePhoto} className="flex-1">
-                <RotateCcw className="mr-1 h-4 w-4" /> Nova Foto
+              <Button variant="outline" onClick={retakePhoto} size="sm" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm">
+                <RotateCcw className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Nova Foto
               </Button>
-              <Button onClick={correctExam} className="flex-1 gradient-primary border-0 text-primary-foreground">
-                <CheckCircle2 className="mr-1 h-4 w-4" /> Corrigir
+              <Button onClick={correctExam} size="sm" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm gradient-primary border-0 text-primary-foreground">
+                <CheckCircle2 className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Corrigir
               </Button>
             </div>
           </CardContent>
