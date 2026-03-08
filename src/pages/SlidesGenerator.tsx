@@ -53,7 +53,6 @@ export default function SlidesGenerator() {
     try {
       const ok = await deductCredit();
       if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
-    try {
       const estiloLabel = estilosImagem.find(e => e.value === estiloImagem)?.label || "Realista";
       const { data, error } = await supabase.functions.invoke("generate-slides", {
         body: {
