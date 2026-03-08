@@ -101,6 +101,7 @@ export default function GameFactory() {
   const [fontStyle, setFontStyle] = useState<string>("print");
   const [spacing, setSpacing] = useState(1);
   const [bonusWords, setBonusWords] = useState(0);
+  const [miniText, setMiniText] = useState(false);
 
   // Crossword
   const [hintStyle, setHintStyle] = useState<string>("text");
