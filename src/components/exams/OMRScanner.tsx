@@ -234,8 +234,8 @@ export default function OMRScanner() {
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-lg flex items-center gap-2">
-            <ScanLine className="h-5 w-5 text-primary" />
-            Correção Automática de Provas
+            <Upload className="h-5 w-5 text-primary" />
+            Correção de Provas por Foto
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
