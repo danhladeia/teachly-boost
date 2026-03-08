@@ -48,23 +48,16 @@ const features = [
   {
     icon: Gamepad2,
     title: "Fábrica de Jogos Pedagógicos",
-    desc: "Mais de 20 tipos de jogos educativos: caça-palavras, cruzadinha, sudoku, anagrama, labirinto, criptograma, jogo da velha temático e muito mais. Todos prontos para imprimir em A4.",
-    tag: "20+ jogos",
-    highlights: ["Caça-palavras", "Cruzadinha", "Labirinto"]
+    desc: "Mais de 15 tipos de jogos educativos prontos para imprimir: caça-palavras, cruzadinha, sudoku, anagrama, labirinto, criptograma, complete a palavra, classifique, verdadeiro ou falso e muito mais.",
+    tag: "15+ jogos",
+    highlights: ["Caça-palavras", "Cruzadinha", "Sudoku"]
   },
   {
     icon: Brain,
-    title: "Provas com Correção por IA",
-    desc: "Crie provas com questões objetivas e dissertativas, embaralhe automaticamente para gerar versões A, B e C. Envie fotos dos gabaritos e a IA corrige tudo automaticamente com validação assistida.",
+    title: "Provas com Correção por Foto",
+    desc: "Crie provas com questões objetivas e dissertativas. Embaralhe automaticamente para gerar versões A, B e C com QR Code. Envie fotos das folhas de respostas e a IA corrige automaticamente, com validação assistida pelo professor.",
     tag: "IA",
-    highlights: ["Versões A/B/C", "Correção por foto", "QR Code"]
-  },
-  {
-    icon: Calendar,
-    title: "Sequências Didáticas",
-    desc: "Planejamento integrado de aulas com sequência de dias letivos, habilidades BNCC vinculadas, recursos pedagógicos e avaliação contínua. Ideal para projetos interdisciplinares.",
-    tag: "BNCC",
-    highlights: ["Dias letivos", "Interdisciplinar", "Avaliação"]
+    highlights: ["Versões A/B/C", "Correção por foto", "Validação assistida"]
   }
 ];
 
