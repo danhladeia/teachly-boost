@@ -11,7 +11,7 @@ export default function AppLayout() {
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           <header className="flex h-14 items-center gap-3 border-b px-4 bg-background">
-            <SidebarTrigger />
+            <SidebarTrigger className="text-foreground hover:bg-transparent hover:text-foreground" />
 
             <img src={logoHeader} alt="GoPedagoX" className="h-4 sm:h-5 w-auto opacity-50" />
           </header>
