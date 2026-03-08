@@ -135,6 +135,7 @@ export default function SlidesGenerator() {
             numSlides={numSlides} setNumSlides={setNumSlides}
             densidade={densidade} setDensidade={setDensidade}
             estiloImagem={estiloImagem} setEstiloImagem={setEstiloImagem}
+            gerarImagens={gerarImagens} setGerarImagens={setGerarImagens}
             loading={loading} onGenerate={handleGenerate}
             onFileUpload={handleFileUpload} arquivo={arquivo}
           />
