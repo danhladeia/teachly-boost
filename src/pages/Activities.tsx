@@ -510,7 +510,7 @@ export default function Activities() {
                     {!modoEnem && aiTipo !== "multipla_escolha" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Questões abertas</Label>
-                        <Input type="number" min={0} max={20} value={aiNumAbertas} onChange={e => setAiNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
+                        <Input type="number" min={0} max={20} value={aiNumAbertas === 0 ? "" : aiNumAbertas} onChange={e => setAiNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
                     <div className="space-y-1">
