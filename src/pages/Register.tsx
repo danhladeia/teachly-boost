@@ -36,7 +36,7 @@ export default function Register() {
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <Link to="/" className="inline-flex items-center justify-center mb-4">
-            <img src={logoPedagox} alt="Pedagox" className="h-20 w-auto" />
+            <img src={logoGoPedagoX} alt="GoPedagoX" className="h-20 w-auto" />
           </Link>
           <CardTitle className="font-display text-xl">Criar sua conta</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">10 planos/mês grátis • Sem cartão de crédito</p>
