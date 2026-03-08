@@ -587,7 +587,7 @@ export default function Exams() {
                         </span>
                         <div className="flex items-center gap-1">
                           <Label className="text-[9px] text-muted-foreground">Pts:</Label>
-                          <Input type="number" min={0.1} step={0.5} value={q.pontos} onChange={e => updateQuestion(q.id, { pontos: parseFloat(e.target.value) || 1 })} className="h-5 w-12 text-[10px] text-center p-0" />
+                          <Input type="number" min={0.1} step={0.5} value={q.pontos} onChange={e => updateQuestion(q.id, { pontos: e.target.value === "" ? 0 : parseFloat(e.target.value) })} className="h-5 w-12 text-[10px] text-center p-0" />
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === 0} onClick={() => moveQuestion(idx, -1)}><MoveUp className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === questoes.length - 1} onClick={() => moveQuestion(idx, 1)}><MoveDown className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeQuestion(q.id)}><Trash2 className="h-3 w-3" /></Button>
