@@ -262,17 +262,38 @@ export default function GameFactory() {
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const container = document.createElement("div");
-      container.appendChild(el.cloneNode(true));
+      const gameClone = el.cloneNode(true) as HTMLElement;
+      // Force exact A4 dimensions on clone to prevent deformation
+      gameClone.style.width = "210mm";
+      gameClone.style.minHeight = "297mm";
+      gameClone.style.padding = "10mm";
+      gameClone.style.boxSizing = "border-box";
+      gameClone.style.overflow = "hidden";
+      container.appendChild(gameClone);
       if (answerKey !== "none") {
         const ak = document.getElementById("answer-key-area");
-        if (ak) container.appendChild(ak.cloneNode(true));
+        if (ak) {
+          const akClone = ak.cloneNode(true) as HTMLElement;
+          akClone.style.width = "210mm";
+          akClone.style.minHeight = "297mm";
+          akClone.style.padding = "10mm";
+          akClone.style.boxSizing = "border-box";
+          akClone.style.pageBreakBefore = "always";
+          container.appendChild(akClone);
+        }
       }
-      html2pdf().set({
+      await html2pdf().set({
         margin: 0,
         filename: `${tema || "jogo"}-${selectedGame}.pdf`,
-        html2canvas: { scale: 2, useCORS: true },
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          width: 794,  // 210mm at 96dpi
+          windowWidth: 794,
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["table", "svg", ".no-break"] },
       }).from(container).save();
       toast.success("PDF exportado!");
     } catch { toast.error("Erro ao exportar PDF"); }
