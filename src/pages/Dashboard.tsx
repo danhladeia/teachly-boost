@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import CreditsDisplay from "@/components/CreditsDisplay";
 
 const tipoConfig: Record<string, { label: string; icon: any; color: string; route: string }> = {
   plano: { label: "Plano de Aula", icon: BookOpen, color: "text-primary", route: "/app/bncc" },
