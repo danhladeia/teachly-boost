@@ -18,12 +18,12 @@ export default function Terms() {
         <div className="prose prose-sm max-w-none space-y-8 text-muted-foreground">
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground">1. Objeto</h2>
-            <p>O GoPedagoX é uma plataforma SaaS (Software as a Service) de auxílio pedagógico que oferece ferramentas de geração automatizada de planos de aula alinhados à BNCC, atividades impressas, jogos pedagógicos, apresentações de slides e provas com correção automatizada. A plataforma destina-se exclusivamente a profissionais da educação.</p>
+            <p>O GoPedagoX é uma plataforma SaaS (Software as a Service) de auxílio pedagógico que oferece ferramentas de geração automatizada de planos de aula alinhados à BNCC, atividades impressas, jogos pedagógicos, apresentações de slides, sequências didáticas e provas com correção automatizada por leitura OMR. A plataforma destina-se exclusivamente a profissionais da educação.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground">2. Uso da Inteligência Artificial</h2>
-            <p>O GoPedagoX utiliza modelos de inteligência artificial (Gemini) para geração de conteúdos pedagógicos. Os materiais gerados são sugestões automatizadas e <strong>devem ser revisados pelo professor antes da aplicação em sala de aula</strong>.</p>
+            <p>O GoPedagoX utiliza modelos avançados de inteligência artificial (Gemini 3 Flash) para geração de conteúdos pedagógicos. Os materiais gerados são sugestões automatizadas e <strong>devem ser revisados pelo professor antes da aplicação em sala de aula</strong>.</p>
             <p className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-foreground font-medium">
               ⚠️ Segurança Pedagógica: O GoPedagoX é uma ferramenta de apoio. A responsabilidade final sobre o conteúdo ensinado e as questões aplicadas em provas é exclusiva do docente usuário. O GoPedagoX não se responsabiliza por imprecisões pedagógicas geradas pela IA.
             </p>
@@ -38,7 +38,7 @@ export default function Terms() {
               <li><strong>Master (R$ 44,90/mês):</strong> 50 créditos renováveis mensalmente, até 3 timbres escolares, suporte prioritário.</li>
               <li><strong>Ultra (R$ 89,90/mês):</strong> Créditos ilimitados, timbres ilimitados, suporte via WhatsApp.</li>
             </ul>
-            <p>Cada ação de geração por IA (plano de aula, jogo, slides, correção de prova) consome 1 crédito. Os créditos dos planos pagos são renovados a cada ciclo mensal de faturamento.</p>
+            <p>Cada ação de geração por IA (plano de aula, jogo, slides, correção de prova) consome 1 crédito. Os créditos dos planos pagos são renovados a cada ciclo mensal de faturamento. O cupom <strong>GOPEDAGOX</strong> concede 25% de desconto sobre os valores dos planos pagos.</p>
           </section>
 
           <section>
