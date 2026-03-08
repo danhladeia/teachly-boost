@@ -36,7 +36,9 @@ interface CorrectionResult {
   total: number;
   correct: number;
   percentage: number;
-  details: { q: number; selected: number; correct: number; isCorrect: boolean }[];
+  totalPoints: number;
+  earnedPoints: number;
+  details: { q: number; selected: number; correct: number; isCorrect: boolean; pontos: number }[];
 }
 
 interface SavedProva {
