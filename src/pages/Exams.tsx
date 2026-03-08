@@ -446,6 +446,7 @@ export default function Exams() {
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
           <TabsTrigger value="minhas">Minhas Provas</TabsTrigger>
           <TabsTrigger value="corrigir">Corrigir por Foto</TabsTrigger>
+          <TabsTrigger value="camera"><Camera className="mr-1 h-3 w-3" /> Câmera Instantânea</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
