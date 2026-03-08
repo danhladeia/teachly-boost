@@ -839,11 +839,19 @@ export default function GameFactory() {
                 </div>
                 {header.showHeader && (
                   <div className="space-y-1.5">
-                    <div>
-                      <Label className="text-[9px]">Logo (opcional)</Label>
-                      <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
-                      {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
-                    </div>
+                    {(timbre.escola || timbre.logoUrl) && (
+                      <div className="rounded border border-primary/20 bg-primary/5 p-1.5 text-[9px] text-primary flex items-center gap-1.5">
+                        {timbre.logoUrl && <img src={timbre.logoUrl} alt="Logo" className="h-5 object-contain" crossOrigin="anonymous" />}
+                        <span>Timbre carregado: <strong>{timbre.escola || "Logo"}</strong></span>
+                      </div>
+                    )}
+                    {!timbre.logoUrl && (
+                      <div>
+                        <Label className="text-[9px]">Logo (opcional)</Label>
+                        <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
+                        {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
+                      </div>
+                    )}
                     <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
                     <div className="grid grid-cols-2 gap-1">
                       <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
