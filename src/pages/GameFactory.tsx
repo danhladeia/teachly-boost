@@ -273,7 +273,7 @@ export default function GameFactory() {
       gameClone.style.width = "210mm";
       gameClone.style.minHeight = "297mm";
       gameClone.style.maxHeight = "297mm";
-      gameClone.style.padding = "10mm";
+      gameClone.style.padding = "15mm";
       gameClone.style.boxSizing = "border-box";
       gameClone.style.overflow = "hidden";
       gameClone.style.background = "#fff";
