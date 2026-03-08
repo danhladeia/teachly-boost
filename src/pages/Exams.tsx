@@ -175,6 +175,28 @@ export default function Exams() {
     e.target.value = "";
   };
 
+  const [generatingImageFor, setGeneratingImageFor] = useState<string | null>(null);
+
+  const handleAiImageForQuestion = async (qId: string) => {
+    const q = questoes.find(x => x.id === qId);
+    if (!q || !q.content.trim()) { toast.error("Escreva o enunciado antes de gerar uma imagem"); return; }
+    setGeneratingImageFor(qId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image", {
+        body: { prompt: `Ilustração educativa para a seguinte questão de prova: ${q.content}`, style: "educational, clean, black and white line art suitable for printing" },
+      });
+      if (error) throw error;
+      if (data?.image_url) {
+        updateQuestion(qId, { imageUrl: data.image_url });
+        toast.success("Imagem gerada com IA!");
+      } else {
+        throw new Error("Nenhuma imagem retornada");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar imagem");
+    } finally { setGeneratingImageFor(null); }
+  };
+
   const { canUseAI, deductCredit } = useCredits();
 
   const handleAiGenerate = async () => {
