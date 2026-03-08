@@ -440,7 +440,7 @@ export default function Exams() {
         <TabsList>
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
           <TabsTrigger value="minhas">Minhas Provas</TabsTrigger>
-          <TabsTrigger value="corrigir">Corrigir Prova</TabsTrigger>
+          <TabsTrigger value="corrigir">Corrigir por Foto</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
