@@ -525,53 +525,50 @@ export default function CameraScanner() {
       {/* STEP 4: Result */}
       {step === "result" && correctionResult && (
         <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
+          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
               Resultado
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-center space-y-1 py-2">
-              <p className="text-5xl font-bold text-primary">{correctionResult.percentage}%</p>
-              <p className="text-sm text-muted-foreground">
-                {correctionResult.earnedPoints} de {correctionResult.totalPoints} pontos
+          <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-center space-y-0.5 py-1 sm:py-2">
+              <p className="text-4xl sm:text-5xl font-bold text-primary">{correctionResult.percentage}%</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {correctionResult.earnedPoints}/{correctionResult.totalPoints} pts · {correctionResult.correct}/{correctionResult.total} certas
               </p>
-              <p className="text-xs text-muted-foreground">
-                ({correctionResult.correct} de {correctionResult.total} questões corretas)
-              </p>
-              <p className="text-2xl font-semibold">
+              <p className="text-xl sm:text-2xl font-semibold">
                 Nota: {correctionResult.totalPoints > 0 ? ((correctionResult.earnedPoints / correctionResult.totalPoints) * 10).toFixed(1) : "0.0"}
               </p>
-              {provaInfo && <p className="text-xs text-muted-foreground">{provaInfo.titulo}</p>}
-              {nomeAluno && <p className="text-sm font-medium">{nomeAluno}</p>}
+              {nomeAluno && <p className="text-xs sm:text-sm font-medium">{nomeAluno}</p>}
+              {provaInfo && <p className="text-[10px] sm:text-xs text-muted-foreground">{provaInfo.titulo}</p>}
             </div>
 
-            <div className="grid grid-cols-5 gap-1">
+            <div className="grid grid-cols-5 gap-0.5 sm:gap-1">
               {correctionResult.details.map(d => (
-                <div key={d.q} className={`text-center rounded p-1.5 text-[10px] font-mono ${
+                <div key={d.q} className={`text-center rounded p-1 sm:p-1.5 text-[9px] sm:text-[10px] font-mono ${
                   d.isCorrect
                     ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                     : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                 }`}>
                   <div className="font-bold">{d.q}</div>
                   <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
-                  {d.pontos !== 1 && <div className="text-[8px]">{d.pontos}pt</div>}
+                  {d.pontos !== 1 && <div className="text-[7px] sm:text-[8px]">{d.pontos}pt</div>}
                 </div>
               ))}
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep("validate")} className="flex-1">
-                <Eye className="mr-1 h-4 w-4" /> Revisar
+              <Button variant="outline" onClick={() => setStep("validate")} size="sm" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm">
+                <Eye className="mr-1 h-3.5 w-3.5" /> Revisar
               </Button>
-              <Button onClick={saveResult} disabled={saving} className="flex-1">
-                <Save className="mr-1 h-4 w-4" />
+              <Button onClick={saveResult} disabled={saving} size="sm" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm">
+                <Save className="mr-1 h-3.5 w-3.5" />
                 {saving ? "Salvando..." : "Salvar"}
               </Button>
             </div>
-            <Button variant="ghost" onClick={resetAll} className="w-full">
-              <RotateCcw className="mr-1 h-4 w-4" /> Nova Correção
+            <Button variant="ghost" onClick={resetAll} size="sm" className="w-full h-8 text-xs">
+              <RotateCcw className="mr-1 h-3.5 w-3.5" /> Nova Correção
             </Button>
           </CardContent>
         </Card>
