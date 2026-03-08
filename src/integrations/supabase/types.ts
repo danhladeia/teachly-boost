@@ -94,12 +94,16 @@ export type Database = {
           created_at: string
           creditos_correcao: number
           creditos_ia: number
+          credits_remaining: number
           email: string | null
           escola: string | null
           id: string
           logo_url: string | null
+          logos_limit: number
           nome: string | null
+          plan_type: string
           plano: string
+          subscription_status: string
           updated_at: string
           user_id: string
         }
@@ -107,12 +111,16 @@ export type Database = {
           created_at?: string
           creditos_correcao?: number
           creditos_ia?: number
+          credits_remaining?: number
           email?: string | null
           escola?: string | null
           id?: string
           logo_url?: string | null
+          logos_limit?: number
           nome?: string | null
+          plan_type?: string
           plano?: string
+          subscription_status?: string
           updated_at?: string
           user_id: string
         }
@@ -120,12 +128,16 @@ export type Database = {
           created_at?: string
           creditos_correcao?: number
           creditos_ia?: number
+          credits_remaining?: number
           email?: string | null
           escola?: string | null
           id?: string
           logo_url?: string | null
+          logos_limit?: number
           nome?: string | null
+          plan_type?: string
           plano?: string
+          subscription_status?: string
           updated_at?: string
           user_id?: string
         }

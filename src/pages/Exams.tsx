@@ -16,6 +16,7 @@ import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
 import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
 
 const niveis: Record<string, string[]> = {
   "Fundamental - Séries Iniciais": ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
@@ -174,10 +175,15 @@ export default function Exams() {
     e.target.value = "";
   };
 
+  const { canUseAI, deductCredit } = useCredits();
+
   const handleAiGenerate = async () => {
     if (!temas.trim()) { toast.error("Insira os temas da prova"); return; }
+    if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setLoading(true);
     try {
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
       const nA = tipoQuestoes === "multipla_escolha" ? 0 : numAbertas;
       const nF = tipoQuestoes === "aberta" ? 0 : numFechadas;
       const { data, error } = await supabase.functions.invoke("generate-prova", {

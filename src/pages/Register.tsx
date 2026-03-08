@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import logoPedagox from "@/assets/logo-pedagox.png";
+import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 
 export default function Register() {
   const [nome, setNome] = useState("");
@@ -36,10 +36,10 @@ export default function Register() {
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <Link to="/" className="inline-flex items-center justify-center mb-4">
-            <img src={logoPedagox} alt="Pedagox" className="h-20 w-auto" />
+            <img src={logoGoPedagoX} alt="GoPedagoX" className="h-20 w-auto" />
           </Link>
           <CardTitle className="font-display text-xl">Criar sua conta</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">10 planos/mês grátis • Sem cartão de crédito</p>
+          <p className="text-sm text-muted-foreground mt-1">5 créditos grátis • Sem cartão de crédito</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

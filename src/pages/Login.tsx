@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import logoPedagox from "@/assets/logo-pedagox.png";
+import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -33,7 +33,7 @@ export default function Login() {
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <Link to="/" className="inline-flex items-center justify-center mb-4">
-            <img src={logoPedagox} alt="Pedagox" className="h-20 w-auto" />
+            <img src={logoGoPedagoX} alt="GoPedagoX" className="h-20 w-auto" />
           </Link>
           <CardTitle className="font-display text-xl">Entrar na sua conta</CardTitle>
         </CardHeader>

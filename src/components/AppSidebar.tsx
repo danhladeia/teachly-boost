@@ -1,11 +1,11 @@
 import {
   LayoutDashboard, BookOpen, FileText, Presentation, Gamepad2,
-  FileCheck, Stamp, Settings, LogOut
+  FileCheck, Stamp, Settings, LogOut, CreditCard
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import logoPedagox from "@/assets/logo-pedagox.png";
+import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -18,7 +18,7 @@ const items = [
   { title: "Gerador de Slides", url: "/app/slides", icon: Presentation },
   { title: "Fábrica de Jogos", url: "/app/jogos", icon: Gamepad2 },
   { title: "Provas e Correção", url: "/app/provas", icon: FileCheck },
-  
+  { title: "Planos", url: "/app/planos", icon: CreditCard },
   { title: "Timbres e Branding", url: "/app/timbres", icon: Stamp },
   { title: "Configurações", url: "/app/configuracoes", icon: Settings },
 ];
@@ -35,9 +35,9 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <div className="flex h-16 items-center gap-2 px-4 border-b border-sidebar-border">
-        <img src={logoPedagox} alt="Pedagox" className="h-8 w-8 shrink-0 object-contain" />
+        <img src={logoGoPedagoX} alt="GoPedagoX" className="h-8 w-8 shrink-0 object-contain" />
         <span className="font-display text-lg font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-          Pedagox
+          GoPedagoX
         </span>
       </div>
       <SidebarContent className="pt-2">

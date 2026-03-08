@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import CreditsDisplay from "@/components/CreditsDisplay";
 
 const tipoConfig: Record<string, { label: string; icon: any; color: string; route: string }> = {
   plano: { label: "Plano de Aula", icon: BookOpen, color: "text-primary", route: "/app/bncc" },
@@ -63,9 +64,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Visão geral do seu planejamento pedagógico</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Visão geral do seu planejamento pedagógico</p>
+        </div>
+        <CreditsDisplay />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
