@@ -43,6 +43,7 @@ const AppRoutes = () => (
     <Route path="/termos" element={<Terms />} />
     <Route path="/privacidade" element={<Privacy />} />
     <Route path="/suporte-admin" element={<SupportAdmin />} />
+    <Route path="/admin" element={<AdminDashboard />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="bncc" element={<BNCCPlanner />} />
