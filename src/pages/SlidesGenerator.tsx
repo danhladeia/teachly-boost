@@ -44,9 +44,15 @@ export default function SlidesGenerator() {
     }
   };
 
+  const { canUseAI, deductCredit } = useCredits();
+
   const handleGenerate = async () => {
     if (!tema.trim()) { toast.error("Insira o tema da aula"); return; }
+    if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setLoading(true);
+    try {
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
     try {
       const estiloLabel = estilosImagem.find(e => e.value === estiloImagem)?.label || "Realista";
       const { data, error } = await supabase.functions.invoke("generate-slides", {

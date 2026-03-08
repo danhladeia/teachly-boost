@@ -215,10 +215,15 @@ export default function Activities() {
     e.target.value = "";
   };
 
+  const { canUseAI, deductCredit } = useCredits();
+
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim() && !textoImportado.trim()) { toast.error("Digite um tema ou importe um texto"); return; }
+    if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setAiLoading(true);
     try {
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setAiLoading(false); return; }
       const numAbertas = modoEnem ? 0 : (aiTipo === "multipla_escolha" ? 0 : aiNumAbertas);
       const numFechadas = modoEnem ? aiNumFechadas : (aiTipo === "aberta" ? 0 : aiNumFechadas);
       const { data, error } = await supabase.functions.invoke("generate-atividade", {

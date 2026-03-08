@@ -78,15 +78,23 @@ export default function BNCCPlanner() {
     } catch {}
   };
 
+  const { canUseAI, deductCredit } = useCredits();
+
   const handleGenerate = async () => {
     if (!nivel || !disciplinaFinal || !conteudo.trim()) {
       toast.error("Preencha todos os campos");
+      return;
+    }
+    if (!canUseAI) {
+      toast.error("Limite atingido. Faça o upgrade para continuar criando.");
       return;
     }
     setLoading(true);
     setPlano(null);
     setShowRefinamento(false);
     try {
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
       const { data, error } = await supabase.functions.invoke("generate-plano", {
         body: { nivel: nivelLabel, serie, disciplina: disciplinaFinal, conteudo, modelo, quantidade_aulas: quantidadeAulas },
       });

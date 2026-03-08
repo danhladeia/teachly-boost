@@ -175,10 +175,15 @@ export default function Exams() {
     e.target.value = "";
   };
 
+  const { canUseAI, deductCredit } = useCredits();
+
   const handleAiGenerate = async () => {
     if (!temas.trim()) { toast.error("Insira os temas da prova"); return; }
+    if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setLoading(true);
     try {
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
       const nA = tipoQuestoes === "multipla_escolha" ? 0 : numAbertas;
       const nF = tipoQuestoes === "aberta" ? 0 : numFechadas;
       const { data, error } = await supabase.functions.invoke("generate-prova", {

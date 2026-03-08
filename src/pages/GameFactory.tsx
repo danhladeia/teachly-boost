@@ -195,10 +195,15 @@ export default function GameFactory() {
     }, 200);
   };
 
+  const { canUseAI, deductCredit } = useCredits();
+
   const handleGenerateAI = async () => {
     if (!tema.trim()) { toast.error("Insira o tema"); return; }
+    if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setGenerating(true);
     try {
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setGenerating(false); return; }
       const wsDefaults = getWordSearchDefaults(etapa, difficulty);
       const { data: aiData, error } = await supabase.functions.invoke("generate-game", {
         body: { gameType: selectedGame, tema, difficulty, etapa, count: wsDefaults.wordCount },
