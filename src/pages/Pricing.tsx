@@ -214,13 +214,10 @@ export default function Pricing() {
                       <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
                     </>
                   ) : p.priceOriginal ? (
-                    <>
-                      <p className="text-sm text-muted-foreground line-through">{p.priceOriginal}</p>
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="font-display text-3xl font-extrabold">{p.priceDisplay}</span>
-                        <span className="text-sm text-muted-foreground">{p.period}</span>
-                      </div>
-                    </>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="font-display text-3xl font-extrabold">{p.priceDisplay}</span>
+                      <span className="text-sm text-muted-foreground">{p.period}</span>
+                    </div>
                   ) : (
                     <span className="font-display text-3xl font-extrabold">Grátis</span>
                   )}
