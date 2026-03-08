@@ -637,7 +637,7 @@ export default function Exams() {
             </div>
 
             {/* RIGHT - Preview */}
-            <div className="overflow-auto max-h-[calc(100vh-200px)]">
+            <div>
               <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center">
                 <div
                   id="prova-print-area"
