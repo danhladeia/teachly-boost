@@ -388,7 +388,7 @@ export default function Activities() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
@@ -510,12 +510,12 @@ export default function Activities() {
                     {!modoEnem && aiTipo !== "multipla_escolha" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Questões abertas</Label>
-                        <Input type="number" min={0} max={20} value={aiNumAbertas} onChange={e => setAiNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
+                        <Input type="number" min={0} max={20} value={aiNumAbertas === 0 ? "" : aiNumAbertas} onChange={e => setAiNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
                     <div className="space-y-1">
                       <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Questões fechadas"}</Label>
-                      <Input type="number" min={0} max={20} value={aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
+                      <Input type="number" min={0} max={20} value={aiNumFechadas === 0 ? "" : aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                     </div>
                   </div>
 
@@ -542,7 +542,7 @@ export default function Activities() {
                     <Label className="text-xs font-semibold flex items-center gap-1"><Sparkles className="h-3 w-3 text-primary" /> Imagens geradas por IA</Label>
                     <div className="space-y-1">
                       <Label className="text-[10px]">Quantidade de imagens IA</Label>
-                      <Input type="number" min={0} max={5} value={numAiImages} onChange={e => handleNumAiImagesChange(e.target.value === "" ? 0 : Math.max(0, Math.min(5, parseInt(e.target.value))))} className="h-8 text-xs" />
+                      <Input type="number" min={0} max={5} value={numAiImages === 0 ? "" : numAiImages} onChange={e => handleNumAiImagesChange(e.target.value === "" ? 0 : Math.max(0, Math.min(5, parseInt(e.target.value))))} className="h-8 text-xs" />
                     </div>
                     {Array.from({ length: numAiImages }).map((_, i) => (
                       <div key={i} className="space-y-1">

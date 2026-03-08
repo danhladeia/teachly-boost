@@ -175,7 +175,7 @@ export default function BlockEditor({ block, index, totalBlocks, onUpdate, onRem
       {block.type === "question-open" && (
         <div className="flex items-center gap-2">
           <Label className="text-[10px]">Linhas:</Label>
-          <Input type="number" min={1} max={20} value={block.lines || 4} onChange={e => onUpdate({ lines: e.target.value === "" ? 0 : parseInt(e.target.value) })} className="h-6 w-14 text-[11px]" />
+          <Input type="number" min={1} max={20} value={block.lines === 0 ? "" : (block.lines ?? 4)} onChange={e => onUpdate({ lines: e.target.value === "" ? 0 : parseInt(e.target.value) })} className="h-6 w-14 text-[11px]" />
         </div>
       )}
 

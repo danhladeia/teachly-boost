@@ -27,7 +27,8 @@ function renderKaTeX(text: string): string {
 }
 
 const PAGE_STYLE: React.CSSProperties = {
-  width: "210mm",
+  width: "100%",
+  maxWidth: "210mm",
   minHeight: "297mm",
   padding: "15mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
@@ -55,7 +56,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
   const imageSizeMap = { small: "30%", medium: "50%", large: "80%" };
 
   return (
-    <div className="bg-muted/30 rounded-lg p-4 flex justify-center">
+    <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center w-full overflow-hidden">
       <div
         id="atividade-print-area"
         ref={containerRef}
