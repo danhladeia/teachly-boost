@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Stamp, Upload, Save, Loader2, Trash2 } from "lucide-react";
+import { Stamp, Upload, Save, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,14 +7,21 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTimbre } from "@/hooks/useTimbre";
 import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
+import { Link } from "react-router-dom";
 
 export default function Branding() {
   const { user } = useAuth();
   const { timbre, loading, saveTimbre, uploadLogo } = useTimbre();
+  const { plan } = useCredits();
   const [escola, setEscola] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const hasLogo = !!logoUrl;
+  const currentLogosCount = hasLogo ? 1 : 0;
+  const canUpload = plan.planType === "ultra" || currentLogosCount < plan.logosLimit;
 
   useEffect(() => {
     setEscola(timbre.escola);
@@ -24,6 +31,10 @@ export default function Branding() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!canUpload && !hasLogo) {
+      toast.error("Limite de timbres atingido. Faça upgrade do seu plano.");
+      return;
+    }
     if (file.size > 2 * 1024 * 1024) { toast.error("Máximo 2MB"); return; }
     setUploading(true);
     const url = await uploadLogo(file);
@@ -63,6 +74,19 @@ export default function Branding() {
         </p>
       </div>
 
+      {/* Plan limit warning */}
+      {plan.logosLimit === 0 && plan.planType === "starter" && (
+        <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-50 p-4 text-sm">
+          <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+          <div>
+            <p className="font-medium text-yellow-800">Plano Starter não inclui timbres</p>
+            <p className="text-yellow-700">
+              <Link to="/app/planos" className="font-medium text-primary hover:underline">Faça upgrade para Pro</Link> para cadastrar o timbre da sua escola.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-lg">Timbre da Escola</CardTitle>
@@ -95,7 +119,7 @@ export default function Branding() {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : canUpload ? (
               <label className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors">
                 <div className="text-center">
                   {uploading ? (
@@ -109,6 +133,16 @@ export default function Branding() {
                 </div>
                 <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleLogoUpload} />
               </label>
+            ) : (
+              <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-destructive/30 bg-destructive/5">
+                <div className="text-center">
+                  <AlertTriangle className="h-8 w-8 text-destructive/50 mx-auto mb-2" />
+                  <p className="text-sm text-destructive/70">
+                    Limite de timbres atingido.{" "}
+                    <Link to="/app/planos" className="font-medium text-primary hover:underline">Fazer upgrade</Link>
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 
