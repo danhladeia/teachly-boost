@@ -9,7 +9,6 @@ interface Props {
 }
 
 export default function MazePreview({ data, config }: Props) {
-  // Scale maze to fit within printable area (190mm ~ 560px)
   const maxWidth = data.mazeSize === "small" ? 260 : data.mazeSize === "large" ? 500 : 400;
   const cellSize = Math.min(Math.floor(maxWidth / data.size), Math.floor(560 / data.size));
   const hasQuestions = data.questions.length > 0;
@@ -22,40 +21,40 @@ export default function MazePreview({ data, config }: Props) {
       colorMode={config.colorMode}
     >
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm", overflow: "hidden" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)`,
-            border: "2px solid #000",
-            maxWidth: "100%",
-          }}
-        >
-          {data.grid.flat().map((cell, i) => {
-            const isCheckpoint = cell === 2;
-            const checkpoint = isCheckpoint
-              ? data.checkpoints.find(cp => cp.row === Math.floor(i / data.size) && cp.col === i % data.size)
-              : null;
+        <table cellSpacing={0} cellPadding={0} style={{ borderCollapse: "collapse", border: "2px solid #000" }}>
+          <tbody>
+            {data.grid.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => {
+                  const isCheckpoint = cell === 2;
+                  const checkpoint = isCheckpoint
+                    ? data.checkpoints.find(cp => cp.row === ri && cp.col === ci)
+                    : null;
 
-            return (
-              <div
-                key={i}
-                style={{
-                  width: cellSize,
-                  height: cellSize,
-                  background: cell === 1 ? "#1a1a1a" : isCheckpoint ? "#fef3c7" : "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: `${cellSize * 0.5}px`,
-                  fontWeight: 700,
-                  color: "#b45309",
-                }}
-              >
-                {isCheckpoint && checkpoint ? String.fromCharCode(65 + checkpoint.questionIndex) : ""}
-              </div>
-            );
-          })}
-        </div>
+                  return (
+                    <td
+                      key={ci}
+                      style={{
+                        width: cellSize,
+                        height: cellSize,
+                        padding: 0,
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                        background: cell === 1 ? "#1a1a1a" : isCheckpoint ? "#fef3c7" : "#fff",
+                        fontSize: `${cellSize * 0.5}px`,
+                        fontWeight: 700,
+                        color: "#b45309",
+                        border: "none",
+                      }}
+                    >
+                      {isCheckpoint && checkpoint ? String.fromCharCode(65 + checkpoint.questionIndex) : ""}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", fontWeight: 700, marginBottom: "4mm" }}>
