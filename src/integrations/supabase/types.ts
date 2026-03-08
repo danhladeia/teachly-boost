@@ -206,6 +206,7 @@ export type Database = {
           imagem_url: string | null
           linhas: number | null
           ordem: number
+          pontos: number
           prova_id: string
           resposta_correta: number | null
           tipo: string
@@ -218,6 +219,7 @@ export type Database = {
           imagem_url?: string | null
           linhas?: number | null
           ordem?: number
+          pontos?: number
           prova_id: string
           resposta_correta?: number | null
           tipo?: string
@@ -230,6 +232,7 @@ export type Database = {
           imagem_url?: string | null
           linhas?: number | null
           ordem?: number
+          pontos?: number
           prova_id?: string
           resposta_correta?: number | null
           tipo?: string

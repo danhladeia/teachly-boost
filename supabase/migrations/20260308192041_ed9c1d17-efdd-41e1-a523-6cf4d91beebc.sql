@@ -1,0 +1,1 @@
+ALTER TABLE public.questoes ADD COLUMN pontos numeric NOT NULL DEFAULT 1;

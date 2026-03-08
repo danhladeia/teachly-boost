@@ -36,7 +36,9 @@ interface CorrectionResult {
   total: number;
   correct: number;
   percentage: number;
-  details: { q: number; selected: number; correct: number; isCorrect: boolean }[];
+  totalPoints: number;
+  earnedPoints: number;
+  details: { q: number; selected: number; correct: number; isCorrect: boolean; pontos: number }[];
 }
 
 interface SavedProva {
@@ -268,17 +270,22 @@ export default function OMRScanner() {
       selected: finalAnswers[item.q] ?? -1,
       correct: item.correct,
       isCorrect: (finalAnswers[item.q] ?? -1) === item.correct,
+      pontos: (item as any).pontos ?? 1,
     }));
     const correctCount = details.filter(d => d.isCorrect).length;
+    const totalPoints = details.reduce((s, d) => s + d.pontos, 0);
+    const earnedPoints = details.filter(d => d.isCorrect).reduce((s, d) => s + d.pontos, 0);
     const result: CorrectionResult = {
       total: sheet.gabarito.length,
       correct: correctCount,
-      percentage: Math.round((correctCount / sheet.gabarito.length) * 100),
+      percentage: totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0,
+      totalPoints,
+      earnedPoints,
       details,
     };
 
     setSheets(prev => prev.map((s, idx) => idx === sheetIdx ? { ...s, correctionResult: result } : s));
-    toast.success(`Correção: ${result.correct}/${result.total} (${result.percentage}%)`);
+    toast.success(`Correção: ${result.earnedPoints}/${result.totalPoints} pontos (${result.percentage}%)`);
   };
 
   const saveResult = async (sheetIdx: number) => {
@@ -295,7 +302,7 @@ export default function OMRScanner() {
         prova_id: sheet.prova_info.prova_id,
         versao_id: sheet.prova_info.versao_id || null,
         nome_aluno: sheet.nome_aluno || "Aluno não identificado",
-        nota: parseFloat(((sheet.correctionResult.correct / sheet.correctionResult.total) * 10).toFixed(1)),
+        nota: parseFloat(((sheet.correctionResult.earnedPoints / sheet.correctionResult.totalPoints) * 10).toFixed(1)),
         respostas_json: Object.entries(finalAnswers).map(([q, a]) => ({ q: parseInt(q), a })),
         imagem_gabarito_url: sheet.imagem_url,
       });
@@ -623,10 +630,13 @@ export default function OMRScanner() {
                           <div className="text-center space-y-1">
                             <p className="text-4xl font-bold text-primary">{current.correctionResult.percentage}%</p>
                             <p className="text-sm text-muted-foreground">
-                              {current.correctionResult.correct} de {current.correctionResult.total} questões corretas
+                              {current.correctionResult.earnedPoints} de {current.correctionResult.totalPoints} pontos
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              ({current.correctionResult.correct} de {current.correctionResult.total} questões corretas)
                             </p>
                             <p className="text-xl font-semibold">
-                              Nota: {((current.correctionResult.correct / current.correctionResult.total) * 10).toFixed(1)}
+                              Nota: {current.correctionResult.totalPoints > 0 ? ((current.correctionResult.earnedPoints / current.correctionResult.totalPoints) * 10).toFixed(1) : "0.0"}
                             </p>
                           </div>
                           <div className="border-t pt-3 grid grid-cols-5 sm:grid-cols-10 gap-1">
@@ -638,6 +648,7 @@ export default function OMRScanner() {
                               }`}>
                                 <div className="font-bold">{d.q}</div>
                                 <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
+                                {d.pontos !== 1 && <div className="text-[8px]">{d.pontos}pt</div>}
                               </div>
                             ))}
                           </div>

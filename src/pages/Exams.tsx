@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,7 @@ import { exportToPdf } from "@/lib/export-utils";
 import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@/lib/shuffle-utils";
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
+import CameraScanner from "@/components/exams/CameraScanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 
@@ -31,8 +32,9 @@ interface ExamQuestion {
   alternatives: string[];
   correctIndex: number;
   lines: number;
+  pontos: number;
   imageUrl?: string;
-  dbId?: string; // id from questoes table
+  dbId?: string;
 }
 
 interface SavedProva {
@@ -52,8 +54,8 @@ interface SavedVersao {
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
-const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0 });
-const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4 });
+const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0, pontos: 1 });
+const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4, pontos: 1 });
 
 export default function Exams() {
   const { user } = useAuth();
@@ -135,6 +137,7 @@ export default function Exams() {
           alternatives: (q.alternativas as string[]) || ["", "", "", ""],
           correctIndex: q.resposta_correta ?? 0,
           lines: q.linhas || 4,
+          pontos: q.pontos ?? 1,
           imageUrl: q.imagem_url || undefined,
         })));
       }
@@ -220,6 +223,7 @@ export default function Exams() {
           alternatives: q.alternatives || ["", "", "", ""],
           correctIndex: q.correctIndex ?? 0,
           lines: q.lines || 4,
+          pontos: 1,
         }));
         setQuestoes(mapped);
         setCurrentProvaId(null); // new unsaved exam
@@ -274,6 +278,7 @@ export default function Exams() {
           resposta_correta: q.type === "mc" ? q.correctIndex : null,
           linhas: q.type === "open" ? q.lines : null,
           imagem_url: q.imageUrl || null,
+          pontos: q.pontos,
         }));
         const { error: qErr } = await supabase.from("questoes").insert(questoesInsert);
         if (qErr) throw qErr;
@@ -441,6 +446,7 @@ export default function Exams() {
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
           <TabsTrigger value="minhas">Minhas Provas</TabsTrigger>
           <TabsTrigger value="corrigir">Corrigir por Foto</TabsTrigger>
+          <TabsTrigger value="camera"><Camera className="mr-1 h-3 w-3" /> Câmera Instantânea</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
@@ -579,7 +585,9 @@ export default function Exams() {
                         <span className="text-[10px] font-medium text-muted-foreground uppercase">
                           {idx + 1}. {q.type === "mc" ? "Múltipla Escolha" : "Aberta"}
                         </span>
-                        <div className="flex gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <Label className="text-[9px] text-muted-foreground">Pts:</Label>
+                          <Input type="number" min={0.1} step={0.5} value={q.pontos} onChange={e => updateQuestion(q.id, { pontos: parseFloat(e.target.value) || 1 })} className="h-5 w-12 text-[10px] text-center p-0" />
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === 0} onClick={() => moveQuestion(idx, -1)}><MoveUp className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === questoes.length - 1} onClick={() => moveQuestion(idx, 1)}><MoveDown className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeQuestion(q.id)}><Trash2 className="h-3 w-3" /></Button>
@@ -660,6 +668,7 @@ export default function Exams() {
                     <div key={`${q.id}-${idx}`} className="question" style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
                       <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                         {idx + 1}) {q.content || "Enunciado da questão"}
+                        {q.pontos !== 1 && <span style={{ fontWeight: 400, fontSize: "9pt", color: "#6b7280" }}> ({q.pontos} {q.pontos === 1 ? "ponto" : "pontos"})</span>}
                       </p>
                       {q.imageUrl && (
                         <div style={{ textAlign: "center", margin: "3mm 0", pageBreakInside: "avoid" }}>
@@ -739,6 +748,10 @@ export default function Exams() {
 
         <TabsContent value="corrigir">
           <OMRScanner />
+        </TabsContent>
+
+        <TabsContent value="camera">
+          <CameraScanner />
         </TabsContent>
       </Tabs>
     </div>
