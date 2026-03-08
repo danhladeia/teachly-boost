@@ -85,7 +85,7 @@ export default function Landing() {
           </div>
           <div className="absolute left-1/2 -translate-x-1/2">
             <Link to="/">
-              <img src={logoHeader} alt="GoPedagoX" className="h-14 w-auto" />
+              <img src={logoHeader} alt="GoPedagoX" className="h-10 w-auto" />
             </Link>
           </div>
           <div className="hidden items-center gap-8 md:flex">
