@@ -1,11 +1,35 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, Upload, CheckCircle2, XCircle, Loader2, RotateCcw, ScanLine, Eye } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Upload, CheckCircle2, XCircle, Loader2, RotateCcw, ScanLine, ImagePlus, Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import type { MapaQuestaoItem } from "@/lib/shuffle-utils";
+import { useAuth } from "@/hooks/useAuth";
+
+interface DetectedAnswer {
+  questao: number;
+  alternativa: number | null;
+  confianca: "high" | "low" | "none";
+}
+
+interface ProcessedSheet {
+  file: File;
+  previewUrl: string;
+  respostas: DetectedAnswer[];
+  nome_aluno: string | null;
+  qr_detected: boolean;
+  gabarito: { q: number; correct: number }[] | null;
+  prova_info: { titulo: string; prova_id: string; versao_id: string; versao_label: string } | null;
+  imagem_url: string | null;
+  manualOverrides: Record<number, number>;
+  correctionResult: CorrectionResult | null;
+  status: "pending" | "processing" | "done" | "error";
+  errorMsg?: string;
+}
 
 interface CorrectionResult {
   total: number;
@@ -14,538 +38,502 @@ interface CorrectionResult {
   details: { q: number; selected: number; correct: number; isCorrect: boolean }[];
 }
 
-interface GabaritoItem {
-  q: number;
-  correct: number;
-}
+const altLabels = ["A", "B", "C", "D"];
 
 export default function OMRScanner() {
-  const [gabarito, setGabarito] = useState<GabaritoItem[]>([]);
-  const [examTitle, setExamTitle] = useState("");
-  const [result, setResult] = useState<CorrectionResult | null>(null);
-  const [scanning, setScanning] = useState(false);
+  const { user } = useAuth();
+  const [sheets, setSheets] = useState<ProcessedSheet[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [processStep, setProcessStep] = useState("");
-  const [debugImageUrl, setDebugImageUrl] = useState<string | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
-  const [detectedAnswers, setDetectedAnswers] = useState<Record<number, number>>({});
-  const [manualOverrides, setManualOverrides] = useState<Record<number, number>>({});
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animRef = useRef<number>(0);
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) { toast.error("Selecione imagens JPG ou PNG"); return; }
 
-  useEffect(() => { return () => stopCamera(); }, []);
+    const newSheets: ProcessedSheet[] = imageFiles.map(file => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      respostas: [],
+      nome_aluno: null,
+      qr_detected: false,
+      gabarito: null,
+      prova_info: null,
+      imagem_url: null,
+      manualOverrides: {},
+      correctionResult: null,
+      status: "pending",
+    }));
 
-  // ---- QR Decoding ----
-  const decodeQr = useCallback(async (imageData: ImageData): Promise<any | null> => {
-    const jsQR = (await import("jsqr")).default;
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
-    if (!code) return null;
-    try {
-      const parsed = JSON.parse(code.data);
-      // New format: { v: "uuid" } - fetch from DB
-      if (parsed.v) {
-        return { type: "db", versaoId: parsed.v };
-      }
-      // Legacy format: { gabarito: [...], titulo, numQ, gridMeta }
-      if (parsed.gabarito && Array.isArray(parsed.gabarito)) {
-        return { type: "inline", ...parsed };
-      }
-    } catch {}
-    return null;
+    setSheets(prev => [...prev, ...newSheets]);
+    toast.success(`${imageFiles.length} imagem(ns) adicionada(s)`);
   }, []);
 
-  // Fetch gabarito from database using versao qr_code_id
-  const fetchGabaritoFromDb = async (versaoId: string): Promise<{ gabarito: GabaritoItem[]; titulo: string; numQ: number } | null> => {
-    try {
-      setProcessStep("Buscando gabarito no banco de dados...");
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
+  }, [addFiles]);
 
-      // Fetch versao by qr_code_id
-      const { data: versao, error: vErr } = await supabase
-        .from("versoes_prova")
-        .select("*, provas(titulo)")
-        .eq("qr_code_id", versaoId)
-        .single();
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) addFiles(e.target.files);
+    e.target.value = "";
+  }, [addFiles]);
 
-      if (vErr || !versao) {
-        toast.error("Versão não encontrada no banco de dados");
-        return null;
-      }
-
-      const mapa = versao.mapa_questoes as unknown as MapaQuestaoItem[];
-      const mcItems = mapa
-        .filter(item => item.resposta_correta_nova !== null)
-        .sort((a, b) => a.nova_ordem - b.nova_ordem);
-
-      const gabaritoFromDb: GabaritoItem[] = mcItems.map((item, idx) => ({
-        q: idx + 1,
-        correct: item.resposta_correta_nova!,
-      }));
-
-      const provaTitle = (versao as any).provas?.titulo || "Prova";
-
-      return {
-        gabarito: gabaritoFromDb,
-        titulo: `${provaTitle} — Versão ${versao.versao_label}`,
-        numQ: gabaritoFromDb.length,
-      };
-    } catch (err) {
-      console.error("Error fetching gabarito:", err);
-      toast.error("Erro ao buscar gabarito");
-      return null;
-    }
+  const removeSheet = (idx: number) => {
+    setSheets(prev => {
+      URL.revokeObjectURL(prev[idx].previewUrl);
+      return prev.filter((_, i) => i !== idx);
+    });
+    if (currentIdx >= sheets.length - 1 && currentIdx > 0) setCurrentIdx(currentIdx - 1);
   };
 
-  // ---- Bubble Detection (unchanged CV logic) ----
-  const analyzeBubbles = useCallback((
-    imageData: ImageData, width: number, height: number, numQuestions: number,
-    gridMeta?: { cols: number; rowsPerCol: number; alternatives: number }
-  ): Record<number, number> => {
-    const data = imageData.data;
-    const gray = new Uint8Array(width * height);
-    for (let i = 0; i < width * height; i++) {
-      gray[i] = Math.round(data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114);
-    }
-    const marks = findAlignmentMarks(gray, width, height);
-    if (marks.length < 4) return analyzeWithEstimatedGrid(gray, width, height, numQuestions, gridMeta);
-
-    const sorted = sortCornerMarks(marks, width, height);
-    const cols = gridMeta?.cols || Math.ceil(numQuestions / 10);
-    const rowsPerCol = gridMeta?.rowsPerCol || 10;
-    const numAlts = gridMeta?.alternatives || 4;
-    const tlx = sorted[0].x, tly = sorted[0].y;
-    const trx = sorted[1].x;
-    const bly = sorted[2].y;
-    const sheetW = trx - tlx, sheetH = bly - tly;
-    const gridStartX = tlx + sheetW * 0.05, gridStartY = tly + sheetH * 0.28;
-    const gridEndX = tlx + sheetW * 0.65, gridEndY = tly + sheetH * 0.90;
-    const gridW = gridEndX - gridStartX, gridH = gridEndY - gridStartY;
-    const colWidth = gridW / cols;
-    const answers: Record<number, number> = {};
-
-    for (let col = 0; col < cols; col++) {
-      const questionsInCol = Math.min(rowsPerCol, numQuestions - col * rowsPerCol);
-      const rowHeight = gridH / rowsPerCol;
-      for (let row = 0; row < questionsInCol; row++) {
-        const qNum = col * rowsPerCol + row + 1;
-        const fillLevels: number[] = [];
-        for (let alt = 0; alt < numAlts; alt++) {
-          const bubbleAreaStart = gridStartX + col * colWidth + colWidth * 0.30;
-          const bubbleSpacing = (colWidth * 0.65) / numAlts;
-          const cx = Math.round(bubbleAreaStart + alt * bubbleSpacing + bubbleSpacing / 2);
-          const cy = Math.round(gridStartY + row * rowHeight + rowHeight / 2);
-          const radius = Math.round(Math.min(bubbleSpacing, rowHeight) * 0.25);
-          fillLevels.push(sampleCircularRegion(gray, width, height, cx, cy, radius));
-        }
-        const minFill = Math.min(...fillLevels);
-        const maxFill = Math.max(...fillLevels);
-        if (maxFill - minFill > 0.25 * 255) {
-          const darkestIdx = fillLevels.indexOf(minFill);
-          const otherFills = fillLevels.filter((_, i) => i !== darkestIdx);
-          const avgOther = otherFills.reduce((a, b) => a + b, 0) / otherFills.length;
-          if (avgOther - minFill > 30) answers[qNum] = darkestIdx;
-        }
-      }
-    }
-    return answers;
-  }, []);
-
-  function findAlignmentMarks(gray: Uint8Array, w: number, h: number) {
-    const marks: { x: number; y: number; size: number }[] = [];
-    const threshold = getOtsuThreshold(gray);
-    const binary = new Uint8Array(w * h);
-    for (let i = 0; i < w * h; i++) binary[i] = gray[i] < threshold ? 1 : 0;
-    const cornerSize = Math.round(Math.min(w, h) * 0.15);
-    const corners = [
-      { sx: 0, sy: 0, ex: cornerSize, ey: cornerSize },
-      { sx: w - cornerSize, sy: 0, ex: w, ey: cornerSize },
-      { sx: 0, sy: h - cornerSize, ex: cornerSize, ey: h },
-      { sx: w - cornerSize, sy: h - cornerSize, ex: w, ey: h },
-    ];
-    for (const c of corners) {
-      const mark = findDarkestCluster(binary, w, c.sx, c.sy, c.ex, c.ey);
-      if (mark) marks.push(mark);
-    }
-    return marks;
-  }
-
-  function findDarkestCluster(binary: Uint8Array, stride: number, sx: number, sy: number, ex: number, ey: number) {
-    const visited = new Set<number>();
-    let best: { x: number; y: number; size: number } | null = null;
-    for (let y = sy; y < ey; y++) {
-      for (let x = sx; x < ex; x++) {
-        const idx = y * stride + x;
-        if (binary[idx] === 1 && !visited.has(idx)) {
-          const queue = [{ x, y }];
-          const cluster: { x: number; y: number }[] = [];
-          visited.add(idx);
-          while (queue.length > 0 && cluster.length < 5000) {
-            const p = queue.shift()!;
-            cluster.push(p);
-            for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-              const nx = p.x + dx, ny = p.y + dy;
-              if (nx >= sx && nx < ex && ny >= sy && ny < ey) {
-                const nIdx = ny * stride + nx;
-                if (binary[nIdx] === 1 && !visited.has(nIdx)) { visited.add(nIdx); queue.push({ x: nx, y: ny }); }
-              }
-            }
-          }
-          if (cluster.length > 50) {
-            const cx = cluster.reduce((s, p) => s + p.x, 0) / cluster.length;
-            const cy = cluster.reduce((s, p) => s + p.y, 0) / cluster.length;
-            if (!best || cluster.length > best.size) best = { x: Math.round(cx), y: Math.round(cy), size: cluster.length };
-          }
-        }
-      }
-    }
-    return best;
-  }
-
-  function sortCornerMarks(marks: { x: number; y: number }[], _w: number, _h: number) {
-    const tl = marks.reduce((b, m) => (!b || (m.x + m.y) < (b.x + b.y) ? m : b));
-    const br = marks.reduce((b, m) => (!b || (m.x + m.y) > (b.x + b.y) ? m : b));
-    const tr = marks.reduce((b, m) => (!b || (m.x - m.y) > (b.x - b.y) ? m : b));
-    const bl = marks.reduce((b, m) => (!b || (m.y - m.x) > (b.y - b.x) ? m : b));
-    return [tl, tr, bl, br];
-  }
-
-  function getOtsuThreshold(gray: Uint8Array) {
-    const hist = new Array(256).fill(0);
-    for (let i = 0; i < gray.length; i++) hist[gray[i]]++;
-    const total = gray.length;
-    let sum = 0;
-    for (let i = 0; i < 256; i++) sum += i * hist[i];
-    let sumB = 0, wB = 0, wF = 0, maxVar = 0, threshold = 128;
-    for (let i = 0; i < 256; i++) {
-      wB += hist[i]; if (wB === 0) continue;
-      wF = total - wB; if (wF === 0) break;
-      sumB += i * hist[i];
-      const mB = sumB / wB, mF = (sum - sumB) / wF;
-      const v = wB * wF * (mB - mF) * (mB - mF);
-      if (v > maxVar) { maxVar = v; threshold = i; }
-    }
-    return threshold;
-  }
-
-  function sampleCircularRegion(gray: Uint8Array, w: number, h: number, cx: number, cy: number, radius: number) {
-    let sum = 0, count = 0;
-    const r2 = radius * radius;
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (dx * dx + dy * dy <= r2) {
-          const x = cx + dx, y = cy + dy;
-          if (x >= 0 && x < w && y >= 0 && y < h) { sum += gray[y * w + x]; count++; }
-        }
-      }
-    }
-    return count > 0 ? sum / count : 255;
-  }
-
-  function analyzeWithEstimatedGrid(gray: Uint8Array, w: number, h: number, numQuestions: number, gridMeta?: { cols: number; rowsPerCol: number; alternatives: number }) {
-    const answers: Record<number, number> = {};
-    const cols = gridMeta?.cols || Math.ceil(numQuestions / 10);
-    const rowsPerCol = gridMeta?.rowsPerCol || 10;
-    const numAlts = gridMeta?.alternatives || 4;
-    const gridStartX = w * 0.08, gridStartY = h * 0.30, gridEndX = w * 0.65, gridEndY = h * 0.92;
-    const gridW = gridEndX - gridStartX, gridH = gridEndY - gridStartY;
-    const colWidth = gridW / cols, rowHeight = gridH / rowsPerCol;
-    for (let col = 0; col < cols; col++) {
-      const qInCol = Math.min(rowsPerCol, numQuestions - col * rowsPerCol);
-      for (let row = 0; row < qInCol; row++) {
-        const qNum = col * rowsPerCol + row + 1;
-        const fills: number[] = [];
-        for (let alt = 0; alt < numAlts; alt++) {
-          const bStart = gridStartX + col * colWidth + colWidth * 0.30;
-          const bSpace = (colWidth * 0.65) / numAlts;
-          const cx = Math.round(bStart + alt * bSpace + bSpace / 2);
-          const cy = Math.round(gridStartY + row * rowHeight + rowHeight / 2);
-          const r = Math.round(Math.min(bSpace, rowHeight) * 0.22);
-          fills.push(sampleCircularRegion(gray, w, h, cx, cy, r));
-        }
-        const minF = Math.min(...fills);
-        const others = fills.filter((_, i) => i !== fills.indexOf(minF));
-        const avgO = others.reduce((a, b) => a + b, 0) / others.length;
-        if (avgO - minF > 25) answers[qNum] = fills.indexOf(minF);
-      }
-    }
-    return answers;
-  }
-
-  // ---- Process Image ----
-  const processImage = useCallback(async (canvas: HTMLCanvasElement) => {
+  const processAllSheets = async () => {
+    if (sheets.length === 0) return;
     setProcessing(true);
-    const ctx = canvas.getContext("2d")!;
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setProgress(0);
 
-    setProcessStep("Procurando QR Code...");
-    const qrData = await decodeQr(imageData);
-    if (!qrData) {
-      toast.error("QR Code não encontrado. Tente uma foto mais nítida.");
-      setProcessing(false); setProcessStep(""); return;
+    for (let i = 0; i < sheets.length; i++) {
+      if (sheets[i].status === "done") { setProgress(((i + 1) / sheets.length) * 100); continue; }
+
+      setCurrentIdx(i);
+      setSheets(prev => prev.map((s, idx) => idx === i ? { ...s, status: "processing" } : s));
+
+      try {
+        const formData = new FormData();
+        formData.append("image", sheets[i].file);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Faça login primeiro");
+
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const resp = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/process-omr`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            body: formData,
+          }
+        );
+
+        const result = await resp.json();
+        if (!result.success) throw new Error(result.error || "Erro no processamento");
+
+        setSheets(prev => prev.map((s, idx) => idx === i ? {
+          ...s,
+          status: "done",
+          respostas: result.respostas || [],
+          nome_aluno: result.nome_aluno,
+          qr_detected: result.qr_detected,
+          gabarito: result.gabarito,
+          prova_info: result.prova_info,
+          imagem_url: result.imagem_url,
+        } : s));
+      } catch (err: any) {
+        setSheets(prev => prev.map((s, idx) => idx === i ? { ...s, status: "error", errorMsg: err.message } : s));
+      }
+
+      setProgress(((i + 1) / sheets.length) * 100);
     }
 
-    let gabaritoData: GabaritoItem[];
-    let title: string;
-    let numQ: number;
-    let gridMeta: any;
-
-    if (qrData.type === "db") {
-      // New system: fetch from database
-      const dbResult = await fetchGabaritoFromDb(qrData.versaoId);
-      if (!dbResult) { setProcessing(false); setProcessStep(""); return; }
-      gabaritoData = dbResult.gabarito;
-      title = dbResult.titulo;
-      numQ = dbResult.numQ;
-      gridMeta = { cols: Math.ceil(numQ / 10), rowsPerCol: 10, alternatives: 4 };
-    } else {
-      // Legacy inline
-      gabaritoData = qrData.gabarito;
-      title = qrData.titulo || "Prova";
-      numQ = qrData.numQ || gabaritoData.length;
-      gridMeta = qrData.gridMeta;
-    }
-
-    setGabarito(gabaritoData);
-    setExamTitle(title);
-    toast.success(`Gabarito "${title}" detectado: ${gabaritoData.length} questões`);
-
-    setProcessStep("Detectando respostas preenchidas...");
-    await new Promise(r => setTimeout(r, 100));
-
-    const answers = analyzeBubbles(imageData, canvas.width, canvas.height, numQ, gridMeta);
-    setDetectedAnswers(answers);
-    setManualOverrides({});
-
-    const answeredCount = Object.keys(answers).length;
-    if (answeredCount > 0) toast.success(`${answeredCount} respostas detectadas!`);
-    else toast.warning("Nenhuma resposta detectada. Verifique preenchimento.");
-
-    // Debug image
-    const dc = document.createElement("canvas");
-    dc.width = canvas.width; dc.height = canvas.height;
-    const dctx = dc.getContext("2d")!;
-    dctx.putImageData(imageData, 0, 0);
-    dctx.strokeStyle = "#00ff00"; dctx.lineWidth = 3;
-    for (const [qStr] of Object.entries(answers)) {
-      const q = parseInt(qStr);
-      dctx.fillStyle = "rgba(0, 255, 0, 0.3)";
-      dctx.fillRect(10, q * 20, 100, 15);
-    }
-    setDebugImageUrl(dc.toDataURL());
-    setProcessStep(""); setProcessing(false);
-  }, [decodeQr, analyzeBubbles]);
-
-  // ---- Camera ----
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } });
-      streamRef.current = stream; setScanning(true);
-      setTimeout(() => { if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); } }, 300);
-    } catch { toast.error("Não foi possível acessar a câmera"); }
+    setProcessing(false);
+    toast.success("Processamento concluído!");
   };
 
-  const stopCamera = useCallback(() => {
-    cancelAnimationFrame(animRef.current);
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null; setScanning(false);
-  }, []);
-
-  const captureFromCamera = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current, canvas = canvasRef.current;
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) { toast.error("Câmera ainda não está pronta"); return; }
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    canvas.getContext("2d")!.drawImage(video, 0, 0);
-    stopCamera(); processImage(canvas);
-  }, [stopCamera, processImage]);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const img = new window.Image();
-    img.onload = () => {
-      const cv = document.createElement("canvas");
-      cv.width = img.width; cv.height = img.height;
-      cv.getContext("2d")!.drawImage(img, 0, 0);
-      processImage(cv); URL.revokeObjectURL(img.src);
-    };
-    img.onerror = () => toast.error("Erro ao carregar imagem");
-    img.src = URL.createObjectURL(file); e.target.value = "";
+  const updateManualOverride = (sheetIdx: number, questao: number, alt: number) => {
+    setSheets(prev => prev.map((s, idx) => {
+      if (idx !== sheetIdx) return s;
+      const currentAnswer = { ...s.manualOverrides };
+      const detected = s.respostas.find(r => r.questao === questao)?.alternativa;
+      // Toggle off if clicking same manual override
+      if (currentAnswer[questao] === alt) {
+        delete currentAnswer[questao];
+      } else {
+        currentAnswer[questao] = alt;
+      }
+      return { ...s, manualOverrides: currentAnswer, correctionResult: null };
+    }));
   };
 
-  const getFinalAnswers = (): Record<number, number> => ({ ...detectedAnswers, ...manualOverrides });
+  const getFinalAnswers = (sheet: ProcessedSheet): Record<number, number> => {
+    const answers: Record<number, number> = {};
+    for (const r of sheet.respostas) {
+      if (r.alternativa !== null) answers[r.questao] = r.alternativa;
+    }
+    return { ...answers, ...sheet.manualOverrides };
+  };
 
-  const handleCorrect = () => {
-    if (gabarito.length === 0) return;
-    const finalAnswers = getFinalAnswers();
-    const details = gabarito.map(item => ({
+  const correctSheet = (sheetIdx: number) => {
+    const sheet = sheets[sheetIdx];
+    if (!sheet.gabarito || sheet.gabarito.length === 0) {
+      toast.error("Gabarito não encontrado. QR Code não detectado ou versão não encontrada.");
+      return;
+    }
+
+    const finalAnswers = getFinalAnswers(sheet);
+    const details = sheet.gabarito.map(item => ({
       q: item.q,
       selected: finalAnswers[item.q] ?? -1,
       correct: item.correct,
       isCorrect: (finalAnswers[item.q] ?? -1) === item.correct,
     }));
     const correctCount = details.filter(d => d.isCorrect).length;
-    setResult({ total: gabarito.length, correct: correctCount, percentage: Math.round((correctCount / gabarito.length) * 100), details });
-    toast.success("Correção concluída!");
+    const result: CorrectionResult = {
+      total: sheet.gabarito.length,
+      correct: correctCount,
+      percentage: Math.round((correctCount / sheet.gabarito.length) * 100),
+      details,
+    };
+
+    setSheets(prev => prev.map((s, idx) => idx === sheetIdx ? { ...s, correctionResult: result } : s));
+    toast.success(`Correção: ${result.correct}/${result.total} (${result.percentage}%)`);
+  };
+
+  const saveResult = async (sheetIdx: number) => {
+    const sheet = sheets[sheetIdx];
+    if (!sheet.correctionResult || !sheet.prova_info || !user) {
+      toast.error("Corrija a prova antes de salvar");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const finalAnswers = getFinalAnswers(sheet);
+      const { error } = await supabase.from("respostas_alunos").insert({
+        prova_id: sheet.prova_info.prova_id,
+        versao_id: sheet.prova_info.versao_id,
+        nome_aluno: sheet.nome_aluno || "Aluno não identificado",
+        nota: parseFloat(((sheet.correctionResult.correct / sheet.correctionResult.total) * 10).toFixed(1)),
+        respostas_json: Object.entries(finalAnswers).map(([q, a]) => ({ q: parseInt(q), a })),
+        imagem_gabarito_url: sheet.imagem_url,
+      });
+
+      if (error) throw error;
+      toast.success("Resultado salvo com sucesso!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const reset = () => {
-    setGabarito([]); setDetectedAnswers({}); setManualOverrides({});
-    setResult(null); setExamTitle(""); setDebugImageUrl(null); setShowDebug(false);
+    sheets.forEach(s => URL.revokeObjectURL(s.previewUrl));
+    setSheets([]);
+    setCurrentIdx(0);
+    setProgress(0);
   };
 
-  const altLabels = ["A", "B", "C", "D"];
-  const finalAnswers = getFinalAnswers();
+  const current = sheets[currentIdx];
+  const hasLowConfidence = current?.respostas.some(r => r.confianca === "low") ?? false;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4">
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-lg flex items-center gap-2">
             <ScanLine className="h-5 w-5 text-primary" />
-            Correção Automática de Prova
+            Correção Automática de Provas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {gabarito.length === 0 ? (
+          {/* Upload Area */}
+          {sheets.every(s => s.status === "pending" || sheets.length === 0) && (
             <>
               <p className="text-sm text-muted-foreground">
-                Fotografe ou envie uma imagem da <strong>folha de respostas</strong> com o QR Code visível.
-                O sistema detectará automaticamente as respostas preenchidas.
+                Envie fotos das <strong>folhas de respostas</strong> preenchidas. O sistema usará IA para detectar o QR Code, identificar a versão e ler as respostas marcadas.
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Button variant="outline" onClick={startCamera} disabled={scanning || processing}>
-                  <Camera className="mr-2 h-4 w-4" /> {scanning ? "Câmera ativa..." : "Usar câmera"}
-                </Button>
-                <label className="cursor-pointer">
-                  <Button variant="outline" className="w-full pointer-events-none" disabled={processing}>
-                    {processing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {processStep || "Processando..."}</> : <><Upload className="mr-2 h-4 w-4" /> Enviar foto</>}
-                  </Button>
-                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} />
-                </label>
-              </div>
-              {processing && (
-                <div className="space-y-2">
-                  <Progress value={processStep.includes("QR") ? 20 : processStep.includes("banco") ? 50 : processStep.includes("respostas") ? 70 : 100} className="h-2" />
-                  <p className="text-xs text-muted-foreground text-center">{processStep}</p>
-                </div>
-              )}
-              {scanning && (
-                <div className="relative rounded-lg overflow-hidden border bg-black">
-                  <video ref={videoRef} className="w-full max-h-[400px]" playsInline muted />
-                  <canvas ref={canvasRef} className="hidden" />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-64 h-64 border-2 border-primary/60 rounded-lg">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ScanLine className="h-8 w-8 text-primary/60 animate-pulse" />
-                      </div>
-                    </div>
+
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+                  dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50"
+                }`}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  multiple
+                  onChange={handleFileInput}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <ImagePlus className="h-8 w-8 text-primary" />
                   </div>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-                    <Button size="sm" className="gradient-primary border-0 text-primary-foreground" onClick={captureFromCamera}>
-                      <Camera className="mr-1 h-4 w-4" /> Capturar
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={stopCamera}>Fechar</Button>
+                  <div>
+                    <p className="font-semibold text-sm">Arraste fotos aqui ou clique para selecionar</p>
+                    <p className="text-xs text-muted-foreground mt-1">JPG ou PNG • Múltiplas imagens permitidas</p>
                   </div>
                 </div>
-              )}
-              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
-                <p className="font-semibold text-foreground">📋 Dicas para melhor detecção:</p>
-                <ul className="list-disc list-inside space-y-0.5">
-                  <li>Certifique-se de que os 4 quadrados pretos nos cantos estejam visíveis</li>
-                  <li>O QR Code deve estar nítido e sem obstruções</li>
-                  <li>Preencha os círculos completamente com caneta preta ou azul</li>
-                  <li>Evite sombras e reflexos na foto</li>
-                </ul>
               </div>
             </>
-          ) : (
+          )}
+
+          {/* Thumbnails & Process Button */}
+          {sheets.length > 0 && !processing && sheets.some(s => s.status === "pending") && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold">{sheets.length} gabarito(s) para processar</h4>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={reset}><Trash2 className="mr-1 h-3 w-3" /> Limpar</Button>
+                  <Button size="sm" onClick={processAllSheets} className="gradient-primary border-0 text-primary-foreground">
+                    <Upload className="mr-1 h-4 w-4" /> Processar Todos
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {sheets.map((s, i) => (
+                  <div key={i} className="relative group">
+                    <img src={s.previewUrl} alt={`Gabarito ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
+                    <button
+                      onClick={() => removeSheet(i)}
+                      className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Processing Progress */}
+          {processing && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Processando gabarito {currentIdx + 1} de {sheets.length}...</p>
+                  <p className="text-xs text-muted-foreground">Analisando com IA de visão computacional</p>
+                </div>
+              </div>
+              <Progress value={progress} className="h-2" />
+              <div className="flex gap-2 flex-wrap">
+                {sheets.map((s, i) => (
+                  <div key={i} className="relative">
+                    <img src={s.previewUrl} alt="" className={`h-16 w-12 object-cover rounded border-2 transition-all ${
+                      s.status === "processing" ? "border-primary animate-pulse" :
+                      s.status === "done" ? "border-green-500" :
+                      s.status === "error" ? "border-destructive" : "border-border opacity-50"
+                    }`} />
+                    {s.status === "done" && <CheckCircle2 className="absolute -bottom-1 -right-1 h-4 w-4 text-green-500 bg-background rounded-full" />}
+                    {s.status === "error" && <XCircle className="absolute -bottom-1 -right-1 h-4 w-4 text-destructive bg-background rounded-full" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Results: Tab-like navigation for each sheet */}
+          {!processing && sheets.some(s => s.status === "done" || s.status === "error") && (
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">{examTitle}</h3>
-                  <p className="text-xs text-muted-foreground">{gabarito.length} questões • {Object.keys(detectedAnswers).length} respostas detectadas</p>
-                </div>
+                <h3 className="text-sm font-semibold">Resultados</h3>
                 <div className="flex gap-2">
-                  {debugImageUrl && (
-                    <Button variant="ghost" size="sm" onClick={() => setShowDebug(!showDebug)}>
-                      <Eye className="mr-1 h-3 w-3" /> {showDebug ? "Ocultar" : "Debug"}
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={reset}><RotateCcw className="mr-1 h-3 w-3" /> Nova correção</Button>
+                  <Button variant="ghost" size="sm" onClick={reset}><RotateCcw className="mr-1 h-3 w-3" /> Nova Correção</Button>
                 </div>
               </div>
-              {showDebug && debugImageUrl && (
-                <div className="rounded-lg overflow-hidden border">
-                  <img src={debugImageUrl} alt="Debug" className="w-full max-h-[300px] object-contain bg-black" />
+
+              {/* Sheet selector */}
+              {sheets.length > 1 && (
+                <div className="flex gap-1 flex-wrap">
+                  {sheets.map((s, i) => (
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant={currentIdx === i ? "default" : "outline"}
+                      onClick={() => setCurrentIdx(i)}
+                      className="text-xs h-7"
+                    >
+                      Gabarito {i + 1}
+                      {s.status === "done" && s.correctionResult && (
+                        <Badge variant="secondary" className="ml-1 text-[9px]">{s.correctionResult.percentage}%</Badge>
+                      )}
+                      {s.status === "error" && <XCircle className="ml-1 h-3 w-3 text-destructive" />}
+                    </Button>
+                  ))}
                 </div>
               )}
-              <div className="border-t pt-3 space-y-3">
-                <h4 className="text-xs font-semibold uppercase text-muted-foreground">
-                  Respostas detectadas <span className="text-primary">(clique para corrigir manualmente)</span>
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {gabarito.map(item => {
-                    const answer = finalAnswers[item.q];
-                    const isDetected = item.q in detectedAnswers && !(item.q in manualOverrides);
-                    return (
-                      <div key={item.q} className="flex items-center gap-1">
-                        <span className="text-xs font-mono w-6 text-right font-semibold">{item.q}.</span>
-                        <div className="flex gap-0.5">
-                          {[0,1,2,3].map(alt => (
-                            <button key={alt} onClick={() => {
-                              if (finalAnswers[item.q] === alt && item.q in manualOverrides) {
-                                setManualOverrides(prev => { const n = { ...prev }; delete n[item.q]; return n; });
-                              } else {
-                                setManualOverrides(prev => ({ ...prev, [item.q]: alt }));
-                              }
-                            }}
-                            className={`w-7 h-7 rounded-full text-[10px] font-bold border-2 transition-all ${
-                              answer === alt
-                                ? isDetected ? "border-primary bg-primary text-primary-foreground" : "border-amber-500 bg-amber-500 text-white"
-                                : "border-border hover:border-muted-foreground"
-                            }`}>{altLabels[alt]}</button>
-                          ))}
+
+              {/* Current sheet detail */}
+              {current && current.status === "error" && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
+                  <XCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+                  <p className="text-sm font-medium">Erro ao processar</p>
+                  <p className="text-xs text-muted-foreground">{current.errorMsg}</p>
+                </div>
+              )}
+
+              {current && current.status === "done" && (
+                <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+                  {/* Left: Original image */}
+                  <div className="space-y-3">
+                    <div className="rounded-lg overflow-hidden border">
+                      <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[500px] bg-muted" />
+                    </div>
+                    <div className="space-y-1 text-xs">
+                      {current.prova_info && (
+                        <p className="font-semibold text-primary">{current.prova_info.titulo}</p>
+                      )}
+                      {current.nome_aluno && (
+                        <div className="space-y-1">
+                          <Label className="text-[10px]">Nome do aluno (detectado)</Label>
+                          <Input
+                            value={current.nome_aluno}
+                            onChange={e => setSheets(prev => prev.map((s, i) => i === currentIdx ? { ...s, nome_aluno: e.target.value } : s))}
+                            className="h-7 text-xs"
+                          />
                         </div>
-                        {result && (
-                          result.details.find(d => d.q === item.q)?.isCorrect
-                            ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                            : <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                      )}
+                      {!current.nome_aluno && (
+                        <div className="space-y-1">
+                          <Label className="text-[10px]">Nome do aluno</Label>
+                          <Input
+                            placeholder="Digite o nome do aluno"
+                            onChange={e => setSheets(prev => prev.map((s, i) => i === currentIdx ? { ...s, nome_aluno: e.target.value || null } : s))}
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant={current.qr_detected ? "default" : "destructive"} className="text-[9px]">
+                          {current.qr_detected ? "✓ QR Detectado" : "✗ QR não encontrado"}
+                        </Badge>
+                        <Badge variant="secondary" className="text-[9px]">
+                          {current.respostas.filter(r => r.alternativa !== null).length} respostas
+                        </Badge>
+                        {hasLowConfidence && (
+                          <Badge variant="outline" className="text-[9px] border-amber-500 text-amber-600">
+                            ⚠ Requer validação
+                          </Badge>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Detecção automática</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Correção manual</span>
-                </div>
-                <Button onClick={handleCorrect} size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                  <CheckCircle2 className="mr-2 h-5 w-5" /> Corrigir Prova
-                </Button>
-              </div>
-              {result && (
-                <Card className="bg-muted/50 border-primary/20">
-                  <CardContent className="pt-4 space-y-3">
-                    <div className="text-center space-y-1">
-                      <p className="text-4xl font-bold text-primary">{result.percentage}%</p>
-                      <p className="text-sm text-muted-foreground">{result.correct} de {result.total} questões corretas</p>
-                      <p className="text-xl font-semibold">Nota: {((result.correct / result.total) * 10).toFixed(1)}</p>
                     </div>
-                    <div className="border-t pt-3 grid grid-cols-5 sm:grid-cols-10 gap-1">
-                      {result.details.map(d => (
-                        <div key={d.q} className={`text-center rounded p-1 text-[10px] font-mono ${
-                          d.isCorrect ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}>
-                          <div className="font-bold">{d.q}</div>
-                          <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
-                        </div>
-                      ))}
+                  </div>
+
+                  {/* Right: Answers validation */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">
+                      Respostas detectadas <span className="text-primary">(clique para corrigir)</span>
+                    </h4>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {(current.gabarito || current.respostas).map((item, idx) => {
+                        const qNum = "q" in item ? item.q : item.questao;
+                        const detected = current.respostas.find(r => r.questao === qNum);
+                        const finalAlt = current.manualOverrides[qNum] ?? detected?.alternativa;
+                        const isManual = qNum in current.manualOverrides;
+                        const isLow = detected?.confianca === "low";
+                        const gabItem = current.gabarito?.find(g => g.q === qNum);
+                        const corrDetail = current.correctionResult?.details.find(d => d.q === qNum);
+
+                        return (
+                          <div key={qNum} className={`flex items-center gap-1 ${isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 rounded p-0.5" : ""}`}>
+                            <span className="text-xs font-mono w-6 text-right font-semibold">{qNum}.</span>
+                            <div className="flex gap-0.5">
+                              {[0, 1, 2, 3].map(alt => (
+                                <button
+                                  key={alt}
+                                  onClick={() => updateManualOverride(currentIdx, qNum, alt)}
+                                  className={`w-7 h-7 rounded-full text-[10px] font-bold border-2 transition-all ${
+                                    finalAlt === alt
+                                      ? isManual
+                                        ? "border-amber-500 bg-amber-500 text-white"
+                                        : isLow
+                                          ? "border-amber-400 bg-amber-400 text-white animate-pulse"
+                                          : "border-primary bg-primary text-primary-foreground"
+                                      : "border-border hover:border-muted-foreground"
+                                  }`}
+                                >
+                                  {altLabels[alt]}
+                                </button>
+                              ))}
+                            </div>
+                            {corrDetail && (
+                              corrDetail.isCorrect
+                                ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                                : <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  </CardContent>
-                </Card>
+
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Alta confiança</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Baixa confiança</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Correção manual</span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => correctSheet(currentIdx)}
+                        size="lg"
+                        className="flex-1 gradient-primary border-0 text-primary-foreground hover:opacity-90"
+                        disabled={!current.gabarito}
+                      >
+                        <CheckCircle2 className="mr-2 h-5 w-5" />
+                        {current.gabarito ? "Corrigir Prova" : "Gabarito não encontrado"}
+                      </Button>
+                    </div>
+
+                    {/* Correction Result */}
+                    {current.correctionResult && (
+                      <Card className="bg-muted/50 border-primary/20">
+                        <CardContent className="pt-4 space-y-3">
+                          <div className="text-center space-y-1">
+                            <p className="text-4xl font-bold text-primary">{current.correctionResult.percentage}%</p>
+                            <p className="text-sm text-muted-foreground">
+                              {current.correctionResult.correct} de {current.correctionResult.total} questões corretas
+                            </p>
+                            <p className="text-xl font-semibold">
+                              Nota: {((current.correctionResult.correct / current.correctionResult.total) * 10).toFixed(1)}
+                            </p>
+                          </div>
+                          <div className="border-t pt-3 grid grid-cols-5 sm:grid-cols-10 gap-1">
+                            {current.correctionResult.details.map(d => (
+                              <div key={d.q} className={`text-center rounded p-1 text-[10px] font-mono ${
+                                d.isCorrect
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                              }`}>
+                                <div className="font-bold">{d.q}</div>
+                                <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <Button
+                            onClick={() => saveResult(currentIdx)}
+                            disabled={saving}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            <Save className="mr-2 h-4 w-4" />
+                            {saving ? "Salvando..." : "Salvar Resultado no Banco"}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
               )}
+            </div>
+          )}
+
+          {/* Tips */}
+          {sheets.length === 0 && (
+            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">📋 Dicas para melhor detecção:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>Fotografe a folha inteira com boa iluminação</li>
+                <li>O QR Code deve estar nítido e sem obstruções</li>
+                <li>Preencha os círculos completamente com caneta preta ou azul</li>
+                <li>Evite sombras, dobras e reflexos na foto</li>
+                <li>Você pode enviar múltiplas fotos de uma vez</li>
+              </ul>
             </div>
           )}
         </CardContent>
