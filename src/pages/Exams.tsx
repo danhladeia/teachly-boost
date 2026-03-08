@@ -452,7 +452,7 @@ export default function Exams() {
         <TabsContent value="criar">
           <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
             {/* LEFT - Config */}
-            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+            <div className="space-y-4 pr-1">
               {/* AI Generation */}
               <Card className="shadow-card">
                 <CardHeader className="py-3"><CardTitle className="text-sm font-semibold flex items-center gap-1"><Sparkles className="h-4 w-4" /> Gerar com IA</CardTitle></CardHeader>
