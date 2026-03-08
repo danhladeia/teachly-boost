@@ -270,17 +270,22 @@ export default function OMRScanner() {
       selected: finalAnswers[item.q] ?? -1,
       correct: item.correct,
       isCorrect: (finalAnswers[item.q] ?? -1) === item.correct,
+      pontos: (item as any).pontos ?? 1,
     }));
     const correctCount = details.filter(d => d.isCorrect).length;
+    const totalPoints = details.reduce((s, d) => s + d.pontos, 0);
+    const earnedPoints = details.filter(d => d.isCorrect).reduce((s, d) => s + d.pontos, 0);
     const result: CorrectionResult = {
       total: sheet.gabarito.length,
       correct: correctCount,
-      percentage: Math.round((correctCount / sheet.gabarito.length) * 100),
+      percentage: totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0,
+      totalPoints,
+      earnedPoints,
       details,
     };
 
     setSheets(prev => prev.map((s, idx) => idx === sheetIdx ? { ...s, correctionResult: result } : s));
-    toast.success(`Correção: ${result.correct}/${result.total} (${result.percentage}%)`);
+    toast.success(`Correção: ${result.earnedPoints}/${result.totalPoints} pontos (${result.percentage}%)`);
   };
 
   const saveResult = async (sheetIdx: number) => {
