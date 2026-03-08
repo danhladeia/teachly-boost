@@ -604,11 +604,18 @@ export default function Exams() {
                           <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <label className="flex items-center gap-1 cursor-pointer text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                          <Image className="h-3 w-3" /> {q.imageUrl ? "Trocar imagem" : "Inserir imagem"}
+                          <Image className="h-3 w-3" /> {q.imageUrl ? "Trocar imagem" : "Upload imagem"}
                           <input type="file" accept="image/*" className="hidden" onChange={e => handleImageUploadForQuestion(q.id, e)} />
                         </label>
+                        <button
+                          onClick={() => handleAiImageForQuestion(q.id)}
+                          disabled={generatingImageFor === q.id}
+                          className="flex items-center gap-1 text-[10px] text-primary hover:underline disabled:opacity-50"
+                        >
+                          <Sparkles className="h-3 w-3" /> {generatingImageFor === q.id ? "Gerando..." : "Gerar com IA"}
+                        </button>
                         {q.imageUrl && (
                           <button onClick={() => updateQuestion(q.id, { imageUrl: undefined })} className="text-[10px] text-destructive hover:underline">Remover</button>
                         )}
