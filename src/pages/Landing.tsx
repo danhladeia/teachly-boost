@@ -208,6 +208,10 @@ export default function Landing() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos para cada necessidade</motion.h2>
             <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Comece grátis, evolua quando precisar</motion.p>
+            <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">Use o cupom <span className="font-bold">GOPEDAGOX</span> e ganhe 25% de desconto!</span>
+            </motion.div>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) =>
