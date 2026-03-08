@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
         // Fetch base gabarito from questoes table (original order)
         const { data: questoes } = await supabase
           .from("questoes")
-          .select("ordem, tipo, resposta_correta")
+          .select("ordem, tipo, resposta_correta, pontos")
           .eq("prova_id", prova_id)
           .order("ordem");
 
@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
           gabarito = mcQuestoes.map((q: any, idx: number) => ({
             q: idx + 1,
             correct: q.resposta_correta,
+            pontos: q.pontos ?? 1,
           }));
 
           provaInfo = {
