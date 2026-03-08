@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Gamepad2, Search as SearchIcon, Grid3X3, Lock, MapPin,
   Sparkles, Loader2, Printer, RotateCcw, FileDown, ArrowLeft,
@@ -20,13 +20,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTimbre } from "@/hooks/useTimbre";
 import {
   defaultHeader, defaultDirections, etapaConfig, getWordSearchDefaults,
   type Difficulty, type EtapaEscolar, type EditorMode, type GameConfig, type GameHeader,
   type ColorMode, type GridSize, type CryptoSymbolTheme, type CryptoCipherType,
   type WordSearchDirections, type AnswerKeyMode,
 } from "@/components/games/types";
-
 import { generateWordSearch } from "@/components/games/generators/wordSearch";
 import { generateCrossword } from "@/components/games/generators/crossword";
 import { generateCryptogram } from "@/components/games/generators/cryptogram";
