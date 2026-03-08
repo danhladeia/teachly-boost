@@ -542,6 +542,11 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px]">📖 Gerar minitexto com palavras <Tip text="Gera um pequeno texto com as palavras em CAIXA ALTA para o aluno encontrar" /></Label>
+                      <Switch checked={miniText} onCheckedChange={setMiniText} />
+                    </div>
                   </Section>
 
                   {isAdvanced && (
