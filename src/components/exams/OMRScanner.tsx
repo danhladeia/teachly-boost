@@ -243,7 +243,7 @@ export default function OMRScanner() {
           {sheets.every(s => s.status === "pending" || sheets.length === 0) && (
             <>
               <p className="text-sm text-muted-foreground">
-                Envie fotos das <strong>folhas de respostas</strong> preenchidas. O sistema usará IA para detectar o QR Code, identificar a versão e ler as respostas marcadas.
+                Envie fotos das <strong>folhas de respostas</strong> preenchidas pelos alunos. A inteligência artificial detecta o QR Code, identifica a versão da prova e lê as respostas marcadas automaticamente.
               </p>
 
               <div
