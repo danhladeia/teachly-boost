@@ -419,7 +419,7 @@ export default function Exams() {
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
             <FileCheck className="h-6 w-6 text-primary" /> Provas e Correção
           </h1>
-          <p className="text-muted-foreground text-sm">Crie provas com gabarito OMR e corrija via QR Code</p>
+          <p className="text-muted-foreground text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {questoes.length > 0 && (
@@ -440,7 +440,7 @@ export default function Exams() {
         <TabsList>
           <TabsTrigger value="criar">Criar Prova</TabsTrigger>
           <TabsTrigger value="minhas">Minhas Provas</TabsTrigger>
-          <TabsTrigger value="corrigir">Corrigir Prova</TabsTrigger>
+          <TabsTrigger value="corrigir">Corrigir por Foto</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
@@ -521,7 +521,7 @@ export default function Exams() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={gerarQr} onCheckedChange={setGerarQr} id="qr-sw" />
-                    <Label htmlFor="qr-sw" className="text-xs">Gabarito OMR com QR Code</Label>
+                    <Label htmlFor="qr-sw" className="text-xs">Folha de respostas com QR Code</Label>
                   </div>
                 </CardContent>
               </Card>

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, CheckCircle2, XCircle, Loader2, RotateCcw, ScanLine, ImagePlus, Trash2, Save } from "lucide-react";
+import { Upload, CheckCircle2, XCircle, Loader2, RotateCcw, ImagePlus, Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -234,8 +234,8 @@ export default function OMRScanner() {
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-lg flex items-center gap-2">
-            <ScanLine className="h-5 w-5 text-primary" />
-            Correção Automática de Provas
+            <Upload className="h-5 w-5 text-primary" />
+            Correção de Provas por Foto
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -243,7 +243,7 @@ export default function OMRScanner() {
           {sheets.every(s => s.status === "pending" || sheets.length === 0) && (
             <>
               <p className="text-sm text-muted-foreground">
-                Envie fotos das <strong>folhas de respostas</strong> preenchidas. O sistema usará IA para detectar o QR Code, identificar a versão e ler as respostas marcadas.
+                Envie fotos das <strong>folhas de respostas</strong> preenchidas pelos alunos. A inteligência artificial detecta o QR Code, identifica a versão da prova e lê as respostas marcadas automaticamente.
               </p>
 
               <div
