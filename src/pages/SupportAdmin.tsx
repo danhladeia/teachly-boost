@@ -243,7 +243,7 @@ export default function SupportAdmin() {
 
         {/* Chat */}
         {selected ? (
-          <Card className="shadow-card flex flex-col max-h-[calc(100vh-120px)]">
+          <Card className="shadow-card flex flex-col">
             <CardHeader className="pb-2 border-b">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
