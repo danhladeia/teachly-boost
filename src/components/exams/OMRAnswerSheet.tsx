@@ -68,8 +68,6 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
         position: "relative",
         padding: "15mm",
         minHeight: "200mm",
-        borderTop: "2px dashed #94a3b8",
-        marginTop: "10mm",
       }}
     >
 
