@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { niveis, estilosImagem, type SlideTemplate, type SlideDensity } from "./types";
 
@@ -18,6 +19,7 @@ interface Props {
   numSlides: number; setNumSlides: (v: number) => void;
   densidade: SlideDensity; setDensidade: (v: SlideDensity) => void;
   estiloImagem: string; setEstiloImagem: (v: string) => void;
+  gerarImagens: boolean; setGerarImagens: (v: boolean) => void;
   loading: boolean;
   onGenerate: () => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -28,7 +30,7 @@ export default function SlideConfigPanel({
   tema, setTema, descricao, setDescricao, textoBase, setTextoBase,
   nivel, setNivel, serie, setSerie, template, setTemplate,
   numSlides, setNumSlides, densidade, setDensidade,
-  estiloImagem, setEstiloImagem,
+  estiloImagem, setEstiloImagem, gerarImagens, setGerarImagens,
   loading, onGenerate, onFileUpload, arquivo,
 }: Props) {
   return (
