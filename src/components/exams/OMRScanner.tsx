@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
-import { Upload, CheckCircle2, XCircle, Loader2, RotateCcw, ImagePlus, Trash2, Save } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Upload, CheckCircle2, XCircle, Loader2, RotateCcw, ImagePlus, Trash2, Save, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ interface ProcessedSheet {
   nome_aluno: string | null;
   qr_detected: boolean;
   gabarito: { q: number; correct: number }[] | null;
-  prova_info: { titulo: string; prova_id: string; versao_id: string; versao_label: string } | null;
+  prova_info: { titulo: string; prova_id: string; versao_id: string | null; versao_label: string } | null;
   imagem_url: string | null;
   manualOverrides: Record<number, number>;
   correctionResult: CorrectionResult | null;
@@ -38,6 +39,16 @@ interface CorrectionResult {
   details: { q: number; selected: number; correct: number; isCorrect: boolean }[];
 }
 
+interface SavedProva {
+  id: string;
+  titulo: string;
+}
+
+interface SavedVersao {
+  id: string;
+  versao_label: string;
+}
+
 const altLabels = ["A", "B", "C", "D"];
 
 export default function OMRScanner() {
@@ -48,6 +59,87 @@ export default function OMRScanner() {
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Manual prova/versao selector state
+  const [provasList, setProvasList] = useState<SavedProva[]>([]);
+  const [versoesList, setVersoesList] = useState<SavedVersao[]>([]);
+  const [selectedProvaId, setSelectedProvaId] = useState<string>("");
+  const [selectedVersaoId, setSelectedVersaoId] = useState<string>("");
+  const [loadingGabarito, setLoadingGabarito] = useState(false);
+
+  // Load user's provas on mount
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("provas")
+        .select("id, titulo")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      setProvasList((data as SavedProva[]) || []);
+    })();
+  }, [user]);
+
+  // Load versions when prova selected
+  useEffect(() => {
+    if (!selectedProvaId) { setVersoesList([]); setSelectedVersaoId(""); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("versoes_prova")
+        .select("id, versao_label")
+        .eq("prova_id", selectedProvaId)
+        .order("created_at");
+      setVersoesList((data as SavedVersao[]) || []);
+      setSelectedVersaoId("");
+    })();
+  }, [selectedProvaId]);
+
+  const fetchManualGabarito = async () => {
+    if (!selectedProvaId) { toast.error("Selecione uma prova"); return; }
+    setLoadingGabarito(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Faça login primeiro");
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const resp = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/process-omr`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prova_id: selectedProvaId,
+            versao_id: selectedVersaoId || null,
+          }),
+        }
+      );
+
+      const result = await resp.json();
+      if (!result.success) throw new Error(result.error || "Erro ao buscar gabarito");
+
+      if (!result.gabarito || result.gabarito.length === 0) {
+        toast.error("Nenhuma questão de múltipla escolha encontrada nesta prova");
+        return;
+      }
+
+      // Apply gabarito to current sheet
+      setSheets(prev => prev.map((s, idx) => idx === currentIdx ? {
+        ...s,
+        gabarito: result.gabarito,
+        prova_info: result.prova_info,
+        correctionResult: null,
+      } : s));
+
+      toast.success(`Gabarito carregado: ${result.gabarito.length} questões`);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao buscar gabarito");
+    } finally {
+      setLoadingGabarito(false);
+    }
+  };
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
@@ -146,8 +238,6 @@ export default function OMRScanner() {
     setSheets(prev => prev.map((s, idx) => {
       if (idx !== sheetIdx) return s;
       const currentAnswer = { ...s.manualOverrides };
-      const detected = s.respostas.find(r => r.questao === questao)?.alternativa;
-      // Toggle off if clicking same manual override
       if (currentAnswer[questao] === alt) {
         delete currentAnswer[questao];
       } else {
@@ -168,7 +258,7 @@ export default function OMRScanner() {
   const correctSheet = (sheetIdx: number) => {
     const sheet = sheets[sheetIdx];
     if (!sheet.gabarito || sheet.gabarito.length === 0) {
-      toast.error("Gabarito não encontrado. QR Code não detectado ou versão não encontrada.");
+      toast.error("Gabarito não encontrado. Selecione uma prova manualmente abaixo.");
       return;
     }
 
@@ -203,7 +293,7 @@ export default function OMRScanner() {
       const finalAnswers = getFinalAnswers(sheet);
       const { error } = await supabase.from("respostas_alunos").insert({
         prova_id: sheet.prova_info.prova_id,
-        versao_id: sheet.prova_info.versao_id,
+        versao_id: sheet.prova_info.versao_id || null,
         nome_aluno: sheet.nome_aluno || "Aluno não identificado",
         nota: parseFloat(((sheet.correctionResult.correct / sheet.correctionResult.total) * 10).toFixed(1)),
         respostas_json: Object.entries(finalAnswers).map(([q, a]) => ({ q: parseInt(q), a })),
@@ -411,6 +501,52 @@ export default function OMRScanner() {
                           </Badge>
                         )}
                       </div>
+
+                      {/* Manual prova selector when no gabarito */}
+                      {!current.gabarito && (
+                        <div className="mt-3 p-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/10 space-y-2">
+                          <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                            ⚠ Gabarito não detectado automaticamente
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Selecione a prova manualmente para carregar o gabarito:
+                          </p>
+                          <div className="space-y-1.5">
+                            <Select value={selectedProvaId} onValueChange={setSelectedProvaId}>
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue placeholder="Selecione a prova" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {provasList.map(p => (
+                                  <SelectItem key={p.id} value={p.id} className="text-xs">{p.titulo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {versoesList.length > 0 && (
+                              <Select value={selectedVersaoId} onValueChange={setSelectedVersaoId}>
+                                <SelectTrigger className="h-7 text-xs">
+                                  <SelectValue placeholder="Original (sem embaralhamento)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="original" className="text-xs">Original (sem embaralhamento)</SelectItem>
+                                  {versoesList.map(v => (
+                                    <SelectItem key={v.id} value={v.id} className="text-xs">Versão {v.versao_label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            <Button
+                              size="sm"
+                              className="w-full h-7 text-xs"
+                              onClick={fetchManualGabarito}
+                              disabled={!selectedProvaId || loadingGabarito}
+                            >
+                              {loadingGabarito ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Search className="mr-1 h-3 w-3" />}
+                              Carregar Gabarito
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -476,7 +612,7 @@ export default function OMRScanner() {
                         disabled={!current.gabarito}
                       >
                         <CheckCircle2 className="mr-2 h-5 w-5" />
-                        {current.gabarito ? "Corrigir Prova" : "Gabarito não encontrado"}
+                        {current.gabarito ? "Corrigir Prova" : "Selecione a prova para corrigir ↓"}
                       </Button>
                     </div>
 
@@ -533,6 +669,7 @@ export default function OMRScanner() {
                 <li>Preencha os círculos completamente com caneta preta ou azul</li>
                 <li>Evite sombras, dobras e reflexos na foto</li>
                 <li>Você pode enviar múltiplas fotos de uma vez</li>
+                <li>Se o QR não for detectado, você pode selecionar a prova manualmente</li>
               </ul>
             </div>
           )}

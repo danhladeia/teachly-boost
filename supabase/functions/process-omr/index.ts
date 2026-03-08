@@ -26,6 +26,86 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser(token);
     if (authErr || !user) throw new Error("Não autorizado");
 
+    const contentType = req.headers.get("content-type") || "";
+
+    // Check if this is a manual gabarito fetch (JSON body)
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      const { prova_id, versao_id } = body;
+
+      if (!prova_id) throw new Error("prova_id é obrigatório");
+
+      let gabarito = null;
+      let provaInfo = null;
+
+      // Fetch prova info
+      const { data: prova } = await supabase
+        .from("provas")
+        .select("id, titulo")
+        .eq("id", prova_id)
+        .eq("user_id", user.id)
+        .single();
+
+      if (!prova) throw new Error("Prova não encontrada");
+
+      if (versao_id) {
+        // Fetch gabarito from version
+        const { data: versao } = await supabase
+          .from("versoes_prova")
+          .select("*")
+          .eq("id", versao_id)
+          .eq("prova_id", prova_id)
+          .single();
+
+        if (versao) {
+          const mapa = versao.mapa_questoes as any[];
+          const mcItems = mapa
+            .filter((item: any) => item.resposta_correta_nova !== null)
+            .sort((a: any, b: any) => a.nova_ordem - b.nova_ordem);
+
+          gabarito = mcItems.map((item: any, idx: number) => ({
+            q: idx + 1,
+            correct: item.resposta_correta_nova,
+          }));
+
+          provaInfo = {
+            titulo: `${prova.titulo} — Versão ${versao.versao_label}`,
+            prova_id: prova.id,
+            versao_id: versao.id,
+            versao_label: versao.versao_label,
+          };
+        }
+      } else {
+        // Fetch base gabarito from questoes table (original order)
+        const { data: questoes } = await supabase
+          .from("questoes")
+          .select("ordem, tipo, resposta_correta")
+          .eq("prova_id", prova_id)
+          .order("ordem");
+
+        if (questoes) {
+          const mcQuestoes = questoes.filter((q: any) => q.tipo === "mc" && q.resposta_correta !== null);
+          gabarito = mcQuestoes.map((q: any, idx: number) => ({
+            q: idx + 1,
+            correct: q.resposta_correta,
+          }));
+
+          provaInfo = {
+            titulo: prova.titulo,
+            prova_id: prova.id,
+            versao_id: null,
+            versao_label: "Original",
+          };
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, gabarito, prova_info: provaInfo }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Image processing flow (FormData)
     const formData = await req.formData();
     const file = formData.get("image") as File;
     if (!file) throw new Error("Nenhuma imagem enviada");
