@@ -1,22 +1,25 @@
 import { useState } from "react";
-import { CheckCircle2, Star, Zap, Crown, Rocket, Tag } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, Tag } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import planStarter from "@/assets/plan-starter.png";
+import planPro from "@/assets/plan-pro.png";
+import planMaster from "@/assets/plan-master.png";
+import planUltra from "@/assets/plan-ultra.png";
 
 const plans = [
   {
     id: "starter",
     name: "Starter",
-    icon: Star,
+    image: planStarter,
     priceOriginal: null,
     priceDiscount: null,
     priceDisplay: "R$ 0,00",
     period: "",
     popular: false,
-    color: "text-muted-foreground",
     features: [
       "5 créditos únicos",
       "Acesso a todos os módulos",
@@ -29,13 +32,12 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    icon: Zap,
+    image: planPro,
     priceOriginal: "R$ 24,90",
     priceDiscount: "R$ 18,67",
     priceDisplay: "R$ 24,90",
     period: "/mês",
     popular: false,
-    color: "text-primary",
     features: [
       "15 créditos/mês",
       "1 Timbre Escolar",
@@ -48,13 +50,12 @@ const plans = [
   {
     id: "master",
     name: "Master",
-    icon: Crown,
+    image: planMaster,
     priceOriginal: "R$ 44,90",
     priceDiscount: "R$ 33,67",
     priceDisplay: "R$ 44,90",
     period: "/mês",
     popular: true,
-    color: "text-plan-pratico",
     features: [
       "50 créditos/mês",
       "Até 3 Timbres (Multiescolas)",
@@ -67,13 +68,12 @@ const plans = [
   {
     id: "ultra",
     name: "Ultra",
-    icon: Rocket,
+    image: planUltra,
     priceOriginal: "R$ 89,90",
     priceDiscount: "R$ 67,42",
     priceDisplay: "R$ 89,90",
     period: "/mês",
     popular: false,
-    color: "text-plan-mestre",
     features: [
       "Créditos Ilimitados",
       "Timbres Ilimitados",
@@ -141,10 +141,7 @@ export default function Pricing() {
               </div>
             )}
             <CardHeader className="text-center pb-2">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <plan.icon className={`h-6 w-6 ${plan.color}`} />
-              </div>
-              <CardTitle className="font-display text-lg">{plan.name}</CardTitle>
+              <img src={plan.image} alt={`Plano ${plan.name}`} className="mx-auto h-28 w-auto mb-2" />
             </CardHeader>
             <CardContent className="text-center space-y-4">
               {/* Pricing */}
@@ -159,10 +156,13 @@ export default function Pricing() {
                     <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
                   </>
                 ) : plan.priceOriginal ? (
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="font-display text-3xl font-extrabold">{plan.priceDisplay}</span>
-                    <span className="text-sm text-muted-foreground">{plan.period}</span>
-                  </div>
+                  <>
+                    <p className="text-sm text-muted-foreground line-through">{plan.priceOriginal}</p>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="font-display text-3xl font-extrabold">{plan.priceDisplay}</span>
+                      <span className="text-sm text-muted-foreground">{plan.period}</span>
+                    </div>
+                  </>
                 ) : (
                   <span className="font-display text-3xl font-extrabold">Grátis</span>
                 )}

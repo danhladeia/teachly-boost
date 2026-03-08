@@ -19,6 +19,8 @@ import Pricing from "./pages/Pricing";
 import Branding from "./pages/Branding";
 import AppSettings from "./pages/AppSettings";
 import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const AppRoutes = () => (
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/termos" element={<Terms />} />
+    <Route path="/privacidade" element={<Privacy />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="bncc" element={<BNCCPlanner />} />

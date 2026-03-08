@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
@@ -13,12 +14,14 @@ export default function Register() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) { toast.error("Você precisa aceitar os Termos de Uso e Política de Privacidade"); return; }
     if (password.length < 6) { toast.error("Senha deve ter no mínimo 6 caracteres"); return; }
     setLoading(true);
     const { error } = await signUp(email, password, nome);
@@ -64,7 +67,21 @@ export default function Register() {
                 <Input className="pl-10" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
             </div>
-            <Button type="submit" size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" disabled={loading}>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="terms"
+                checked={acceptedTerms}
+                onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+                Ao criar uma conta, você concorda com nossos{" "}
+                <Link to="/termos" className="text-primary font-medium hover:underline" target="_blank">Termos de Uso</Link>{" "}
+                e{" "}
+                <Link to="/privacidade" className="text-primary font-medium hover:underline" target="_blank">Política de Privacidade</Link>.
+              </label>
+            </div>
+            <Button type="submit" size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" disabled={loading || !acceptedTerms}>
               {loading ? "Criando..." : "Criar conta grátis"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
