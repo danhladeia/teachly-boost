@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { niveis, estilosImagem, type SlideTemplate, type SlideDensity } from "./types";
 
@@ -18,6 +19,7 @@ interface Props {
   numSlides: number; setNumSlides: (v: number) => void;
   densidade: SlideDensity; setDensidade: (v: SlideDensity) => void;
   estiloImagem: string; setEstiloImagem: (v: string) => void;
+  gerarImagens: boolean; setGerarImagens: (v: boolean) => void;
   loading: boolean;
   onGenerate: () => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -28,7 +30,7 @@ export default function SlideConfigPanel({
   tema, setTema, descricao, setDescricao, textoBase, setTextoBase,
   nivel, setNivel, serie, setSerie, template, setTemplate,
   numSlides, setNumSlides, densidade, setDensidade,
-  estiloImagem, setEstiloImagem,
+  estiloImagem, setEstiloImagem, gerarImagens, setGerarImagens,
   loading, onGenerate, onFileUpload, arquivo,
 }: Props) {
   return (
@@ -104,17 +106,32 @@ export default function SlideConfigPanel({
           </div>
         </div>
 
-        {/* Image style */}
+        {/* Image generation toggle */}
         <div className="space-y-1.5">
-          <Label className="text-xs">Estilo das imagens IA</Label>
-          <div className="grid grid-cols-3 gap-1.5">
-            {estilosImagem.map(e => (
-              <button key={e.value} onClick={() => setEstiloImagem(e.value)} className={`rounded-md border p-1.5 text-left transition-colors ${estiloImagem === e.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/40"}`}>
-                <span className="text-[11px] font-medium block truncate">{e.label}</span>
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <Switch checked={gerarImagens} onCheckedChange={setGerarImagens} id="img-toggle" />
+            <Label htmlFor="img-toggle" className="text-xs flex items-center gap-1">
+              <ImageIcon className="h-3.5 w-3.5" /> Gerar imagens por IA
+            </Label>
           </div>
+          {!gerarImagens && (
+            <p className="text-[10px] text-muted-foreground ml-8">Slides serão gerados apenas com texto. Você pode adicionar imagens manualmente depois.</p>
+          )}
         </div>
+
+        {/* Image style - only when generating images */}
+        {gerarImagens && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Estilo das imagens IA</Label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {estilosImagem.map(e => (
+                <button key={e.value} onClick={() => setEstiloImagem(e.value)} className={`rounded-md border p-1.5 text-left transition-colors ${estiloImagem === e.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/40"}`}>
+                  <span className="text-[11px] font-medium block truncate">{e.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* File upload */}
         <div className="space-y-1.5">

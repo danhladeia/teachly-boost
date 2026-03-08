@@ -298,6 +298,48 @@ export type Database = {
           },
         ]
       }
+      timbres: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          nome_escola: string
+          show_aluno: boolean
+          show_data: boolean
+          show_disciplina: boolean
+          show_professor: boolean
+          show_serie: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nome_escola?: string
+          show_aluno?: boolean
+          show_data?: boolean
+          show_disciplina?: boolean
+          show_professor?: boolean
+          show_serie?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nome_escola?: string
+          show_aluno?: boolean
+          show_data?: boolean
+          show_disciplina?: boolean
+          show_professor?: boolean
+          show_serie?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       versoes_prova: {
         Row: {
           created_at: string

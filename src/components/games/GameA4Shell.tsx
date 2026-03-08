@@ -5,7 +5,7 @@ const PAGE_STYLE: React.CSSProperties = {
   width: "210mm",
   minHeight: "297mm",
   maxHeight: "297mm",
-  padding: "10mm",
+  padding: "15mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
   fontSize: "11pt",
   lineHeight: 1.5,
@@ -56,15 +56,19 @@ export default function GameA4Shell({ header, title, subtitle, colorMode = "colo
               </div>
             )}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "2mm", flexWrap: "wrap", gap: "2mm" }}>
-            {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
-            {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
-            {header.serie && <span><strong>Série:</strong> {header.serie}</span>}
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm" }}>
-            <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>
-            <span><strong>Data:</strong> {header.data || "____/____/________"}</span>
-          </div>
+          {(header.professor || header.disciplina || header.serie) && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "2mm", flexWrap: "wrap", gap: "2mm" }}>
+              {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
+              {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
+              {header.serie && <span><strong>Série:</strong> {header.serie}</span>}
+            </div>
+          )}
+          {(header.aluno !== undefined || header.data !== undefined) && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm" }}>
+              {header.aluno !== undefined && <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>}
+              {header.data !== undefined && <span><strong>Data:</strong> {header.data || "____/____/________"}</span>}
+            </div>
+          )}
         </div>
       )}
 
