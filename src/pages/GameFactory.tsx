@@ -132,15 +132,13 @@ export default function GameFactory() {
   const selectedGameDef = GAMES.find(g => g.id === selectedGame);
   const isAdvanced = editorMode === "advanced";
 
-  // Auto-populate header from branding
+  // Always sync header with branding from Timbres e Branding
   useEffect(() => {
-    if (timbre.escola || timbre.logoUrl) {
-      setHeader(h => ({
-        ...h,
-        escola: h.escola || timbre.escola,
-        logoUrl: h.logoUrl || timbre.logoUrl,
-      }));
-    }
+    setHeader(h => ({
+      ...h,
+      escola: timbre.escola || h.escola,
+      logoUrl: timbre.logoUrl || h.logoUrl,
+    }));
   }, [timbre]);
 
   // Apply etapa defaults when etapa/difficulty changes for word search
