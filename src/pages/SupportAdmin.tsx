@@ -215,7 +215,7 @@ export default function SupportAdmin() {
             </Select>
           </div>
 
-          <div className="space-y-2 max-h-[calc(100vh-180px)] overflow-auto">
+          <div className="space-y-2">
             {tickets.map((t) => {
               const st = statusMap[t.status] || statusMap.open;
               const pr = priorityMap[t.priority] || priorityMap.normal;
@@ -243,7 +243,7 @@ export default function SupportAdmin() {
 
         {/* Chat */}
         {selected ? (
-          <Card className="shadow-card flex flex-col max-h-[calc(100vh-120px)]">
+          <Card className="shadow-card flex flex-col">
             <CardHeader className="pb-2 border-b">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>

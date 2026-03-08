@@ -452,7 +452,7 @@ export default function Exams() {
         <TabsContent value="criar">
           <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
             {/* LEFT - Config */}
-            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+            <div className="space-y-4 pr-1">
               {/* AI Generation */}
               <Card className="shadow-card">
                 <CardHeader className="py-3"><CardTitle className="text-sm font-semibold flex items-center gap-1"><Sparkles className="h-4 w-4" /> Gerar com IA</CardTitle></CardHeader>
@@ -496,13 +496,13 @@ export default function Exams() {
                     {tipoQuestoes !== "multipla_escolha" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Q. Abertas</Label>
-                        <Input type="number" min={0} max={30} value={numAbertas} onChange={e => setNumAbertas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                        <Input type="number" min={0} max={30} value={numAbertas} onChange={e => setNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
                     {tipoQuestoes !== "aberta" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Q. Múltipla Escolha</Label>
-                        <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(parseInt(e.target.value) || 0)} className="h-8 text-xs" />
+                        <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
                   </div>
@@ -578,7 +578,7 @@ export default function Exams() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
+                <CardContent className="space-y-2">
                   {questoes.map((q, idx) => (
                     <div key={q.id} className="rounded-lg border p-2.5 space-y-2 bg-card">
                       <div className="flex items-center justify-between">
@@ -587,7 +587,7 @@ export default function Exams() {
                         </span>
                         <div className="flex items-center gap-1">
                           <Label className="text-[9px] text-muted-foreground">Pts:</Label>
-                          <Input type="number" min={0.1} step={0.5} value={q.pontos} onChange={e => updateQuestion(q.id, { pontos: parseFloat(e.target.value) || 1 })} className="h-5 w-12 text-[10px] text-center p-0" />
+                          <Input type="number" min={0.1} step={0.5} value={q.pontos} onChange={e => updateQuestion(q.id, { pontos: e.target.value === "" ? 0 : parseFloat(e.target.value) })} className="h-5 w-12 text-[10px] text-center p-0" />
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === 0} onClick={() => moveQuestion(idx, -1)}><MoveUp className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === questoes.length - 1} onClick={() => moveQuestion(idx, 1)}><MoveDown className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeQuestion(q.id)}><Trash2 className="h-3 w-3" /></Button>
@@ -609,7 +609,7 @@ export default function Exams() {
                       {q.type === "open" && (
                         <div className="flex items-center gap-2">
                           <Label className="text-[10px]">Linhas:</Label>
-                          <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
+                          <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: e.target.value === "" ? 0 : parseInt(e.target.value) })} className="h-6 w-14 text-[11px]" />
                         </div>
                       )}
                       <div className="flex items-center gap-2 flex-wrap">
@@ -637,7 +637,7 @@ export default function Exams() {
             </div>
 
             {/* RIGHT - Preview */}
-            <div className="overflow-auto max-h-[calc(100vh-200px)]">
+            <div>
               <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center">
                 <div
                   id="prova-print-area"

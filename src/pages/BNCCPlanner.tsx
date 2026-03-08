@@ -224,7 +224,7 @@ export default function BNCCPlanner() {
                 min={1}
                 max={20}
                 value={quantidadeAulas}
-                onChange={(e) => setQuantidadeAulas(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                onChange={(e) => setQuantidadeAulas(e.target.value === "" ? 1 : Math.max(1, Math.min(20, parseInt(e.target.value))))}
                 placeholder="1"
               />
               {quantidadeAulas > 1 && (
