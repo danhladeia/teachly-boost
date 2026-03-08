@@ -11,10 +11,8 @@ export default function AppLayout() {
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           <header className="flex h-14 items-center gap-3 border-b px-4 bg-background">
-            <SidebarTrigger className="relative sm:inline-flex p-2 sm:p-0">
-              <Menu className="h-14 w-14 sm:h-5 sm:w-5 text-primary" />
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary animate-pulse border-2 border-background sm:hidden" />
-            </SidebarTrigger>
+            <SidebarTrigger />
+
             <img src={logoHeader} alt="GoPedagoX" className="h-4 sm:h-5 w-auto opacity-50" />
           </header>
           <div className="flex-1 p-3 sm:p-6 overflow-auto">
