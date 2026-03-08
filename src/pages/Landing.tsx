@@ -21,12 +21,12 @@ const stagger = {
 };
 
 const features = [
-{ icon: BookOpen, title: "Planejador BNCC", desc: "Planos de aula alinhados à BNCC com IA em segundos" },
-{ icon: FileCheck, title: "Atividades A4", desc: "Gere atividades com layout profissional automaticamente" },
-{ icon: Presentation, title: "Gerador de Slides", desc: "Apresentações prontas para projetar na sala de aula" },
-{ icon: Gamepad2, title: "Fábrica de Jogos", desc: "20 tipos de jogos pedagógicos para imprimir" },
-{ icon: Brain, title: "Provas e Correção", desc: "Crie provas e corrija por foto com IA" },
-{ icon: Calendar, title: "Sequência Didática", desc: "Planejamento integrado de dias letivos completos" }];
+{ icon: BookOpen, title: "Planejador BNCC", desc: "Planos de aula 100% alinhados à Base Nacional Comum Curricular, gerados por IA em segundos. Inclui objetivos, metodologia e avaliação.", tag: "IA" },
+{ icon: FileCheck, title: "Atividades A4", desc: "Gere atividades impressas com layout profissional. Cabeçalho escolar, questões variadas e gabarito automático.", tag: "PDF" },
+{ icon: Presentation, title: "Gerador de Slides", desc: "Apresentações completas com design moderno, prontas para projetar. Escolha temas, cores e quantidade de slides.", tag: "IA" },
+{ icon: Gamepad2, title: "Fábrica de Jogos", desc: "20 tipos de jogos pedagógicos: caça-palavras, cruzadinha, sudoku, anagrama, labirinto e muito mais. Prontos para imprimir.", tag: "20+" },
+{ icon: Brain, title: "Provas e Correção OMR", desc: "Crie provas com questões objetivas e dissertativas, embaralhe versões e corrija gabaritos por foto com inteligência artificial.", tag: "OMR" },
+{ icon: Calendar, title: "Sequência Didática", desc: "Planejamento integrado de aulas com sequência de dias letivos, habilidades BNCC e recursos pedagógicos completos.", tag: "BNCC" }];
 
 
 const plans = [
