@@ -287,7 +287,7 @@ export default function GameFactory() {
           const akClone = ak.cloneNode(true) as HTMLElement;
           akClone.style.width = "210mm";
           akClone.style.minHeight = "297mm";
-          akClone.style.padding = "10mm";
+          akClone.style.padding = "15mm";
           akClone.style.boxSizing = "border-box";
           akClone.style.pageBreakBefore = "always";
           akClone.style.background = "#fff";
