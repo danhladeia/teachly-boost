@@ -7,7 +7,6 @@ import {
 "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import heroBg from "@/assets/hero-bg.jpg";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 import logoHeader from "@/assets/logo-gopedagox-header.png";
 
