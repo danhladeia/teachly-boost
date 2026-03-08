@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 import logoHeader from "@/assets/logo-gopedagox-header.png";
+import planStarter from "@/assets/plan-starter.png";
+import planPro from "@/assets/plan-pro.png";
+import planMaster from "@/assets/plan-master.png";
+import planUltra from "@/assets/plan-ultra.png";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -20,54 +24,88 @@ const stagger = {
 };
 
 const features = [
-{ icon: BookOpen, title: "Planejador BNCC", desc: "Planos de aula 100% alinhados à Base Nacional Comum Curricular, gerados por IA em segundos. Inclui objetivos, metodologia e avaliação.", tag: "IA" },
-{ icon: FileCheck, title: "Atividades A4", desc: "Gere atividades impressas com layout profissional. Cabeçalho escolar, questões variadas e gabarito automático.", tag: "PDF" },
-{ icon: Presentation, title: "Gerador de Slides", desc: "Apresentações completas com design moderno, prontas para projetar. Escolha temas, cores e quantidade de slides.", tag: "IA" },
-{ icon: Gamepad2, title: "Fábrica de Jogos", desc: "20 tipos de jogos pedagógicos: caça-palavras, cruzadinha, sudoku, anagrama, labirinto e muito mais. Prontos para imprimir.", tag: "20+" },
-{ icon: Brain, title: "Provas e Correção OMR", desc: "Crie provas com questões objetivas e dissertativas, embaralhe versões e corrija gabaritos por foto com inteligência artificial.", tag: "OMR" },
-{ icon: Calendar, title: "Sequência Didática", desc: "Planejamento integrado de aulas com sequência de dias letivos, habilidades BNCC e recursos pedagógicos completos.", tag: "BNCC" }];
-
+  {
+    icon: BookOpen,
+    title: "Planejador BNCC",
+    desc: "Gere planos de aula completos e alinhados à Base Nacional Comum Curricular em segundos. Inclui objetivos de aprendizagem, metodologia ativa, recursos didáticos e critérios de avaliação. Exporte em PDF ou DOCX.",
+    tag: "IA",
+    highlights: ["Alinhado à BNCC", "PDF e DOCX", "Metodologia ativa"]
+  },
+  {
+    icon: FileCheck,
+    title: "Atividades Impressas A4",
+    desc: "Crie atividades com layout profissional prontas para imprimir. Cabeçalho personalizado com timbre da escola, questões variadas (múltipla escolha, dissertativa, complete) e gabarito automático no verso.",
+    tag: "PDF",
+    highlights: ["Timbre escolar", "Gabarito automático", "Layout A4"]
+  },
+  {
+    icon: Presentation,
+    title: "Gerador de Slides",
+    desc: "Apresentações completas com design moderno geradas por IA. Escolha o tema, quantidade de slides, paleta de cores e exporte em PPTX pronto para projetar na sala de aula.",
+    tag: "IA",
+    highlights: ["Export PPTX", "Temas variados", "Design moderno"]
+  },
+  {
+    icon: Gamepad2,
+    title: "Fábrica de Jogos Pedagógicos",
+    desc: "Mais de 20 tipos de jogos educativos: caça-palavras, cruzadinha, sudoku, anagrama, labirinto, criptograma, jogo da velha temático e muito mais. Todos prontos para imprimir em A4.",
+    tag: "20+ jogos",
+    highlights: ["Caça-palavras", "Cruzadinha", "Labirinto"]
+  },
+  {
+    icon: Brain,
+    title: "Provas com Correção OMR",
+    desc: "Crie provas com questões objetivas e dissertativas, embaralhe automaticamente para gerar versões A, B e C. Corrija gabaritos por foto usando inteligência artificial com leitura OMR.",
+    tag: "OMR",
+    highlights: ["Versões A/B/C", "Correção por foto", "QR Code"]
+  },
+  {
+    icon: Calendar,
+    title: "Sequências Didáticas",
+    desc: "Planejamento integrado de aulas com sequência de dias letivos, habilidades BNCC vinculadas, recursos pedagógicos e avaliação contínua. Ideal para projetos interdisciplinares.",
+    tag: "BNCC",
+    highlights: ["Dias letivos", "Interdisciplinar", "Avaliação"]
+  }
+];
 
 const plans = [
-{
-  name: "Starter", price: "R$ 0,00", originalPrice: null, period: "", icon: Star,
-  color: "text-muted-foreground",
-  features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
-  cta: "Começar grátis"
-},
-{
-  name: "Pro", price: "R$ 18,67", originalPrice: "R$ 24,90", period: "/mês", icon: Zap,
-  color: "text-primary",
-  features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
-  cta: "Assinar Pro"
-},
-{
-  name: "Master", price: "R$ 33,67", originalPrice: "R$ 44,90", period: "/mês", icon: Crown,
-  color: "text-plan-pratico", popular: true,
-  features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
-  cta: "Assinar Master"
-},
-{
-  name: "Ultra", price: "R$ 67,42", originalPrice: "R$ 89,90", period: "/mês", icon: Rocket,
-  color: "text-plan-mestre",
-  features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
-  cta: "Assinar Ultra"
-}];
-
+  {
+    name: "Starter", price: "R$ 0,00", originalPrice: null, period: "", icon: Star,
+    color: "text-muted-foreground", logo: planStarter,
+    features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    cta: "Começar grátis"
+  },
+  {
+    name: "Pro", price: "R$ 18,67", originalPrice: "R$ 24,90", period: "/mês", icon: Zap,
+    color: "text-primary", logo: planPro,
+    features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    cta: "Assinar Pro"
+  },
+  {
+    name: "Master", price: "R$ 33,67", originalPrice: "R$ 44,90", period: "/mês", icon: Crown,
+    color: "text-plan-pratico", popular: true, logo: planMaster,
+    features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    cta: "Assinar Master"
+  },
+  {
+    name: "Ultra", price: "R$ 67,42", originalPrice: "R$ 89,90", period: "/mês", icon: Rocket,
+    color: "text-plan-mestre", logo: planUltra,
+    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
+    cta: "Assinar Ultra"
+  }
+];
 
 const faqs = [
-{ q: "Preciso de cartão de crédito para começar?", a: "Não! O plano Starter não requer cartão. Você recebe 5 créditos grátis para experimentar." },
-{ q: "A plataforma funciona no celular?", a: "Sim! O GoPedagoX é responsivo e funciona em qualquer dispositivo." },
-{ q: "As habilidades BNCC estão atualizadas?", a: "Sim, mantemos nosso banco de habilidades sempre atualizado conforme as diretrizes do MEC." },
-{ q: "Posso cancelar minha assinatura a qualquer momento?", a: "Sim, sem multa ou fidelidade. Cancele quando quiser e continue usando até o fim do período pago." },
-{ q: "O que é um crédito?", a: "Cada geração de IA (plano de aula, jogo, slides, correção de prova) consome 1 crédito. Planos pagos renovam mensalmente." }];
-
-
-const testimonials = [
-{ name: "Profª Maria Silva", school: "E.M. Paulo Freire", text: "Reduzi 4 horas de planejamento para 30 minutos. Agora tenho tempo para preparar materiais criativos!", avatar: "MS" },
-{ name: "Prof. Carlos Souza", school: "Colégio Santos", text: "A fábrica de jogos é incrível. Meus alunos ficam muito mais engajados com os caça-palavras temáticos.", avatar: "CS" },
-{ name: "Profª Ana Oliveira", school: "E.E. Monteiro Lobato", text: "A correção por foto mudou minha vida. Corrijo 30 provas em menos de 10 minutos.", avatar: "AO" }];
-
+  { q: "Preciso de cartão de crédito para começar?", a: "Não! O plano Starter é totalmente gratuito e não requer cartão de crédito. Você recebe 5 créditos para experimentar todos os módulos da plataforma." },
+  { q: "O que é um crédito e como funciona?", a: "Cada geração de conteúdo por IA consome 1 crédito: plano de aula, jogo pedagógico, apresentação de slides ou correção de prova. Os planos pagos (Pro, Master, Ultra) renovam os créditos automaticamente todo mês." },
+  { q: "Posso usar no celular e no computador?", a: "Sim! O GoPedagoX é 100% responsivo e funciona em qualquer navegador — computador, tablet ou celular. Não precisa instalar nada." },
+  { q: "As habilidades BNCC estão atualizadas?", a: "Sim, mantemos nosso banco de habilidades sempre atualizado conforme as diretrizes mais recentes do MEC. O sistema cobre Educação Infantil, Ensino Fundamental e Ensino Médio." },
+  { q: "Posso cancelar minha assinatura a qualquer momento?", a: "Sim, sem multa ou fidelidade. Você cancela quando quiser e continua usando todos os recursos do plano até o fim do período já pago." },
+  { q: "Como funciona a correção de provas por foto?", a: "Você cria a prova na plataforma, imprime com QR Code e gabarito OMR. Depois da aplicação, tire foto ou faça upload dos gabaritos preenchidos. A IA lê as respostas, identifica a versão da prova e calcula a nota automaticamente." },
+  { q: "Os materiais gerados pela IA são confiáveis?", a: "Os conteúdos são gerados por modelos avançados de IA e alinhados à BNCC, mas recomendamos que o professor sempre revise o material antes de aplicar em sala de aula. A responsabilidade pedagógica final é do docente." },
+  { q: "O que acontece com meus créditos se eu trocar de plano?", a: "Ao fazer upgrade, você recebe imediatamente os créditos do novo plano. Ao fazer downgrade, a mudança ocorre no próximo ciclo de faturamento." },
+  { q: "Como funciona o cupom GOPEDAGOX?", a: "O cupom GOPEDAGOX oferece 25% de desconto em qualquer plano pago (Pro, Master ou Ultra). Basta inserir o código no momento da assinatura. O desconto é aplicado em todos os ciclos de pagamento." }
+];
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -108,9 +146,6 @@ export default function Landing() {
         <div className="gradient-hero">
           <div className="container relative z-10 flex flex-col items-center py-24 text-center md:py-32 lg:py-40">
             <motion.div initial="hidden" animate="visible" variants={stagger}>
-              
-
-              
               <motion.h1 variants={fadeUp} className="mx-auto max-w-4xl font-display text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl lg:text-7xl">
                 Seu planejamento pedagógico em{" "}
                 <span className="bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">1 clique</span>
@@ -154,7 +189,7 @@ export default function Landing() {
               </div>
               <ul className="space-y-3 text-muted-foreground">
                 {["4h para um plano de aula", "2h formatando atividades", "1h buscando habilidades BNCC", "Jogos? Só comprando pronto", "Correção manual: noite toda"].map((t) =>
-                <li key={t} className="flex items-start gap-2"><span className="text-destructive mt-1">✕</span>{t}</li>
+                  <li key={t} className="flex items-start gap-2"><span className="text-destructive mt-1">✕</span>{t}</li>
                 )}
               </ul>
               <p className="mt-6 font-display text-2xl font-bold text-destructive">~10h/semana</p>
@@ -166,7 +201,7 @@ export default function Landing() {
               </div>
               <ul className="space-y-3 text-muted-foreground">
                 {["Plano BNCC em 2 minutos", "Atividades auto-formatadas", "Habilidades sugeridas por IA", "20 jogos prontos para imprimir", "Correção por foto em segundos"].map((t) =>
-                <li key={t} className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />{t}</li>
+                  <li key={t} className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />{t}</li>
                 )}
               </ul>
               <p className="mt-6 font-display text-2xl font-bold text-primary">~1h/semana</p>
@@ -184,7 +219,7 @@ export default function Landing() {
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) =>
-            <motion.div key={f.title} variants={fadeUp} className="group relative rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-shadow">
+              <motion.div key={f.title} variants={fadeUp} className="group relative rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-all hover:-translate-y-1">
                 {f.tag && (
                   <span className="absolute top-4 right-4 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                     {f.tag}
@@ -195,6 +230,13 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-lg font-bold">{f.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {f.highlights.map((h) => (
+                    <span key={h} className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {h}
+                    </span>
+                  ))}
+                </div>
               </motion.div>
             )}
           </motion.div>
@@ -214,37 +256,37 @@ export default function Landing() {
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) =>
-            <motion.div key={plan.name} variants={fadeUp} className={`relative rounded-2xl border p-6 bg-card shadow-card ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
+              <motion.div key={plan.name} variants={fadeUp} className={`relative rounded-2xl border p-6 bg-card shadow-card ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
                 {plan.popular &&
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
                     MAIS POPULAR
                   </div>
-              }
+                }
                 {plan.originalPrice &&
-              <div className="absolute top-3 right-3 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                  <div className="absolute top-3 right-3 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
                     -25%
                   </div>
-              }
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <plan.icon className={`h-5 w-5 ${plan.color}`} />
-                </div>
-                <h3 className="font-display text-lg font-bold">{plan.name}</h3>
-                <div className="mt-2">
-                  {plan.originalPrice &&
-                <p className="text-sm text-muted-foreground line-through">{plan.originalPrice}</p>
                 }
-                  <div className="flex items-baseline gap-1">
+                <div className="mb-4 flex justify-center">
+                  <img src={plan.logo} alt={plan.name} className="h-16 w-auto object-contain" />
+                </div>
+                <h3 className="font-display text-lg font-bold text-center">{plan.name}</h3>
+                <div className="mt-2 text-center">
+                  {plan.originalPrice &&
+                    <p className="text-sm text-muted-foreground line-through">{plan.originalPrice}</p>
+                  }
+                  <div className="flex items-baseline gap-1 justify-center">
                     <span className="font-display text-3xl font-extrabold">{plan.price}</span>
                     <span className="text-sm text-muted-foreground">{plan.period}</span>
                   </div>
                 </div>
                 <ul className="mt-6 space-y-2.5">
                   {plan.features.map((f) =>
-                <li key={f} className="flex items-start gap-2 text-sm">
+                    <li key={f} className="flex items-start gap-2 text-sm">
                       <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <span className="text-muted-foreground">{f}</span>
                     </li>
-                )}
+                  )}
                 </ul>
                 <Link to="/register" className="mt-6 block">
                   <Button className={`w-full ${plan.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`} variant={plan.popular ? "default" : "outline"}>
@@ -257,43 +299,20 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-secondary/50">
-        <div className="container">
-          <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center font-display text-3xl font-bold md:text-4xl mb-12">
-            O que professores dizem
-          </motion.h2>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 md:grid-cols-3">
-            {testimonials.map((t) =>
-            <motion.div key={t.name} variants={fadeUp} className="rounded-2xl border bg-card p-6 shadow-card">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">{t.avatar}</div>
-                  <div>
-                    <p className="font-semibold text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.school}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground italic">"{t.text}"</p>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
-      </section>
-
       {/* FAQ */}
-      <section id="faq" className="py-20 bg-background">
+      <section id="faq" className="py-20 bg-secondary/50">
         <div className="container max-w-3xl">
           <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center font-display text-3xl font-bold md:text-4xl mb-12">
             Perguntas frequentes
           </motion.h2>
           <div className="space-y-3">
             {faqs.map((faq, i) =>
-            <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-xl border bg-card overflow-hidden">
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-xl border bg-card overflow-hidden">
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="flex w-full items-center justify-between p-5 text-left font-medium hover:bg-secondary/50 transition-colors">
                   {faq.q}
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform shrink-0 ml-2 ${openFaq === i ? "rotate-180" : ""}`} />
                 </button>
-                {openFaq === i && <div className="px-5 pb-5 text-sm text-muted-foreground">{faq.a}</div>}
+                {openFaq === i && <div className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">{faq.a}</div>}
               </motion.div>
             )}
           </div>
@@ -308,14 +327,14 @@ export default function Landing() {
               <img src={logoGoPedagoX} alt="GoPedagoX" className="h-10 w-auto" />
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Termos de Uso</a>
-              <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
-              <a href="#" className="hover:text-foreground transition-colors">Contato</a>
+              <Link to="/termos" className="hover:text-foreground transition-colors">Termos de Uso</Link>
+              <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
+              <a href="mailto:contato@gopedagox.com" className="hover:text-foreground transition-colors">Contato</a>
             </div>
             <p className="text-sm text-muted-foreground">© 2026 GoPedagoX. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
-    </div>);
-
+    </div>
+  );
 }
