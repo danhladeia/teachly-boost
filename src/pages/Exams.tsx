@@ -418,35 +418,35 @@ export default function Exams() {
   const gabarito = mcQuestoes.map((q, i) => ({ q: i + 1, correct: q.correctIndex }));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <FileCheck className="h-6 w-6 text-primary" /> Provas e Correção
+    <div className="space-y-4 overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Provas e Correção
           </h1>
-          <p className="text-muted-foreground text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
           {questoes.length > 0 && (
             <>
-              <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
-              <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
-              <Button size="sm" variant="outline" onClick={handleShuffle} disabled={shuffling || !currentProvaId}>
-                <Shuffle className="mr-1 h-4 w-4" /> {shuffling ? "Embaralhando..." : "Embaralhar"}
+              <Button size="sm" variant="outline" onClick={handlePrint} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Printer className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Imprimir</span><span className="sm:hidden">Imp.</span></Button>
+              <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> PDF</Button>
+              <Button size="sm" variant="outline" onClick={handleShuffle} disabled={shuffling || !currentProvaId} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3">
+                <Shuffle className="mr-1 h-3.5 w-3.5" /> {shuffling ? "..." : <span className="hidden sm:inline">Embaralhar</span>}{!shuffling && <span className="sm:hidden">Emb.</span>}
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Save className="mr-1 h-3.5 w-3.5" /> {saving ? "..." : "Salvar"}</Button>
             </>
           )}
-          <Button size="sm" variant="ghost" onClick={handleNewExam}><Plus className="mr-1 h-4 w-4" /> Nova</Button>
+          <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
         </div>
       </div>
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList>
-          <TabsTrigger value="criar">Criar Prova</TabsTrigger>
-          <TabsTrigger value="minhas">Minhas Provas</TabsTrigger>
-          <TabsTrigger value="corrigir">Corrigir por Foto</TabsTrigger>
-          <TabsTrigger value="camera"><Camera className="mr-1 h-3 w-3" /> Câmera Instantânea</TabsTrigger>
+        <TabsList className="w-full flex overflow-x-auto">
+          <TabsTrigger value="criar" className="text-xs flex-1 min-w-0">Criar</TabsTrigger>
+          <TabsTrigger value="minhas" className="text-xs flex-1 min-w-0">Minhas</TabsTrigger>
+          <TabsTrigger value="corrigir" className="text-xs flex-1 min-w-0">Corrigir</TabsTrigger>
+          <TabsTrigger value="camera" className="text-xs flex-1 min-w-0"><Camera className="mr-1 h-3 w-3" /> Câmera</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
@@ -638,11 +638,11 @@ export default function Exams() {
 
             {/* RIGHT - Preview */}
             <div className="overflow-auto max-h-[calc(100vh-200px)]">
-              <div className="bg-muted/30 rounded-lg p-4 flex justify-center">
+              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center">
                 <div
                   id="prova-print-area"
-                  className="bg-white text-black shadow-lg"
-                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  className="bg-white text-black shadow-lg w-full max-w-[210mm]"
+                  style={{ minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {/* School header */}
                   {showHeader && escola && (

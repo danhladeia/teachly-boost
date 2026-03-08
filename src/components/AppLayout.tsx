@@ -9,7 +9,7 @@ export default function AppLayout() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           <header className="flex h-14 items-center gap-3 border-b px-4 bg-background">
             <SidebarTrigger className="relative sm:inline-flex">
               <Menu className="h-7 w-7 sm:h-5 sm:w-5 text-primary" />
