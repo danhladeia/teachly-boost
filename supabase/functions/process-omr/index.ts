@@ -229,6 +229,15 @@ IMPORTANTE:
             .single();
 
           if (versao) {
+            // Fetch pontos from questoes
+            const { data: questoes } = await supabase
+              .from("questoes")
+              .select("id, pontos")
+              .eq("prova_id", versao.prova_id)
+              .order("ordem");
+            const pontosMap: Record<string, number> = {};
+            (questoes || []).forEach((q: any) => { pontosMap[q.id] = q.pontos ?? 1; });
+
             const mapa = versao.mapa_questoes as any[];
             const mcItems = mapa
               .filter((item: any) => item.resposta_correta_nova !== null)
@@ -237,6 +246,7 @@ IMPORTANTE:
             gabarito = mcItems.map((item: any, idx: number) => ({
               q: idx + 1,
               correct: item.resposta_correta_nova,
+              pontos: pontosMap[item.questao_id] ?? 1,
             }));
 
             provaInfo = {
