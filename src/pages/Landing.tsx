@@ -7,7 +7,6 @@ import {
 "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import heroBg from "@/assets/hero-bg.jpg";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 import logoHeader from "@/assets/logo-gopedagox-header.png";
 
@@ -85,7 +84,7 @@ export default function Landing() {
           </div>
           <div className="absolute left-1/2 -translate-x-1/2">
             <Link to="/">
-              <img src={logoHeader} alt="GoPedagoX" className="h-14 w-auto" />
+              <img src={logoHeader} alt="GoPedagoX" className="h-10 w-auto" />
             </Link>
           </div>
           <div className="hidden items-center gap-8 md:flex">
@@ -135,9 +134,6 @@ export default function Landing() {
               <motion.p variants={fadeUp} className="mt-4 text-sm text-primary-foreground/50">
                 5 créditos grátis • Sem cartão de crédito
               </motion.p>
-            </motion.div>
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mt-16 w-full max-w-5xl">
-              <img src={heroBg} alt="GoPedagoX plataforma" className="w-full rounded-2xl shadow-elevated border border-white/10" />
             </motion.div>
           </div>
         </div>
@@ -211,6 +207,10 @@ export default function Landing() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos para cada necessidade</motion.h2>
             <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Comece grátis, evolua quando precisar</motion.p>
+            <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">Use o cupom <span className="font-bold">GOPEDAGOX</span> e ganhe 25% de desconto!</span>
+            </motion.div>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) =>
@@ -218,6 +218,11 @@ export default function Landing() {
                 {plan.popular &&
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
                     MAIS POPULAR
+                  </div>
+              }
+                {plan.originalPrice &&
+              <div className="absolute top-3 right-3 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                    -25%
                   </div>
               }
                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
