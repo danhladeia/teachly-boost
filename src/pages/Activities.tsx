@@ -406,7 +406,7 @@ export default function Activities() {
 
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         {/* LEFT PANEL */}
-        <div className="space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto pr-1">
+        <div className="space-y-4 pr-1">
           <Card className="shadow-card">
             <CardContent className="pt-4">
               <Tabs value={tab} onValueChange={setTab}>
