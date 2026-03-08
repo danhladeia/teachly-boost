@@ -167,7 +167,7 @@ export default function GameFactory() {
     mazeSize: mazeSize as any, mazeQuestionType: mazeQuestionType as any,
     mazeStyle: "square",
   }), [tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
-    gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase, fontStyle, spacing, bonusWords,
+    gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase, fontStyle, spacing, bonusWords, miniText,
     hintStyle, crosswordSymmetry, mysteryWord,
     symbolTheme, cipherType, caesarShift, vigenereKey, showCipherTable, phraseLength,
     sudokuSize, sudokuContentType, sudokuCustomSymbols, sudokuFillPercent, sudokuCount, sudokuShowScratch,
