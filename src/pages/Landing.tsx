@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
+import logoHeader from "@/assets/logo-gopedagox-header.png";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -20,12 +21,12 @@ const stagger = {
 };
 
 const features = [
-{ icon: BookOpen, title: "Planejador BNCC", desc: "Planos de aula alinhados à BNCC com IA em segundos" },
-{ icon: FileCheck, title: "Atividades A4", desc: "Gere atividades com layout profissional automaticamente" },
-{ icon: Presentation, title: "Gerador de Slides", desc: "Apresentações prontas para projetar na sala de aula" },
-{ icon: Gamepad2, title: "Fábrica de Jogos", desc: "20 tipos de jogos pedagógicos para imprimir" },
-{ icon: Brain, title: "Provas e Correção", desc: "Crie provas e corrija por foto com IA" },
-{ icon: Calendar, title: "Sequência Didática", desc: "Planejamento integrado de dias letivos completos" }];
+{ icon: BookOpen, title: "Planejador BNCC", desc: "Planos de aula 100% alinhados à Base Nacional Comum Curricular, gerados por IA em segundos. Inclui objetivos, metodologia e avaliação.", tag: "IA" },
+{ icon: FileCheck, title: "Atividades A4", desc: "Gere atividades impressas com layout profissional. Cabeçalho escolar, questões variadas e gabarito automático.", tag: "PDF" },
+{ icon: Presentation, title: "Gerador de Slides", desc: "Apresentações completas com design moderno, prontas para projetar. Escolha temas, cores e quantidade de slides.", tag: "IA" },
+{ icon: Gamepad2, title: "Fábrica de Jogos", desc: "20 tipos de jogos pedagógicos: caça-palavras, cruzadinha, sudoku, anagrama, labirinto e muito mais. Prontos para imprimir.", tag: "20+" },
+{ icon: Brain, title: "Provas e Correção OMR", desc: "Crie provas com questões objetivas e dissertativas, embaralhe versões e corrija gabaritos por foto com inteligência artificial.", tag: "OMR" },
+{ icon: Calendar, title: "Sequência Didática", desc: "Planejamento integrado de aulas com sequência de dias letivos, habilidades BNCC e recursos pedagógicos completos.", tag: "BNCC" }];
 
 
 const plans = [
@@ -76,17 +77,24 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       {/* Nav */}
       <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logoGoPedagoX} alt="GoPedagoX" className="h-10 w-auto" />
-          </Link>
+        <div className="container flex h-20 items-center justify-between">
+          <div className="flex items-center gap-3 md:hidden">
+            <Link to="/login">
+              <Button variant="ghost" size="sm">Entrar</Button>
+            </Link>
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Link to="/">
+              <img src={logoHeader} alt="GoPedagoX" className="h-14 w-auto" />
+            </Link>
+          </div>
           <div className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Planos</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login">
+            <Link to="/login" className="hidden md:block">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
             <Link to="/register">
@@ -180,12 +188,17 @@ export default function Landing() {
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) =>
-            <motion.div key={f.title} variants={fadeUp} className="group rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-shadow">
+            <motion.div key={f.title} variants={fadeUp} className="group relative rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-shadow">
+                {f.tag && (
+                  <span className="absolute top-4 right-4 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {f.tag}
+                  </span>
+                )}
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:gradient-primary group-hover:text-primary-foreground transition-all">
                   <f.icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-lg font-bold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
               </motion.div>
             )}
           </motion.div>
