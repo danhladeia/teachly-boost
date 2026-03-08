@@ -419,7 +419,7 @@ export default function Exams() {
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
             <FileCheck className="h-6 w-6 text-primary" /> Provas e Correção
           </h1>
-          <p className="text-muted-foreground text-sm">Crie provas com gabarito OMR e corrija via QR Code</p>
+          <p className="text-muted-foreground text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {questoes.length > 0 && (
