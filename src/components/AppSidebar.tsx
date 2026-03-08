@@ -35,9 +35,9 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <div className="flex h-16 items-center gap-2 px-4 border-b border-sidebar-border">
-        <img src={logoPedagox} alt="Pedagox" className="h-8 w-8 shrink-0 object-contain" />
+        <img src={logoGoPedagoX} alt="GoPedagoX" className="h-8 w-8 shrink-0 object-contain" />
         <span className="font-display text-lg font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-          Pedagox
+          GoPedagoX
         </span>
       </div>
       <SidebarContent className="pt-2">

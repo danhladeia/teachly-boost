@@ -39,7 +39,7 @@ export default function Register() {
             <img src={logoGoPedagoX} alt="GoPedagoX" className="h-20 w-auto" />
           </Link>
           <CardTitle className="font-display text-xl">Criar sua conta</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">10 planos/mês grátis • Sem cartão de crédito</p>
+          <p className="text-sm text-muted-foreground mt-1">5 créditos grátis • Sem cartão de crédito</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
