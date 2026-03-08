@@ -32,8 +32,9 @@ interface ExamQuestion {
   alternatives: string[];
   correctIndex: number;
   lines: number;
+  pontos: number;
   imageUrl?: string;
-  dbId?: string; // id from questoes table
+  dbId?: string;
 }
 
 interface SavedProva {
