@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil } from "lucide-react";
+import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil, AlertTriangle } from "lucide-react";
+import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
