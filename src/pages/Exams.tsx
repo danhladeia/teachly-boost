@@ -15,6 +15,7 @@ import { exportToPdf } from "@/lib/export-utils";
 import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@/lib/shuffle-utils";
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
+import CameraScanner from "@/components/exams/CameraScanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 
