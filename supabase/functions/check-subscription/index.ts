@@ -72,7 +72,18 @@ serve(async (req) => {
     const subscription = subscriptions.data[0];
     const productId = subscription.items.data[0].price.product as string;
     const planInfo = PLAN_MAP[productId] || { plan_type: "starter", credits: 5, logos_limit: 0 };
-    const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+    
+    let subscriptionEnd: string | null = null;
+    try {
+      const endVal = subscription.current_period_end;
+      if (typeof endVal === 'number') {
+        subscriptionEnd = new Date(endVal * 1000).toISOString();
+      } else if (typeof endVal === 'string') {
+        subscriptionEnd = new Date(endVal).toISOString();
+      }
+    } catch (_) {
+      subscriptionEnd = null;
+    }
 
     // Sync profile
     await supabaseClient
