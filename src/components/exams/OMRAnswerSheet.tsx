@@ -55,10 +55,12 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
     position: "absolute",
   };
 
-  const columns: number[][] = [];
-  for (let i = 0; i < numMcQuestions; i += 10) {
-    columns.push(Array.from({ length: Math.min(10, numMcQuestions - i) }, (_, j) => i + j + 1));
-  }
+  // Split into exactly 2 columns, filling vertically (top to bottom, then next column)
+  const half = Math.ceil(numMcQuestions / 2);
+  const columns: number[][] = [
+    Array.from({ length: half }, (_, i) => i + 1),
+    Array.from({ length: numMcQuestions - half }, (_, i) => half + i + 1),
+  ];
 
   return (
     <div
