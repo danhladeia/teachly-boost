@@ -21,6 +21,7 @@ export default function SlidesGenerator() {
   const [loading, setLoading] = useState(false);
   const [slides, setSlides] = useState<Slide[]>([]);
   const [estiloImagem, setEstiloImagem] = useState("realistic");
+  const [gerarImagens, setGerarImagens] = useState(true);
   const [generatingImages, setGeneratingImages] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [imageTotal, setImageTotal] = useState(0);
