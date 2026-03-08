@@ -77,17 +77,24 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       {/* Nav */}
       <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logoGoPedagoX} alt="GoPedagoX" className="h-10 w-auto" />
-          </Link>
+        <div className="container flex h-20 items-center justify-between">
+          <div className="flex items-center gap-3 md:hidden">
+            <Link to="/login">
+              <Button variant="ghost" size="sm">Entrar</Button>
+            </Link>
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Link to="/">
+              <img src={logoHeader} alt="GoPedagoX" className="h-14 w-auto" />
+            </Link>
+          </div>
           <div className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Planos</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login">
+            <Link to="/login" className="hidden md:block">
               <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
             <Link to="/register">
