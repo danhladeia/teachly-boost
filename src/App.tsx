@@ -18,6 +18,9 @@ import Exams from "./pages/Exams";
 import Pricing from "./pages/Pricing";
 import Branding from "./pages/Branding";
 import AppSettings from "./pages/AppSettings";
+import Notepad from "./pages/Notepad";
+import Support from "./pages/Support";
+import SupportAdmin from "./pages/SupportAdmin";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -38,6 +41,7 @@ const AppRoutes = () => (
     <Route path="/register" element={<Register />} />
     <Route path="/termos" element={<Terms />} />
     <Route path="/privacidade" element={<Privacy />} />
+    <Route path="/suporte-admin" element={<SupportAdmin />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="bncc" element={<BNCCPlanner />} />
@@ -45,6 +49,8 @@ const AppRoutes = () => (
       <Route path="slides" element={<SlidesGenerator />} />
       <Route path="jogos" element={<GameFactory />} />
       <Route path="provas" element={<Exams />} />
+      <Route path="notas" element={<Notepad />} />
+      <Route path="suporte" element={<Support />} />
       <Route path="planos" element={<Pricing />} />
       <Route path="timbres" element={<Branding />} />
       <Route path="configuracoes" element={<AppSettings />} />
