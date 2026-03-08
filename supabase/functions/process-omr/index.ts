@@ -78,7 +78,7 @@ IMPORTANTE:
 - Numere as questões sequencialmente começando em 1
 - Analise TODOS os círculos visíveis na folha`;
 
-    const geminiResp = await fetch("https://api.lovable.dev/v1/chat/completions", {
+    const geminiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
