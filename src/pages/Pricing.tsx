@@ -1,93 +1,97 @@
-import { useState } from "react";
-import { CheckCircle2, Tag } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle2, Tag, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
 import planStarter from "@/assets/plan-starter.png";
 import planPro from "@/assets/plan-pro.png";
 import planMaster from "@/assets/plan-master.png";
 import planUltra from "@/assets/plan-ultra.png";
 
+const STRIPE_COUPON_ID = "EEnPYZCe";
+
 const plans = [
   {
     id: "starter",
+    planType: "starter",
     name: "Starter",
     image: planStarter,
+    priceId: null,
     priceOriginal: null,
     priceDiscount: null,
     priceDisplay: "R$ 0,00",
     period: "",
     popular: false,
-    features: [
-      "5 créditos únicos",
-      "Acesso a todos os módulos",
-      "Exportação PDF",
-      "Com marca d'água",
-    ],
+    features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
     cta: "Plano Atual",
-    disabled: true,
   },
   {
     id: "pro",
+    planType: "pro",
     name: "Pro",
     image: planPro,
+    priceId: "price_1T8ZY998wNeD9azwJ4BnMFHj",
     priceOriginal: "R$ 24,90",
     priceDiscount: "R$ 18,67",
     priceDisplay: "R$ 24,90",
     period: "/mês",
     popular: false,
-    features: [
-      "15 créditos/mês",
-      "1 Timbre Escolar",
-      "Sem marca d'água",
-      "Suporte via e-mail",
-    ],
+    features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
     cta: "Assinar Pro",
-    disabled: false,
   },
   {
     id: "master",
+    planType: "master",
     name: "Master",
     image: planMaster,
+    priceId: "price_1T8ZZ398wNeD9azwQcHlGXrL",
     priceOriginal: "R$ 44,90",
     priceDiscount: "R$ 33,67",
     priceDisplay: "R$ 44,90",
     period: "/mês",
     popular: true,
-    features: [
-      "50 créditos/mês",
-      "Até 3 Timbres (Multiescolas)",
-      "Sem marca d'água",
-      "Suporte prioritário",
-    ],
+    features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master",
-    disabled: false,
   },
   {
     id: "ultra",
+    planType: "ultra",
     name: "Ultra",
     image: planUltra,
+    priceId: "price_1T8ZZu98wNeD9azwHd3KFd6W",
     priceOriginal: "R$ 89,90",
     priceDiscount: "R$ 67,42",
     priceDisplay: "R$ 89,90",
     period: "/mês",
     popular: false,
-    features: [
-      "Créditos Ilimitados",
-      "Timbres Ilimitados",
-      "Sem marca d'água",
-      "Suporte via WhatsApp",
-    ],
+    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
     cta: "Assinar Ultra",
-    disabled: false,
   },
 ];
 
 export default function Pricing() {
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [managingPortal, setManagingPortal] = useState(false);
+  const { plan } = useCredits();
+
+  // Check for success/cancel query params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true") {
+      toast.success("Assinatura realizada com sucesso! 🎉");
+      // Trigger subscription check
+      supabase.functions.invoke("check-subscription");
+    }
+    if (params.get("canceled") === "true") {
+      toast.info("Checkout cancelado.");
+    }
+  }, []);
 
   const applyCoupon = () => {
     if (coupon.trim().toUpperCase() === "GOPEDAGOX") {
@@ -99,12 +103,60 @@ export default function Pricing() {
     }
   };
 
+  const handleCheckout = async (priceId: string) => {
+    setCheckingOut(priceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          priceId,
+          couponId: couponApplied ? STRIPE_COUPON_ID : undefined,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao iniciar checkout");
+    } finally {
+      setCheckingOut(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setManagingPortal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao abrir portal");
+    } finally {
+      setManagingPortal(false);
+    }
+  };
+
+  const isCurrentPlan = (planType: string) => plan.planType === planType;
+  const hasPaidPlan = plan.planType !== "starter";
+
   return (
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="font-display text-2xl font-bold">Escolha seu Plano</h1>
         <p className="text-muted-foreground mt-1">Evolua quando precisar, cancele quando quiser</p>
       </div>
+
+      {/* Manage subscription button for paid users */}
+      {hasPaidPlan && (
+        <div className="text-center">
+          <Button variant="outline" onClick={handleManageSubscription} disabled={managingPortal}>
+            <Settings className="mr-2 h-4 w-4" />
+            {managingPortal ? "Abrindo..." : "Gerenciar Assinatura"}
+          </Button>
+        </div>
+      )}
 
       {/* Coupon */}
       <div className="max-w-md mx-auto">
@@ -130,64 +182,77 @@ export default function Pricing() {
 
       {/* Plans */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {plans.map((plan) => (
-          <Card
-            key={plan.id}
-            className={`relative shadow-card ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}
-          >
-            {plan.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
-                MAIS POPULAR
-              </div>
-            )}
-            <CardHeader className="text-center pb-2">
-              <img src={plan.image} alt={`Plano ${plan.name}`} className="mx-auto h-28 w-auto mb-2" />
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              {/* Pricing */}
-              <div>
-                {plan.priceOriginal && couponApplied ? (
-                  <>
-                    <p className="text-sm text-muted-foreground line-through">{plan.priceOriginal}</p>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="font-display text-3xl font-extrabold text-green-600">{plan.priceDiscount}</span>
-                      <span className="text-sm text-muted-foreground">{plan.period}</span>
-                    </div>
-                    <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
-                  </>
-                ) : plan.priceOriginal ? (
-                  <>
-                    <p className="text-sm text-muted-foreground line-through">{plan.priceOriginal}</p>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="font-display text-3xl font-extrabold">{plan.priceDisplay}</span>
-                      <span className="text-sm text-muted-foreground">{plan.period}</span>
-                    </div>
-                  </>
+        {plans.map((p) => {
+          const isCurrent = isCurrentPlan(p.planType);
+          return (
+            <Card
+              key={p.id}
+              className={`relative shadow-card ${p.popular ? "border-primary ring-2 ring-primary/20" : ""} ${isCurrent ? "ring-2 ring-green-500/30 border-green-500" : ""}`}
+            >
+              {p.popular && !isCurrent && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
+                  MAIS POPULAR
+                </div>
+              )}
+              {isCurrent && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-4 py-1 text-xs font-semibold text-white">
+                  SEU PLANO
+                </div>
+              )}
+              <CardHeader className="text-center pb-2">
+                <img src={p.image} alt={`Plano ${p.name}`} className="mx-auto h-28 w-auto mb-2" />
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div>
+                  {p.priceOriginal && couponApplied ? (
+                    <>
+                      <p className="text-sm text-muted-foreground line-through">{p.priceOriginal}</p>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="font-display text-3xl font-extrabold text-green-600">{p.priceDiscount}</span>
+                        <span className="text-sm text-muted-foreground">{p.period}</span>
+                      </div>
+                      <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
+                    </>
+                  ) : p.priceOriginal ? (
+                    <>
+                      <p className="text-sm text-muted-foreground line-through">{p.priceOriginal}</p>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="font-display text-3xl font-extrabold">{p.priceDisplay}</span>
+                        <span className="text-sm text-muted-foreground">{p.period}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <span className="font-display text-3xl font-extrabold">Grátis</span>
+                  )}
+                </div>
+
+                <ul className="space-y-2 text-left">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span className="text-muted-foreground">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {p.priceId ? (
+                  <Button
+                    className={`w-full ${p.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`}
+                    variant={p.popular ? "default" : "outline"}
+                    disabled={isCurrent || checkingOut === p.priceId}
+                    onClick={() => handleCheckout(p.priceId!)}
+                  >
+                    {isCurrent ? "Plano Atual" : checkingOut === p.priceId ? "Redirecionando..." : p.cta}
+                  </Button>
                 ) : (
-                  <span className="font-display text-3xl font-extrabold">Grátis</span>
+                  <Button variant="outline" className="w-full" disabled>
+                    {isCurrent ? "Plano Atual" : p.cta}
+                  </Button>
                 )}
-              </div>
-
-              {/* Features */}
-              <ul className="space-y-2 text-left">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-muted-foreground">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                className={`w-full ${plan.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`}
-                variant={plan.popular ? "default" : "outline"}
-                disabled={plan.disabled}
-              >
-                {plan.cta}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
