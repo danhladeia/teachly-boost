@@ -175,6 +175,28 @@ export default function Exams() {
     e.target.value = "";
   };
 
+  const [generatingImageFor, setGeneratingImageFor] = useState<string | null>(null);
+
+  const handleAiImageForQuestion = async (qId: string) => {
+    const q = questoes.find(x => x.id === qId);
+    if (!q || !q.content.trim()) { toast.error("Escreva o enunciado antes de gerar uma imagem"); return; }
+    setGeneratingImageFor(qId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image", {
+        body: { prompt: `Ilustração educativa para a seguinte questão de prova: ${q.content}`, style: "educational, clean, black and white line art suitable for printing" },
+      });
+      if (error) throw error;
+      if (data?.image_url) {
+        updateQuestion(qId, { imageUrl: data.image_url });
+        toast.success("Imagem gerada com IA!");
+      } else {
+        throw new Error("Nenhuma imagem retornada");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar imagem");
+    } finally { setGeneratingImageFor(null); }
+  };
+
   const { canUseAI, deductCredit } = useCredits();
 
   const handleAiGenerate = async () => {
@@ -332,12 +354,12 @@ export default function Exams() {
     if (!el) return;
     const pw = window.open("", "_blank");
     if (!pw) return;
-    pw.document.write(`<html><head><title>Prova</title><style>
+      pw.document.write(`<html><head><title>Prova</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
       .question { page-break-inside: avoid; }
       .omr-sheet { page-break-before: always; }
-      @page { size: A4; margin: 10mm; }
+      @page { size: A4; margin: 15mm; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -582,11 +604,18 @@ export default function Exams() {
                           <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <label className="flex items-center gap-1 cursor-pointer text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                          <Image className="h-3 w-3" /> {q.imageUrl ? "Trocar imagem" : "Inserir imagem"}
+                          <Image className="h-3 w-3" /> {q.imageUrl ? "Trocar imagem" : "Upload imagem"}
                           <input type="file" accept="image/*" className="hidden" onChange={e => handleImageUploadForQuestion(q.id, e)} />
                         </label>
+                        <button
+                          onClick={() => handleAiImageForQuestion(q.id)}
+                          disabled={generatingImageFor === q.id}
+                          className="flex items-center gap-1 text-[10px] text-primary hover:underline disabled:opacity-50"
+                        >
+                          <Sparkles className="h-3 w-3" /> {generatingImageFor === q.id ? "Gerando..." : "Gerar com IA"}
+                        </button>
                         {q.imageUrl && (
                           <button onClick={() => updateQuestion(q.id, { imageUrl: undefined })} className="text-[10px] text-destructive hover:underline">Remover</button>
                         )}
@@ -605,7 +634,7 @@ export default function Exams() {
                 <div
                   id="prova-print-area"
                   className="bg-white text-black shadow-lg"
-                  style={{ width: "210mm", minHeight: "297mm", padding: "10mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {/* School header */}
                   {showHeader && escola && (
