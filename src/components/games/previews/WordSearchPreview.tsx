@@ -10,8 +10,9 @@ interface Props {
 
 export default function WordSearchPreview({ data, config }: Props) {
   const gridLen = data.grid.length;
-  const maxGridWidth = 480;
-  const baseCell = Math.max(14, Math.min(28, maxGridWidth / gridLen));
+  // Calculate cell size to fit within A4 printable area (190mm = ~718px at 96dpi)
+  const maxGridPx = 560;
+  const baseCell = Math.max(12, Math.min(28, maxGridPx / gridLen));
   const cellSize = baseCell * (data.spacing || 1);
   const isCircle = data.cellFormat === "circle";
 
@@ -28,8 +29,13 @@ export default function WordSearchPreview({ data, config }: Props) {
         </p>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${gridLen}, ${cellSize}px)`, border: isCircle ? "none" : "2px solid #000" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${gridLen}, ${cellSize}px)`,
+          border: isCircle ? "none" : "2px solid #000",
+          maxWidth: "100%",
+        }}>
           {data.grid.flat().map((letter, i) => (
             <div
               key={i}

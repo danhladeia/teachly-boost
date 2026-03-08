@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function CrosswordPreview({ data, config }: Props) {
-  const cellSize = Math.max(18, Math.min(30, 450 / data.size));
+  // Fit within 190mm printable width (~560px)
+  const cellSize = Math.max(16, Math.min(28, 520 / data.size));
 
   return (
     <GameA4Shell
@@ -18,8 +19,12 @@ export default function CrosswordPreview({ data, config }: Props) {
       subtitle={`${data.clues.length} palavras`}
       colorMode={config.colorMode}
     >
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)` }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)`,
+          maxWidth: "100%",
+        }}>
           {data.grid.flat().map((cell, i) => (
             <div
               key={i}

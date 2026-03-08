@@ -9,8 +9,9 @@ interface Props {
 }
 
 export default function MazePreview({ data, config }: Props) {
-  const maxWidth = data.mazeSize === "small" ? 280 : data.mazeSize === "large" ? 520 : 420;
-  const cellSize = Math.floor(maxWidth / data.size);
+  // Scale maze to fit within printable area (190mm ~ 560px)
+  const maxWidth = data.mazeSize === "small" ? 260 : data.mazeSize === "large" ? 500 : 400;
+  const cellSize = Math.min(Math.floor(maxWidth / data.size), Math.floor(560 / data.size));
   const hasQuestions = data.questions.length > 0;
 
   return (
@@ -20,12 +21,13 @@ export default function MazePreview({ data, config }: Props) {
       subtitle={hasQuestions ? "Resolva as perguntas nos checkpoints para avançar!" : "Encontre o caminho da entrada à saída!"}
       colorMode={config.colorMode}
     >
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm", overflow: "hidden" }}>
         <div
           style={{
             display: "grid",
             gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)`,
             border: "2px solid #000",
+            maxWidth: "100%",
           }}
         >
           {data.grid.flat().map((cell, i) => {
@@ -67,7 +69,7 @@ export default function MazePreview({ data, config }: Props) {
             🔒 Perguntas de Bloqueio:
           </p>
           {data.questions.map((q, qi) => (
-            <div key={qi} style={{ marginBottom: "4mm" }}>
+            <div key={qi} style={{ marginBottom: "4mm", pageBreakInside: "avoid" }}>
               <p style={{ fontWeight: 700, fontSize: "10pt" }}>
                 Checkpoint {String.fromCharCode(65 + qi)}: {q.question}
               </p>
