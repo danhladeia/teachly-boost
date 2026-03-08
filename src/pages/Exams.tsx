@@ -609,7 +609,7 @@ export default function Exams() {
                       {q.type === "open" && (
                         <div className="flex items-center gap-2">
                           <Label className="text-[10px]">Linhas:</Label>
-                          <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: parseInt(e.target.value) || 4 })} className="h-6 w-14 text-[11px]" />
+                          <Input type="number" min={1} max={20} value={q.lines} onChange={e => updateQuestion(q.id, { lines: e.target.value === "" ? 0 : parseInt(e.target.value) })} className="h-6 w-14 text-[11px]" />
                         </div>
                       )}
                       <div className="flex items-center gap-2 flex-wrap">
