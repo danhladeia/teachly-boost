@@ -283,19 +283,19 @@ export default function CameraScanner() {
   const hasLowConfidence = respostas.some(r => r.confianca === "low");
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3">
+    <div className="max-w-2xl mx-auto space-y-2 px-1 sm:space-y-3 sm:px-0">
       {/* Step indicator */}
-      <div className="flex items-center gap-1 text-[10px] font-medium px-1">
+      <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-medium">
         {[
-          { key: "select-gabarito", label: "1. Gabarito" },
-          { key: "camera", label: "2. Foto" },
-          { key: "validate", label: "3. Validar" },
-          { key: "result", label: "4. Resultado" },
+          { key: "select-gabarito", label: "Gabarito" },
+          { key: "camera", label: "Foto" },
+          { key: "validate", label: "Validar" },
+          { key: "result", label: "Resultado" },
         ].map((s, i) => (
-          <div key={s.key} className="flex items-center gap-1">
-            {i > 0 && <div className="w-4 h-px bg-border" />}
-            <span className={`px-2 py-0.5 rounded-full ${step === s.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-              {s.label}
+          <div key={s.key} className="flex items-center gap-0.5 sm:gap-1 flex-1 justify-center">
+            {i > 0 && <div className="w-3 sm:w-4 h-px bg-border shrink-0" />}
+            <span className={`px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap ${step === s.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              {i + 1}. {s.label}
             </span>
           </div>
         ))}
