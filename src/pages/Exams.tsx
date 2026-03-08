@@ -278,6 +278,7 @@ export default function Exams() {
           resposta_correta: q.type === "mc" ? q.correctIndex : null,
           linhas: q.type === "open" ? q.lines : null,
           imagem_url: q.imageUrl || null,
+          pontos: q.pontos,
         }));
         const { error: qErr } = await supabase.from("questoes").insert(questoesInsert);
         if (qErr) throw qErr;
