@@ -668,6 +668,7 @@ export default function Exams() {
                     <div key={`${q.id}-${idx}`} className="question" style={{ marginBottom: "6mm", pageBreakInside: "avoid" }}>
                       <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
                         {idx + 1}) {q.content || "Enunciado da questão"}
+                        {q.pontos !== 1 && <span style={{ fontWeight: 400, fontSize: "9pt", color: "#6b7280" }}> ({q.pontos} {q.pontos === 1 ? "ponto" : "pontos"})</span>}
                       </p>
                       {q.imageUrl && (
                         <div style={{ textAlign: "center", margin: "3mm 0", pageBreakInside: "avoid" }}>
