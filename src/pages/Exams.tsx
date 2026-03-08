@@ -354,12 +354,12 @@ export default function Exams() {
     if (!el) return;
     const pw = window.open("", "_blank");
     if (!pw) return;
-    pw.document.write(`<html><head><title>Prova</title><style>
+      pw.document.write(`<html><head><title>Prova</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
       .question { page-break-inside: avoid; }
       .omr-sheet { page-break-before: always; }
-      @page { size: A4; margin: 10mm; }
+      @page { size: A4; margin: 15mm; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
