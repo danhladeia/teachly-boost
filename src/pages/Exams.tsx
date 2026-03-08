@@ -638,11 +638,11 @@ export default function Exams() {
 
             {/* RIGHT - Preview */}
             <div className="overflow-auto max-h-[calc(100vh-200px)]">
-              <div className="bg-muted/30 rounded-lg p-4 flex justify-center">
+              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center">
                 <div
                   id="prova-print-area"
-                  className="bg-white text-black shadow-lg"
-                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  className="bg-white text-black shadow-lg w-full max-w-[210mm]"
+                  style={{ minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {/* School header */}
                   {showHeader && escola && (
