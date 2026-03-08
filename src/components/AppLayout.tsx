@@ -11,7 +11,7 @@ export default function AppLayout() {
           <header className="flex h-14 items-center gap-3 border-b px-4 bg-background">
             <SidebarTrigger />
           </header>
-          <div className="flex-1 p-6 overflow-auto">
+          <div className="flex-1 p-3 sm:p-6 overflow-auto">
             <Outlet />
           </div>
         </main>
