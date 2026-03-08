@@ -54,8 +54,8 @@ interface SavedVersao {
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
-const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0 });
-const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4 });
+const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0, pontos: 1 });
+const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4, pontos: 1 });
 
 export default function Exams() {
   const { user } = useAuth();
