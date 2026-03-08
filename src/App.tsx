@@ -49,6 +49,8 @@ const AppRoutes = () => (
       <Route path="slides" element={<SlidesGenerator />} />
       <Route path="jogos" element={<GameFactory />} />
       <Route path="provas" element={<Exams />} />
+      <Route path="notas" element={<Notepad />} />
+      <Route path="suporte" element={<Support />} />
       <Route path="planos" element={<Pricing />} />
       <Route path="timbres" element={<Branding />} />
       <Route path="configuracoes" element={<AppSettings />} />
