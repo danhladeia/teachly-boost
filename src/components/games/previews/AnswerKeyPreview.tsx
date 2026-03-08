@@ -29,17 +29,11 @@ interface Props {
 export default function AnswerKeyPreview({ gameType, gameData, config }: Props) {
   return (
     <div id="answer-key-area" style={PAGE_STYLE}>
-      {/* Header from branding if enabled */}
       {config.header.showHeader && (
         <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
             {config.header.logoUrl && (
-              <img
-                src={config.header.logoUrl}
-                alt="Logo"
-                style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }}
-                crossOrigin="anonymous"
-              />
+              <img src={config.header.logoUrl} alt="Logo" style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }} crossOrigin="anonymous" />
             )}
             {config.header.escola && (
               <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>
@@ -85,36 +79,39 @@ function WordSearchAnswer({ data }: { data: WordSearchData }) {
 }
 
 function CrosswordAnswer({ data }: { data: CrosswordData }) {
-  const cellSize = Math.max(14, Math.min(20, 480 / data.size));
-
+  const cellSize = Math.max(14, Math.min(20, Math.floor(480 / data.size)));
   return (
     <div>
       <h2 style={{ fontSize: "13pt", fontWeight: 700, marginBottom: "3mm" }}>✏️ Palavras Cruzadas — Gabarito</h2>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${data.size}, ${cellSize}px)`, maxWidth: "100%" }}>
-          {data.grid.flat().map((cell, i) => (
-            <div
-              key={i}
-              style={{
-                width: cellSize,
-                height: cellSize,
-                border: cell.empty ? "none" : "1px solid #000",
-                background: cell.empty ? "transparent" : "#e8f5e9",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: `${cellSize * 0.5}px`,
-                fontWeight: 700,
-                position: "relative",
-              }}
-            >
-              {cell.number && (
-                <span style={{ position: "absolute", top: 0, left: 1, fontSize: "5px", color: "#333" }}>{cell.number}</span>
-              )}
-              {!cell.empty && cell.letter}
-            </div>
-          ))}
-        </div>
+        <table cellSpacing={0} cellPadding={0} style={{ borderCollapse: "collapse" }}>
+          <tbody>
+            {Array.from({ length: data.size }).map((_, r) => (
+              <tr key={r}>
+                {Array.from({ length: data.size }).map((_, c) => {
+                  const cellData = Array.isArray(data.grid[0])
+                    ? (data.grid as any)[r][c]
+                    : data.grid[r * data.size + c];
+                  return (
+                    <td key={c} style={{
+                      width: `${cellSize}px`, height: `${cellSize}px`,
+                      border: cellData?.empty ? "none" : "1px solid #000",
+                      background: cellData?.empty ? "transparent" : "#e8f5e9",
+                      textAlign: "center", verticalAlign: "middle",
+                      fontSize: `${Math.floor(cellSize * 0.5)}px`, fontWeight: 700,
+                      position: "relative", padding: 0,
+                    }}>
+                      {cellData?.number && (
+                        <span style={{ position: "absolute", top: 0, left: 1, fontSize: "5px", color: "#333" }}>{cellData.number}</span>
+                      )}
+                      {!cellData?.empty && cellData?.letter}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3mm", fontSize: "9pt" }}>
         <div>
@@ -164,7 +161,7 @@ function SudokuAnswer({ data }: { data: SudokuData }) {
   const count = data.grids.length;
   const maxPerRow = count > 2 ? 2 : count;
   const availableWidth = 520 / maxPerRow - 16;
-  const cellSize = Math.max(12, Math.min(22, availableWidth / gridSize));
+  const cellSize = Math.max(12, Math.min(22, Math.floor(availableWidth / gridSize)));
   const boxH = gridSize === 4 ? 2 : gridSize === 6 ? 2 : 3;
   const boxW = gridSize === 4 ? 2 : gridSize === 6 ? 3 : 3;
 
@@ -175,23 +172,32 @@ function SudokuAnswer({ data }: { data: SudokuData }) {
         {data.grids.map((g, gi) => (
           <div key={gi}>
             <p style={{ textAlign: "center", fontWeight: 700, fontSize: "9pt", marginBottom: "1mm" }}>Puzzle {gi + 1}</p>
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${gridSize}, ${cellSize}px)`, border: "2px solid #000" }}>
-              {g.solution.flat().map((val, i) => {
-                const r = Math.floor(i / gridSize), c = i % gridSize;
-                const borderRight = (c + 1) % boxW === 0 && c + 1 < gridSize ? "2px solid #000" : "1px solid #999";
-                const borderBottom = (r + 1) % boxH === 0 && r + 1 < gridSize ? "2px solid #000" : "1px solid #999";
-                const wasEmpty = g.puzzle[r][c] === null;
-                return (
-                  <div key={i} style={{
-                    width: cellSize, height: cellSize, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: `${cellSize * 0.5}px`, fontWeight: 700, borderRight, borderBottom,
-                    background: wasEmpty ? "#e8f5e9" : "#fff", color: wasEmpty ? "#2e7d32" : "#000",
-                  }}>
-                    {val}
-                  </div>
-                );
-              })}
-            </div>
+            <table cellSpacing={0} cellPadding={0} style={{ borderCollapse: "collapse", border: "2px solid #000" }}>
+              <tbody>
+                {Array.from({ length: gridSize }).map((_, r) => (
+                  <tr key={r}>
+                    {Array.from({ length: gridSize }).map((_, c) => {
+                      const val = g.solution[r][c];
+                      const wasEmpty = g.puzzle[r][c] === null;
+                      const borderRight = (c + 1) % boxW === 0 && c + 1 < gridSize ? "2px solid #000" : "1px solid #999";
+                      const borderBottom = (r + 1) % boxH === 0 && r + 1 < gridSize ? "2px solid #000" : "1px solid #999";
+                      return (
+                        <td key={c} style={{
+                          width: `${cellSize}px`, height: `${cellSize}px`,
+                          textAlign: "center", verticalAlign: "middle",
+                          fontSize: `${Math.floor(cellSize * 0.5)}px`, fontWeight: 700,
+                          borderRight, borderBottom, padding: 0,
+                          background: wasEmpty ? "#e8f5e9" : "#fff",
+                          color: wasEmpty ? "#2e7d32" : "#000",
+                        }}>
+                          {val}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ))}
       </div>

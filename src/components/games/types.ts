@@ -55,6 +55,7 @@ export interface GameConfig {
   fontStyle?: FontStyle;
   spacing?: number; // 0.8 to 1.5
   bonusWords?: number;
+  miniText?: boolean; // generate a mini-text with words in CAPS
 
   // Crossword specific
   hintStyle?: "text" | "synonym" | "fill-blank" | "question" | "riddle";

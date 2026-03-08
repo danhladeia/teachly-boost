@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Presentation, Sparkles } from "lucide-react";
+import { Presentation, Sparkles, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SlideConfigPanel from "@/components/slides/SlideConfigPanel";
@@ -99,6 +99,17 @@ export default function SlidesGenerator() {
           <Presentation className="h-6 w-6 text-primary" /> Gerador de Slides
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">Apresentações pedagógicas com imagens IA, exportação PPTX e modo handout</p>
+      </div>
+
+      {/* Development banner */}
+      <div className="flex items-center gap-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 px-4 py-3">
+        <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+        <div>
+          <p className="font-semibold text-yellow-800 text-sm">⚠️ Sistema de Slides em Desenvolvimento</p>
+          <p className="text-yellow-700 text-xs mt-0.5">
+            Recomenda-se gerar os slides e editá-los no <strong>PowerPoint</strong> ou <strong>Google Slides</strong> para melhor personalização.
+          </p>
+        </div>
       </div>
 
       {slides.length === 0 ? (

@@ -101,6 +101,7 @@ export default function GameFactory() {
   const [fontStyle, setFontStyle] = useState<string>("print");
   const [spacing, setSpacing] = useState(1);
   const [bonusWords, setBonusWords] = useState(0);
+  const [miniText, setMiniText] = useState(false);
 
   // Crossword
   const [hintStyle, setHintStyle] = useState<string>("text");
@@ -131,15 +132,13 @@ export default function GameFactory() {
   const selectedGameDef = GAMES.find(g => g.id === selectedGame);
   const isAdvanced = editorMode === "advanced";
 
-  // Auto-populate header from branding
+  // Always sync header with branding from Timbres e Branding
   useEffect(() => {
-    if (timbre.escola || timbre.logoUrl) {
-      setHeader(h => ({
-        ...h,
-        escola: h.escola || timbre.escola,
-        logoUrl: h.logoUrl || timbre.logoUrl,
-      }));
-    }
+    setHeader(h => ({
+      ...h,
+      escola: timbre.escola || h.escola,
+      logoUrl: timbre.logoUrl || h.logoUrl,
+    }));
   }, [timbre]);
 
   // Apply etapa defaults when etapa/difficulty changes for word search
@@ -155,7 +154,7 @@ export default function GameFactory() {
     gridSize, directions, wordListPosition: wordListPosition as any,
     wordListOrder: wordListOrder as any, cellFormat: cellFormat as any,
     letterCase: letterCase as any, fontStyle: fontStyle as any,
-    spacing, bonusWords: bonusWords || undefined,
+    spacing, bonusWords: bonusWords || undefined, miniText,
     hideWordList: wordListPosition === "hidden",
     hintStyle: hintStyle as any, crosswordSymmetry: crosswordSymmetry as any,
     mysteryWord: mysteryWord || undefined,
@@ -168,7 +167,7 @@ export default function GameFactory() {
     mazeSize: mazeSize as any, mazeQuestionType: mazeQuestionType as any,
     mazeStyle: "square",
   }), [tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
-    gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase, fontStyle, spacing, bonusWords,
+    gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase, fontStyle, spacing, bonusWords, miniText,
     hintStyle, crosswordSymmetry, mysteryWord,
     symbolTheme, cipherType, caesarShift, vigenereKey, showCipherTable, phraseLength,
     sudokuSize, sudokuContentType, sudokuCustomSymbols, sudokuFillPercent, sudokuCount, sudokuShowScratch,
@@ -262,14 +261,20 @@ export default function GameFactory() {
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const container = document.createElement("div");
+
+      // Clone game page
       const gameClone = el.cloneNode(true) as HTMLElement;
-      // Force exact A4 dimensions on clone to prevent deformation
       gameClone.style.width = "210mm";
       gameClone.style.minHeight = "297mm";
+      gameClone.style.maxHeight = "297mm";
       gameClone.style.padding = "10mm";
       gameClone.style.boxSizing = "border-box";
       gameClone.style.overflow = "hidden";
+      gameClone.style.background = "#fff";
+      gameClone.style.position = "relative";
       container.appendChild(gameClone);
+
+      // Clone answer key if enabled
       if (answerKey !== "none") {
         const ak = document.getElementById("answer-key-area");
         if (ak) {
@@ -279,9 +284,20 @@ export default function GameFactory() {
           akClone.style.padding = "10mm";
           akClone.style.boxSizing = "border-box";
           akClone.style.pageBreakBefore = "always";
+          akClone.style.background = "#fff";
           container.appendChild(akClone);
         }
       }
+
+      // Force all table cells and grid cells to have centered text
+      container.querySelectorAll("td, div").forEach((node) => {
+        const el = node as HTMLElement;
+        if (el.style.textAlign === "center" || el.style.display === "flex") {
+          el.style.textAlign = "center";
+          el.style.verticalAlign = "middle";
+        }
+      });
+
       await html2pdf().set({
         margin: 0,
         filename: `${tema || "jogo"}-${selectedGame}.pdf`,
@@ -291,6 +307,7 @@ export default function GameFactory() {
           useCORS: true,
           width: 794,  // 210mm at 96dpi
           windowWidth: 794,
+          letterRendering: true,
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"], avoid: ["table", "svg", ".no-break"] },
@@ -542,6 +559,11 @@ export default function GameFactory() {
                           <SelectItem value="hidden">Ocultar lista</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px]">📖 Gerar minitexto com palavras <Tip text="Gera um pequeno texto com as palavras em CAIXA ALTA para o aluno encontrar" /></Label>
+                      <Switch checked={miniText} onCheckedChange={setMiniText} />
                     </div>
                   </Section>
 
