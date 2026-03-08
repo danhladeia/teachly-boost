@@ -388,7 +388,7 @@ export default function Activities() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">

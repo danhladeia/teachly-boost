@@ -27,7 +27,8 @@ function renderKaTeX(text: string): string {
 }
 
 const PAGE_STYLE: React.CSSProperties = {
-  width: "210mm",
+  width: "100%",
+  maxWidth: "210mm",
   minHeight: "297mm",
   padding: "15mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
