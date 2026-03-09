@@ -40,33 +40,63 @@ export default function GameA4Shell({ header, title, subtitle, colorMode = "colo
       }}
     >
       {header.showHeader && (
-        <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
-            {header.logoUrl && (
+        <div>
+          {header.bannerUrl ? (
+            /* Banner mode - full width header */
+            <div style={{ marginBottom: "4mm" }}>
               <img
-                src={header.logoUrl}
-                alt="Logo"
-                style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }}
+                src={header.bannerUrl}
+                alt="Banner"
+                style={{ width: "100%", height: "20mm", objectFit: "cover", borderRadius: "2mm" }}
                 crossOrigin="anonymous"
               />
-            )}
-            {header.escola && (
-              <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>
-                {header.escola}
+              <div style={{ borderBottom: "1px solid #ccc", paddingBottom: "2mm", marginTop: "2mm" }}>
+                {(header.professor || header.disciplina || header.serie) && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", flexWrap: "wrap", gap: "2mm" }}>
+                    {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
+                    {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
+                    {header.serie && <span><strong>Série:</strong> {header.serie}</span>}
+                  </div>
+                )}
+                {(header.aluno !== undefined || header.data !== undefined) && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm" }}>
+                    {header.aluno !== undefined && <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>}
+                    {header.data !== undefined && <span><strong>Data:</strong> {header.data || "____/____/________"}</span>}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {(header.professor || header.disciplina || header.serie) && (
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "2mm", flexWrap: "wrap", gap: "2mm" }}>
-              {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
-              {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
-              {header.serie && <span><strong>Série:</strong> {header.serie}</span>}
             </div>
-          )}
-          {(header.aluno !== undefined || header.data !== undefined) && (
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm" }}>
-              {header.aluno !== undefined && <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>}
-              {header.data !== undefined && <span><strong>Data:</strong> {header.data || "____/____/________"}</span>}
+          ) : (
+            /* Traditional logo mode */
+            <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
+                {header.logoUrl && (
+                  <img
+                    src={header.logoUrl}
+                    alt="Logo"
+                    style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }}
+                    crossOrigin="anonymous"
+                  />
+                )}
+                {header.escola && (
+                  <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>
+                    {header.escola}
+                  </div>
+                )}
+              </div>
+              {(header.professor || header.disciplina || header.serie) && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "2mm", flexWrap: "wrap", gap: "2mm" }}>
+                  {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
+                  {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
+                  {header.serie && <span><strong>Série:</strong> {header.serie}</span>}
+                </div>
+              )}
+              {(header.aluno !== undefined || header.data !== undefined) && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm" }}>
+                  {header.aluno !== undefined && <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>}
+                  {header.data !== undefined && <span><strong>Data:</strong> {header.data || "____/____/________"}</span>}
+                </div>
+              )}
             </div>
           )}
         </div>

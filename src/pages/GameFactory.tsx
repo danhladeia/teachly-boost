@@ -139,6 +139,7 @@ export default function GameFactory() {
       ...h,
       escola: timbre.escola || h.escola,
       logoUrl: timbre.logoUrl || h.logoUrl,
+      bannerUrl: timbre.bannerUrl || h.bannerUrl,
     }));
   }, [timbre]);
 

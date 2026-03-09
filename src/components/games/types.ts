@@ -17,6 +17,7 @@ export type AnswerKeyMode = "none" | "separate" | "back";
 export interface GameHeader {
   showHeader: boolean;
   logoUrl: string;
+  bannerUrl?: string;
   escola: string;
   professor: string;
   disciplina: string;
@@ -137,6 +138,7 @@ export const etapaConfig: Record<EtapaEscolar, { label: string; icon: string; de
 export const defaultHeader: GameHeader = {
   showHeader: false,
   logoUrl: "",
+  bannerUrl: "",
   escola: "",
   professor: "",
   disciplina: "",

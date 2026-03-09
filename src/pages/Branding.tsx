@@ -37,6 +37,17 @@ export default function Branding() {
     setUploading(false);
   };
 
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB"); return; }
+    setUploading(true);
+    const url = await uploadLogo(file);
+    if (url) setEditing({ ...editing, bannerUrl: url });
+    else toast.error("Erro ao enviar banner");
+    setUploading(false);
+  };
+
   const handleSave = async () => {
     if (!user || !editing) return;
     setSaving(true);
@@ -164,6 +175,31 @@ export default function Branding() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label>Banner completo (opcional)</Label>
+              <p className="text-xs text-muted-foreground">Cabeçalho personalizado que substitui logo + nome da escola</p>
+              {editing.bannerUrl ? (
+                <div className="space-y-2">
+                  <img src={editing.bannerUrl} alt="Banner" className="w-full h-20 object-cover rounded border" crossOrigin="anonymous" />
+                  <div className="flex gap-2">
+                    <Label htmlFor="banner-replace" className="cursor-pointer text-xs text-primary hover:underline">Trocar banner</Label>
+                    <input id="banner-replace" type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleBannerUpload} />
+                    <button onClick={() => setEditing({ ...editing, bannerUrl: "" })} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                      <Trash2 className="h-3 w-3" /> Remover
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors">
+                  <div className="text-center">
+                    {uploading ? <Loader2 className="h-6 w-6 text-muted-foreground mx-auto mb-1 animate-spin" /> : <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1" />}
+                    <p className="text-xs text-muted-foreground">{uploading ? "Enviando..." : "PNG, JPG - max 5MB"}</p>
+                  </div>
+                  <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleBannerUpload} />
+                </label>
+              )}
+            </div>
+
             {/* Optional fields toggles */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Campos do cabeçalho</Label>
@@ -192,20 +228,43 @@ export default function Branding() {
             {/* Preview */}
             <div className="space-y-2">
               <Label>Preview do cabeçalho</Label>
-              <div className="rounded-lg border bg-white p-4">
-                <div className="flex items-center justify-center gap-4 border-b-2 border-black pb-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                  {editing.logoUrl && <img src={editing.logoUrl} alt="Logo" className="h-10 object-contain" crossOrigin="anonymous" />}
-                  {editing.showNomeEscola && editing.escola && <span className="font-bold text-lg text-black">{editing.escola}</span>}
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2 flex-wrap gap-1">
-                  {editing.showProfessor && <span>Professor(a): ________________</span>}
-                  {editing.showDisciplina && <span>Disciplina: ________________</span>}
-                  {editing.showSerie && <span>Série: ________</span>}
-                </div>
-                {(editing.showAluno || editing.showData) && (
-                  <div className="flex justify-between text-xs text-gray-500 mt-1 flex-wrap gap-1">
-                    {editing.showAluno && <span>Aluno(a): ________________________________</span>}
-                    {editing.showData && <span>Data: ____/____/________</span>}
+              <div className="rounded-lg border bg-white overflow-hidden">
+                {editing.bannerUrl ? (
+                  /* Banner mode */
+                  <div>
+                    <img src={editing.bannerUrl} alt="Banner" className="w-full h-20 object-cover" crossOrigin="anonymous" />
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <div className="flex justify-between text-xs text-gray-500 flex-wrap gap-1">
+                        {editing.showProfessor && <span>Professor(a): ________________</span>}
+                        {editing.showDisciplina && <span>Disciplina: ________________</span>}
+                        {editing.showSerie && <span>Série: ________</span>}
+                      </div>
+                      {(editing.showAluno || editing.showData) && (
+                        <div className="flex justify-between text-xs text-gray-500 mt-1 flex-wrap gap-1">
+                          {editing.showAluno && <span>Aluno(a): ________________________________</span>}
+                          {editing.showData && <span>Data: ____/____/________</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Logo mode */
+                  <div className="p-4">
+                    <div className="flex items-center justify-center gap-4 border-b-2 border-black pb-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                      {editing.logoUrl && <img src={editing.logoUrl} alt="Logo" className="h-10 object-contain" crossOrigin="anonymous" />}
+                      {editing.showNomeEscola && editing.escola && <span className="font-bold text-lg text-black">{editing.escola}</span>}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-2 flex-wrap gap-1">
+                      {editing.showProfessor && <span>Professor(a): ________________</span>}
+                      {editing.showDisciplina && <span>Disciplina: ________________</span>}
+                      {editing.showSerie && <span>Série: ________</span>}
+                    </div>
+                    {(editing.showAluno || editing.showData) && (
+                      <div className="flex justify-between text-xs text-gray-500 mt-1 flex-wrap gap-1">
+                        {editing.showAluno && <span>Aluno(a): ________________________________</span>}
+                        {editing.showData && <span>Data: ____/____/________</span>}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

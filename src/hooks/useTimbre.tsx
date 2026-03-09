@@ -6,6 +6,7 @@ export interface TimbreData {
   id?: string;
   escola: string;
   logoUrl: string;
+  bannerUrl?: string;
   showNomeEscola: boolean;
   showProfessor: boolean;
   showDisciplina: boolean;
@@ -17,6 +18,7 @@ export interface TimbreData {
 export const defaultTimbre: TimbreData = {
   escola: "",
   logoUrl: "",
+  bannerUrl: "",
   showNomeEscola: true,
   showProfessor: true,
   showDisciplina: true,
@@ -45,6 +47,7 @@ export function useTimbre() {
         id: t.id,
         escola: t.nome_escola || "",
         logoUrl: t.logo_url || "",
+        bannerUrl: t.banner_url || "",
         showNomeEscola: t.show_nome_escola ?? true,
         showProfessor: t.show_professor ?? true,
         showDisciplina: t.show_disciplina ?? true,
@@ -65,6 +68,7 @@ export function useTimbre() {
         const legacy: TimbreData = {
           escola: profile.escola || "",
           logoUrl: (profile as any).logo_url || "",
+          bannerUrl: "",
           ...defaultTimbre,
         };
         legacy.escola = profile.escola || "";
@@ -84,6 +88,7 @@ export function useTimbre() {
       user_id: user.id,
       nome_escola: data.escola,
       logo_url: data.logoUrl || null,
+      banner_url: data.bannerUrl || null,
       show_nome_escola: data.showNomeEscola,
       show_professor: data.showProfessor,
       show_disciplina: data.showDisciplina,
