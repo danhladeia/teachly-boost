@@ -308,33 +308,50 @@ export default function DiagramGenerator() {
     saveAs(docBlob, "diagrama.docx");
   };
 
-  // ── Export: PPTX ──
+  // ── Export: PPTX (scaled to fit slide) ──
   const handleExportPptx = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
-    const pngBlob = await svgToPngBlob(svgEl, 3);
+    const isLandscape = orientation === "landscape";
+    const pngBlob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    
     const base64 = await new Promise<string>((res) => {
       const reader = new FileReader();
       reader.onloadend = () => res((reader.result as string).split(",")[1]);
       reader.readAsDataURL(pngBlob);
     });
+    
     const pptxgenjs = (await import("pptxgenjs")).default;
     const pres = new pptxgenjs();
-    const isLandscape = orientation === "landscape";
-    if (!isLandscape) pres.defineLayout({ name: "A4V", width: 7.5, height: 10 });
+    
+    // Define A4 layout
+    if (isLandscape) {
+      pres.defineLayout({ name: "A4H", width: 11.69, height: 8.27 }); // A4 landscape in inches
+    } else {
+      pres.defineLayout({ name: "A4V", width: 8.27, height: 11.69 }); // A4 portrait in inches
+    }
+    
     const slide = pres.addSlide();
     if (escolaFinal) {
-      slide.addText(escolaFinal, { x: 0.5, y: 0.3, w: isLandscape ? 9 : 6.5, h: 0.5, fontSize: 14, bold: true, align: "center" });
+      slide.addText(escolaFinal, { x: 0.5, y: 0.3, w: isLandscape ? 10.69 : 7.27, h: 0.5, fontSize: 14, bold: true, align: "center" });
     }
-    const bbox = svgEl.getBoundingClientRect();
-    const aspect = bbox.width / bbox.height;
-    const slideW = isLandscape ? 8 : 6;
-    const slideH = isLandscape ? 5 : 7;
-    let imgW = slideW, imgH = slideW / aspect;
-    if (imgH > slideH) { imgH = slideH; imgW = slideH * aspect; }
-    const xOff = isLandscape ? (10 - imgW) / 2 : (7.5 - imgW) / 2;
-    const yOff = escolaFinal ? 1 : (isLandscape ? (7.5 - imgH) / 2 : (10 - imgH) / 2);
+    
+    // Get actual image dimensions from blob
+    const imgBitmap = await createImageBitmap(pngBlob);
+    const imgAspect = imgBitmap.width / imgBitmap.height;
+    
+    // Max content area (leaving margins)
+    const maxW = isLandscape ? 10 : 7;
+    const maxH = isLandscape ? 6.5 : 9.5;
+    
+    let imgW = maxW;
+    let imgH = maxW / imgAspect;
+    if (imgH > maxH) { imgH = maxH; imgW = maxH * imgAspect; }
+    
+    const xOff = isLandscape ? (11.69 - imgW) / 2 : (8.27 - imgW) / 2;
+    const yOff = escolaFinal ? 1 : (isLandscape ? (8.27 - imgH) / 2 : (11.69 - imgH) / 2);
+    
     slide.addImage({ data: `image/png;base64,${base64}`, x: xOff, y: yOff, w: imgW, h: imgH });
     const buf = await pres.write({ outputType: "arraybuffer" });
     saveAs(new Blob([buf as ArrayBuffer]), "diagrama.pptx");
