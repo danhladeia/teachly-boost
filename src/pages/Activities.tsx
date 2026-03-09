@@ -519,10 +519,12 @@ export default function Activities() {
                         <Input type="number" min={0} max={20} value={aiNumAbertas === 0 ? "" : aiNumAbertas} onChange={e => setAiNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Questões fechadas"}</Label>
-                      <Input type="number" min={0} max={20} value={aiNumFechadas === 0 ? "" : aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
-                    </div>
+                    {(modoEnem || aiTipo !== "aberta") && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Questões fechadas"}</Label>
+                        <Input type="number" min={0} max={20} value={aiNumFechadas === 0 ? "" : aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1">
