@@ -174,6 +174,7 @@ export default function BNCCPlanner() {
 
   const escolaFinal = selectedTimbre?.escola || escola;
   const logoUrl = selectedTimbre?.logoUrl;
+  const bannerUrl = selectedTimbre?.bannerUrl;
 
   return (
     <div className="space-y-6 max-w-5xl">
