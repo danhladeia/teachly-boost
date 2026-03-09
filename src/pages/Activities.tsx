@@ -723,24 +723,6 @@ export default function Activities() {
               ))}
             </CardContent>
           </Card>
-        </div>
-          <Card className="shadow-card">
-            <CardHeader className="py-3"><CardTitle className="text-xs font-semibold">📝 Blocos ({blocks.length})</CardTitle></CardHeader>
-            <CardContent className="space-y-2 max-h-[350px] overflow-y-auto">
-              {blocks.map((block, i) => (
-                <BlockEditor
-                  key={block.id}
-                  block={block}
-                  index={i}
-                  totalBlocks={blocks.length}
-                  onUpdate={(updates) => updateBlock(block.id, updates)}
-                  onRemove={() => removeBlock(block.id)}
-                  onMove={(dir) => moveBlock(i, dir)}
-                />
-              ))}
-            </CardContent>
-          </Card>
-        </div>
 
         {/* RIGHT PANEL - A4 Preview */}
         <div>
@@ -748,5 +730,7 @@ export default function Activities() {
         </div>
       </div>
     </div>
+  );
+}
   );
 }
