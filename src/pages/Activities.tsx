@@ -509,6 +509,7 @@ export default function Activities() {
                 <Switch checked={showData} onCheckedChange={setShowData} id="show-data" />
                 <Label htmlFor="show-data" className="text-xs">Campo "Data"</Label>
               </div>
+            </CardContent>
           </Card>
 
           {/* Geração de conteúdo */}
