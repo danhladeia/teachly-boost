@@ -6,6 +6,9 @@ interface A4PreviewProps {
   showHeader: boolean;
   escola: string;
   autoNumber: boolean;
+  showLines?: boolean;
+  showAluno?: boolean;
+  showData?: boolean;
   professor?: string;
   turma?: string;
   logoUrl?: string;
