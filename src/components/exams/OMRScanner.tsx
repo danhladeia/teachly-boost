@@ -250,6 +250,11 @@ export default function OMRScanner() {
   };
 
   const processAllSheets = async () => {
+    if (!preloadedGabarito || preloadedGabarito.length === 0) {
+      toast.error("Carregue o gabarito antes de processar as fotos");
+      setStep("select-gabarito");
+      return;
+    }
     if (sheets.length === 0) return;
     setProcessing(true);
     setProgress(0);
