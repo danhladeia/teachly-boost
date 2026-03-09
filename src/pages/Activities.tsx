@@ -62,7 +62,7 @@ export default function Activities() {
   const [savedDocs, setSavedDocs] = useState<any[]>([]);
   const [tab, setTab] = useState("ia");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [imagePosition, setImagePosition] = useState<ImageFloat>("left");
+  const [imagePosition, setImagePosition] = useState<ImageFloat>("right");
   const [separatorTitle, setSeparatorTitle] = useState("Atividades");
   const [aiImageDescriptions, setAiImageDescriptions] = useState<string[]>([]);
   const [numAiImages, setNumAiImages] = useState(0);
