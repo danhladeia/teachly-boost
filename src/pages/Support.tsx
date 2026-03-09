@@ -119,6 +119,8 @@ export default function Support() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
+  const isUltra = plan.planType === "ultra";
+
   return (
     <div className="space-y-4">
       <div>
@@ -127,6 +129,26 @@ export default function Support() {
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">Entre em contato com a equipe GoPedagoX</p>
       </div>
+
+      {/* WhatsApp banner for Ultra */}
+      {isUltra && (
+        <Card className="border-green-500/30 bg-green-50 dark:bg-green-950/20">
+          <CardContent className="flex items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-green-600 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300">Suporte Ultra via WhatsApp</p>
+                <p className="text-xs text-green-600 dark:text-green-400">Atendimento prioritário direto pelo WhatsApp</p>
+              </div>
+            </div>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white border-0">
+                <Phone className="h-4 w-4 mr-1" /> Abrir WhatsApp
+              </Button>
+            </a>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
         {/* Ticket list */}
@@ -221,6 +243,19 @@ export default function Support() {
           </Card>
         )}
       </div>
+
+      {/* Floating WhatsApp button for Ultra */}
+      {isUltra && (
+        <a
+          href={WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 transition-colors"
+          title="Suporte WhatsApp Ultra"
+        >
+          <Phone className="h-6 w-6" />
+        </a>
+      )}
     </div>
   );
 }
