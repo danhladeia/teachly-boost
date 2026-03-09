@@ -25,11 +25,6 @@ export default function MazePreview({ data, config }: Props) {
             {data.grid.map((row, ri) => (
               <tr key={ri}>
                 {row.map((cell, ci) => {
-                  const isCheckpoint = cell === 2;
-                  const checkpoint = isCheckpoint
-                    ? data.checkpoints.find(cp => cp.row === ri && cp.col === ci)
-                    : null;
-
                   return (
                     <td
                       key={ci}
