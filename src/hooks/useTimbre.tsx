@@ -18,6 +18,7 @@ export interface TimbreData {
 export const defaultTimbre: TimbreData = {
   escola: "",
   logoUrl: "",
+  bannerUrl: "",
   showNomeEscola: true,
   showProfessor: true,
   showDisciplina: true,
