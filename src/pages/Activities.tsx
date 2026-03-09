@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
+import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { exportToPdf, exportAtividadeToDocx } from "@/lib/export-utils";
 import A4Preview from "@/components/activities/A4Preview";
 import BlockEditor from "@/components/activities/BlockEditor";
+import EditorTopBar from "@/components/EditorTopBar";
+import TimbreSelector from "@/components/TimbreSelector";
 import type { Block, BlockType, ImageFloat } from "@/components/activities/types";
 
 const genId = () => Math.random().toString(36).slice(2, 10);
