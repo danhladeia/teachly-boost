@@ -571,6 +571,39 @@ export default function Exams() {
                   <Button onClick={handleAiGenerate} disabled={loading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
                     {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Questões</>}
                   </Button>
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => setShowActivityPicker(!showActivityPicker)}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      Importar de Atividade
+                    </Button>
+                    {showActivityPicker && (
+                      <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {loadingActivities ? (
+                          <div className="p-4 text-center text-xs text-muted-foreground">Carregando...</div>
+                        ) : savedActivities.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma atividade salva</div>
+                        ) : (
+                          savedActivities.map((a) => (
+                            <button
+                              key={a.id}
+                              onClick={() => importActivityAsQuestions(a)}
+                              className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0"
+                            >
+                              <p className="font-medium truncate">{a.titulo}</p>
+                              <p className="text-muted-foreground text-[10px]">
+                                {a.disciplina || "Sem disciplina"} • {new Date(a.created_at).toLocaleDateString("pt-BR")}
+                              </p>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
