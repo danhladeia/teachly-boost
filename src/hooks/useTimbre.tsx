@@ -68,6 +68,7 @@ export function useTimbre() {
         const legacy: TimbreData = {
           escola: profile.escola || "",
           logoUrl: (profile as any).logo_url || "",
+          bannerUrl: "",
           ...defaultTimbre,
         };
         legacy.escola = profile.escola || "";
