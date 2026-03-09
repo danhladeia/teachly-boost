@@ -125,7 +125,7 @@ export default function SlideEditor({
       </div>
     `).join("");
 
-    printWin.document.write(`<!DOCTYPE html><html><head><title>Handout</title><style>@page{margin:10mm;}body{font-family:sans-serif;}</style></head><body>${html}</body></html>`);
+    printWin.document.write(`<!DOCTYPE html><html><head><title>Handout</title><style>@page{margin:20mm 15mm;}body{font-family:sans-serif;}</style></head><body>${html}</body></html>`);
     printWin.document.close();
     printWin.print();
   };

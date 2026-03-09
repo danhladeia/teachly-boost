@@ -595,7 +595,7 @@ export default function Exams() {
       body { font-family: 'Inter', 'Arial', sans-serif; }
       .question { page-break-inside: avoid; }
       .omr-sheet { page-break-before: always; }
-      @page { size: A4; margin: 15mm 15mm 15mm 15mm; }
+      @page { size: A4; margin: 20mm 15mm; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -949,7 +949,7 @@ export default function Exams() {
                 <div
                   id="prova-print-area"
                   className="bg-white text-black shadow-lg w-full max-w-[210mm]"
-                  style={{ minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  style={{ minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {/* School header */}
                   {showHeader && escola && (

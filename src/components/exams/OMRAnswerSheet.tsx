@@ -68,7 +68,7 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
       style={{
         pageBreakBefore: "always",
         position: "relative",
-        padding: "15mm",
+        padding: "20mm 15mm",
         minHeight: "200mm",
       }}
     >

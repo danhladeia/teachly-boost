@@ -250,7 +250,7 @@ export default function GameFactory() {
     if (!pw) return;
     pw.document.write(`<html><head><title>${tema || "Jogo"}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      @page { size: A4; margin: 15mm; }
+      @page { size: A4; margin: 20mm 15mm; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);
@@ -274,7 +274,7 @@ export default function GameFactory() {
       gameClone.style.width = "210mm";
       gameClone.style.minHeight = "297mm";
       gameClone.style.maxHeight = "297mm";
-      gameClone.style.padding = "15mm";
+      gameClone.style.padding = "20mm 15mm";
       gameClone.style.boxSizing = "border-box";
       gameClone.style.overflow = "hidden";
       gameClone.style.background = "#fff";
@@ -288,7 +288,7 @@ export default function GameFactory() {
           const akClone = ak.cloneNode(true) as HTMLElement;
           akClone.style.width = "210mm";
           akClone.style.minHeight = "297mm";
-          akClone.style.padding = "15mm";
+          akClone.style.padding = "20mm 15mm";
           akClone.style.boxSizing = "border-box";
           akClone.style.pageBreakBefore = "always";
           akClone.style.background = "#fff";

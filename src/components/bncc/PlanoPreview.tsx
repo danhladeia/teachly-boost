@@ -50,14 +50,14 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
     pw.document.write(`<html><head><title>Plano de Aula</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; padding: 15mm; font-size: 11pt; line-height: 1.6; color: #1e293b; }
+        body { font-family: 'Arial', sans-serif; padding: 20mm 15mm; font-size: 11pt; line-height: 1.6; color: #1e293b; }
         h1 { font-size: 16pt; text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #2563eb; padding-bottom: 4mm; }
         h2 { font-size: 13pt; color: #2563eb; margin: 6mm 0 3mm; page-break-after: avoid; }
         p, li { margin-bottom: 2mm; text-align: justify; }
         ul { padding-left: 5mm; }
         .header { text-align: center; margin-bottom: 6mm; font-weight: bold; font-size: 14pt; }
         .section { page-break-inside: avoid; }
-        @page { size: A4; margin: 15mm; }
+        @page { size: A4; margin: 20mm 15mm; }
       </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
@@ -116,7 +116,7 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
       </Card>
 
       <Card className="shadow-card overflow-auto">
-        <div id="plano-print-area" className="bg-white text-black p-[15mm] mx-auto" style={{ width: "210mm", minHeight: "297mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}>
+        <div id="plano-print-area" className="bg-white text-black mx-auto" style={{ width: "210mm", minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}>
           {showHeader && (escola || logoUrl) && (
             <div style={{ textAlign: "center", marginBottom: "6mm", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
               {logoUrl && <img src={logoUrl} alt="" style={{ maxHeight: "50px", margin: "0 auto 3mm" }} crossOrigin="anonymous" />}

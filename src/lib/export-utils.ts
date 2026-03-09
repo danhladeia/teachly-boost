@@ -87,7 +87,7 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
     sections: [{
       properties: {
         page: {
-          margin: { top: 567, bottom: 567, left: 567, right: 567 }, // ~15mm
+          margin: { top: 756, bottom: 756, left: 567, right: 567 }, // top/bottom ~20mm, left/right ~15mm
         },
       },
       children,
@@ -166,7 +166,7 @@ export async function exportAtividadeToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 567, bottom: 567, left: 567, right: 567 },
+          margin: { top: 756, bottom: 756, left: 567, right: 567 },
         },
       },
       children,

@@ -9,7 +9,7 @@ import type { MazeData } from "../generators/maze";
 const PAGE_STYLE: React.CSSProperties = {
   width: "210mm",
   minHeight: "297mm",
-  padding: "15mm",
+  padding: "20mm 15mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
   fontSize: "11pt",
   lineHeight: 1.5,
