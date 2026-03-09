@@ -32,10 +32,10 @@ function renderKaTeX(text: string): string {
 // Content height per page = 297 - 40 = 257mm
 const PAGE_WIDTH = "210mm";
 const PAGE_HEIGHT_MM = 297;
-const PADDING_TOP_MM = 20;
-const PADDING_BOTTOM_MM = 20;
+const PADDING_TOP_MM = 15;
+const PADDING_BOTTOM_MM = 15;
 const PADDING_LR = "15mm";
-const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - PADDING_TOP_MM - PADDING_BOTTOM_MM; // 257mm
+const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - PADDING_TOP_MM - PADDING_BOTTOM_MM; // 267mm
 
 const baseFontStyle: React.CSSProperties = {
   fontFamily: "'Inter', 'Arial', sans-serif",

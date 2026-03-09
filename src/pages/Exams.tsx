@@ -951,7 +951,7 @@ export default function Exams() {
                 <div
                   id="prova-print-area"
                   className="bg-white text-black shadow-lg"
-                  style={{ width: "210mm", minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {showHeader && selectedTimbre?.bannerUrl && (
                     <div style={{ textAlign: "center", marginBottom: "4mm" }}>

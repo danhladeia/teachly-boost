@@ -422,7 +422,7 @@ export async function exportExamToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 1134, bottom: 1134, left: 850, right: 850 },
+          margin: { top: 850, bottom: 850, left: 850, right: 850 },
         },
       },
       children,
