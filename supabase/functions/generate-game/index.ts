@@ -31,15 +31,6 @@ Retorne JSON:
 }
 A frase deve ser educativa, relacionada ao tema e adequada ao nível. Máximo 60 caracteres. Sem acentos, apenas letras A-Z e espaços.`,
 
-  "labirinto": (tema, diff, count) => `Gere dados para LABIRINTO COM DESAFIOS sobre "${tema}" (nível: ${diff}).
-Retorne JSON:
-{
-  "questions": [
-    {"question":"Pergunta sobre o tema?","alternatives":["Opção A","Opção B","Opção C","Opção D"],"correctIndex":0},
-    ...
-  ]
-}
-Gere ${Math.min(count, 5)} perguntas de múltipla escolha (4 alternativas cada) sobre o tema. Adeque ao nível.`,
 
   "sudoku": () => `Retorne JSON: {"generated": true}`,
 };

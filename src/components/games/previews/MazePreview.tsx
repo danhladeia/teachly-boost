@@ -49,28 +49,6 @@ export default function MazePreview({ data, config }: Props) {
         <span>↓ ENTRADA</span>
         <span>SAÍDA →</span>
       </div>
-
-      {hasQuestions && (
-        <div style={{ borderTop: "2px solid #000", paddingTop: "4mm" }}>
-          <p style={{ fontWeight: 700, fontSize: "11pt", marginBottom: "3mm" }}>
-            🔒 Perguntas de Bloqueio:
-          </p>
-          {data.questions.map((q, qi) => (
-            <div key={qi} style={{ marginBottom: "4mm", pageBreakInside: "avoid" }}>
-              <p style={{ fontWeight: 700, fontSize: "10pt" }}>
-                Checkpoint {String.fromCharCode(65 + qi)}: {q.question}
-              </p>
-              <div style={{ marginLeft: "4mm", marginTop: "1mm" }}>
-                {q.alternatives.map((alt, ai) => (
-                  <p key={ai} style={{ fontSize: "10pt" }}>
-                    ({String.fromCharCode(65 + ai)}) {alt}
-                  </p>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </GameA4Shell>
   );
 }
