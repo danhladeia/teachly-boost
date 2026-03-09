@@ -70,7 +70,107 @@
     </script>
   </head>
   <body>
-    <div id="root"><!--app-html--></div>
+    <div id="root"><!--app-html-->
+      <!-- Static SEO fallback for crawlers (replaced by React on load) -->
+      <div id="seo-fallback">
+        <header>
+          <nav>
+            <a href="/">
+              <img src="/favicon.png" alt="GoPedagoX - Plataforma de IA para Professores" width="40" height="40" />
+            </a>
+            <a href="#features">Recursos</a>
+            <a href="#pricing">Planos</a>
+            <a href="#faq">FAQ</a>
+            <a href="/login">Entrar</a>
+            <a href="/register">Criar conta</a>
+          </nav>
+        </header>
+        <main>
+          <section>
+            <h1>Seu planejamento pedagógico em 1 clique</h1>
+            <p>Plano BNCC • Atividades A4 • Slides • Jogos pedagógicos • Correção por foto. Tudo o que você precisa para planejar aulas incríveis.</p>
+            <a href="/register">Começar grátis</a>
+            <p>5 créditos grátis • Sem cartão de crédito</p>
+          </section>
+
+          <section>
+            <h2>Quanto tempo você gasta planejando?</h2>
+            <p>Compare o antes e depois do GoPedagoX</p>
+            <h3>Sem GoPedagoX</h3>
+            <ul>
+              <li>4h para um plano de aula</li>
+              <li>2h formatando atividades</li>
+              <li>1h buscando habilidades BNCC</li>
+              <li>Jogos? Só comprando pronto</li>
+              <li>Correção manual: noite toda</li>
+            </ul>
+            <p><strong>~10h/semana</strong></p>
+            <h3>Com GoPedagoX</h3>
+            <ul>
+              <li>Plano BNCC em 2 minutos</li>
+              <li>Atividades auto-formatadas</li>
+              <li>Habilidades sugeridas por IA</li>
+              <li>17+ jogos prontos para imprimir</li>
+              <li>Correção por foto em segundos</li>
+            </ul>
+            <p><strong>~1h/semana</strong></p>
+          </section>
+
+          <section id="features">
+            <h2>Tudo em uma plataforma</h2>
+            <p>7 módulos integrados para o professor completo</p>
+            <h3>Planejador BNCC</h3>
+            <p>Gere planos de aula completos e alinhados à Base Nacional Comum Curricular em segundos. Inclui objetivos de aprendizagem, metodologia ativa, recursos didáticos e critérios de avaliação. Exporte em PDF ou DOCX.</p>
+            <h3>Atividades Impressas A4</h3>
+            <p>Crie atividades com layout profissional prontas para imprimir. Cabeçalho personalizado com timbre da escola, questões variadas e gabarito automático no verso.</p>
+            <h3>Gerador de Slides</h3>
+            <p>Apresentações completas com design moderno geradas por IA. Escolha o tema, quantidade de slides, paleta de cores e exporte em PPTX pronto para projetar na sala de aula.</p>
+            <h3>Fábrica de Jogos Pedagógicos</h3>
+            <p>Diversos jogos educativos prontos para imprimir em A4 com níveis de dificuldade e gabarito automático. Ideal para fixação de conteúdo de forma lúdica e engajadora.</p>
+            <h3>Gerador de Diagramas</h3>
+            <p>Crie fluxogramas, mapas mentais, diagramas de sequência e muito mais com IA. Visualize conceitos complexos de forma clara e exporte em PDF, DOCX ou PPTX.</p>
+            <h3>Provas com Correção por Foto</h3>
+            <p>Crie provas com questões objetivas e dissertativas. Embaralhe automaticamente para gerar versões A, B e C com QR Code. A IA corrige automaticamente com validação assistida pelo professor.</p>
+          </section>
+
+          <section id="pricing">
+            <h2>Planos para cada necessidade</h2>
+            <p>Comece grátis, evolua quando precisar</p>
+            <h3>Starter — R$ 0,00</h3>
+            <ul><li>5 créditos únicos</li><li>Acesso a todos os módulos</li><li>Exportação PDF</li><li>Com marca d'água</li></ul>
+            <h3>Pro — R$ 18,67/mês</h3>
+            <ul><li>15 créditos/mês</li><li>1 Timbre Escolar</li><li>Sem marca d'água</li><li>Suporte via e-mail</li></ul>
+            <h3>Master — R$ 33,67/mês</h3>
+            <ul><li>50 créditos/mês</li><li>Até 3 Timbres (Multiescolas)</li><li>Sem marca d'água</li><li>Suporte prioritário</li></ul>
+            <h3>Ultra — R$ 67,42/mês</h3>
+            <ul><li>Créditos Ilimitados</li><li>Timbres Ilimitados</li><li>Sem marca d'água</li><li>Suporte via WhatsApp</li></ul>
+          </section>
+
+          <section id="faq">
+            <h2>Perguntas frequentes</h2>
+            <h3>Preciso de cartão de crédito para começar?</h3>
+            <p>Não! O plano Starter é totalmente gratuito e não requer cartão de crédito.</p>
+            <h3>O que é um crédito e como funciona?</h3>
+            <p>Cada geração de conteúdo por IA consome 1 crédito: plano de aula, jogo pedagógico, apresentação de slides ou correção de prova.</p>
+            <h3>Posso usar no celular e no computador?</h3>
+            <p>Sim! O GoPedagoX é 100% responsivo e funciona em qualquer navegador.</p>
+            <h3>As habilidades BNCC estão atualizadas?</h3>
+            <p>Sim, mantemos nosso banco de habilidades sempre atualizado conforme as diretrizes mais recentes do MEC.</p>
+            <h3>Posso cancelar minha assinatura a qualquer momento?</h3>
+            <p>Sim, sem multa ou fidelidade. Você cancela quando quiser.</p>
+            <h3>Como funciona a correção de provas por foto?</h3>
+            <p>Você cria a prova na plataforma, imprime com QR Code e gabarito OMR. Tire foto dos gabaritos preenchidos e a IA calcula a nota automaticamente.</p>
+          </section>
+
+          <footer>
+            <a href="/termos">Termos de Uso</a>
+            <a href="/privacidade">Privacidade</a>
+            <a href="mailto:contato@gopedagox.com">Contato</a>
+            <p>© 2026 GoPedagoX. Todos os direitos reservados.</p>
+          </footer>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
