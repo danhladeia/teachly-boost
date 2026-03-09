@@ -17,6 +17,7 @@ export type AnswerKeyMode = "none" | "separate" | "back";
 export interface GameHeader {
   showHeader: boolean;
   logoUrl: string;
+  bannerUrl?: string;
   escola: string;
   professor: string;
   disciplina: string;
