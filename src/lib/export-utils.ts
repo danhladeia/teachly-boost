@@ -62,7 +62,7 @@ export async function exportToPdf(elementId: string, filename: string) {
   const html2pdf = (await import("html2pdf.js")).default;
   await html2pdf()
     .set({
-      margin: [20, 15, 20, 15], // top, left, bottom, right in mm
+      margin: [15, 15, 15, 15], // top, left, bottom, right in mm
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
