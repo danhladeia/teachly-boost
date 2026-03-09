@@ -106,8 +106,14 @@ export default function DiagramGenerator() {
   const renderMermaid = useCallback(async (code: string) => {
     if (!code.trim()) { setSvgOutput(""); return; }
     try {
+      // Remove any stray markdown fences that might have slipped through
+      const cleanCode = code
+        .replace(/^```(?:mermaid)?\s*/im, "")
+        .replace(/\s*```\s*$/im, "")
+        .replace(/^mermaid\s*/i, "")
+        .trim();
       const id = "mermaid-" + Date.now();
-      const { svg } = await mermaid.render(id, code);
+      const { svg } = await mermaid.render(id, cleanCode);
       // Force SVG to fill available width
       const scaledSvg = svg
         .replace(/width="[^"]*"/, 'width="100%"')
@@ -115,7 +121,11 @@ export default function DiagramGenerator() {
       setSvgOutput(scaledSvg);
     } catch (err) {
       console.error("Mermaid render error:", err);
-      setSvgOutput(`<p style="color:red;padding:16px;">Erro na sintaxe Mermaid. Ajuste o código e tente novamente.</p>`);
+      toast.error("Erro de sintaxe no diagrama. Tente gerar novamente ou ajuste o código.");
+      setSvgOutput(`<div style="color:#b91c1c;padding:16px;background:#fef2f2;border-radius:8px;font-size:13px;">
+        <strong>Erro de sintaxe Mermaid.</strong><br/>
+        Use o campo "Pedir Ajuste à IA" abaixo e escreva: <em>"corrija a sintaxe do diagrama"</em>
+      </div>`);
     }
   }, []);
 

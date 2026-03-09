@@ -33,11 +33,36 @@ serve(async (req) => {
     let userPrompt: string;
 
     if (codigoAtual && ajuste) {
-      systemPrompt = `Você é um especialista em educação e sintaxe Mermaid.js. Receba o código Mermaid existente e aplique o ajuste solicitado pelo professor. Retorne APENAS o código Mermaid puro atualizado, sem formatação markdown (\`\`\`) ou explicações. Não inclua a palavra "mermaid" no início do código.`;
+      systemPrompt = `Você é um especialista em sintaxe Mermaid.js versão 10+.
+Receba o código Mermaid existente e aplique o ajuste solicitado.
+
+REGRAS CRÍTICAS:
+- Retorne APENAS o código Mermaid puro, sem nenhuma formatação markdown, sem \`\`\`, sem a palavra "mermaid"
+- O código deve ser 100% válido para Mermaid.js v10
+- Nunca use caracteres especiais como (), [], {} dentro de textos de nós sem escapar
+- Use aspas duplas para textos com espaços: A["Texto aqui"]
+- IDs de nós devem ser simples: letras e números apenas, sem espaços
+- Nunca deixe linhas em branco dentro de classDef ou linkStyle`;
       userPrompt = `Código atual:\n${codigoAtual}\n\nAjuste solicitado: ${ajuste}`;
     } else {
-      systemPrompt = `Você é um especialista em educação e sintaxe Mermaid.js. Seu objetivo é transformar descrições pedagógicas em códigos de diagrama Mermaid válidos. Retorne APENAS o código Mermaid puro, sem formatação markdown (\`\`\`) ou explicações. Não inclua a palavra "mermaid" no início do código. Use texto em português. Mantenha os textos dos nós curtos e objetivos (máximo 6 palavras por nó). Use IDs simples como A, B, C, etc.`;
-      userPrompt = `Crie ${tipoMap[tipo] || "um fluxograma (graph TD)"} sobre: "${prompt}"\n\nEstilo: ${estiloMap[estilo] || estiloMap.clean}`;
+      const tipoInstrucao = tipoMap[tipo] || "um fluxograma (graph TD)";
+      const estiloInstrucao = estiloMap[estilo] || estiloMap.clean;
+
+      systemPrompt = `Você é um especialista em sintaxe Mermaid.js versão 10+ para uso educacional.
+
+REGRAS CRÍTICAS DE SINTAXE (siga à risca ou o diagrama falhará):
+1. Retorne APENAS o código Mermaid puro — sem \`\`\`, sem "mermaid", sem explicações
+2. Primeira linha DEVE ser o tipo: "graph TD", "graph LR", "mindmap", etc.
+3. IDs de nós: use apenas letras/números simples (A, B, C1, etc.) — NUNCA espaços ou acentos no ID
+4. Textos: sempre entre aspas duplas quando tiver espaços: A["Texto com espaço"]
+5. NUNCA use parênteses em textos sem aspas. Use: A["(texto)"] se necessário
+6. Para mindmap: use indentação com 4 espaços, root deve ser primeiro nó
+7. Máximo 8 palavras por nó — mantenha textos curtos
+8. Máximo 15 nós no total para não sobrecarregar
+9. Não inclua comentários (%%)
+10. Português para os textos dos nós`;
+
+      userPrompt = `Crie ${tipoInstrucao} sobre: "${prompt}"\nEstilo: ${estiloInstrucao}`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -47,11 +72,13 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        temperature: 0.3,
+        max_tokens: 2048,
       }),
     });
 
@@ -74,8 +101,12 @@ serve(async (req) => {
     const data = await response.json();
     let mermaidCode = data.choices?.[0]?.message?.content || "";
 
-    // Clean markdown fences if present
-    mermaidCode = mermaidCode.replace(/^```(?:mermaid)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    // Robust cleanup: remove all markdown fences and leading/trailing whitespace
+    mermaidCode = mermaidCode
+      .replace(/^```(?:mermaid)?\s*/im, "")
+      .replace(/\s*```\s*$/im, "")
+      .replace(/^mermaid\s*/i, "")
+      .trim();
 
     return new Response(JSON.stringify({ mermaidCode }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
