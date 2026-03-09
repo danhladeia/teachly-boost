@@ -6,6 +6,7 @@ export interface TimbreData {
   id?: string;
   escola: string;
   logoUrl: string;
+  showNomeEscola: boolean;
   showProfessor: boolean;
   showDisciplina: boolean;
   showSerie: boolean;
@@ -16,6 +17,7 @@ export interface TimbreData {
 export const defaultTimbre: TimbreData = {
   escola: "",
   logoUrl: "",
+  showNomeEscola: true,
   showProfessor: true,
   showDisciplina: true,
   showSerie: true,
@@ -43,6 +45,7 @@ export function useTimbre() {
         id: t.id,
         escola: t.nome_escola || "",
         logoUrl: t.logo_url || "",
+        showNomeEscola: t.show_nome_escola ?? true,
         showProfessor: t.show_professor ?? true,
         showDisciplina: t.show_disciplina ?? true,
         showSerie: t.show_serie ?? true,
@@ -81,6 +84,7 @@ export function useTimbre() {
       user_id: user.id,
       nome_escola: data.escola,
       logo_url: data.logoUrl || null,
+      show_nome_escola: data.showNomeEscola,
       show_professor: data.showProfessor,
       show_disciplina: data.showDisciplina,
       show_serie: data.showSerie,
