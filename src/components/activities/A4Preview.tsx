@@ -45,6 +45,8 @@ const baseFontStyle: React.CSSProperties = {
   fontSize: "11pt",
   lineHeight: 1.6,
   color: "#000",
+  wordBreak: "break-word",
+  overflowWrap: "break-word",
 };
 
 export default function A4Preview({ blocks, showHeader, escola, autoNumber, showLines = true, showAluno = false, showData = false, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
