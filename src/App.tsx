@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CreditsProvider } from "@/hooks/useCredits";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Register from "./pages/Register";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
