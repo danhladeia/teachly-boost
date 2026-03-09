@@ -256,23 +256,22 @@ export default function BNCCPlanner() {
               className="min-h-[80px]"
             />
           </div>
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Quantidade de Aulas</Label>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={quantidadeAulas === 0 ? "" : quantidadeAulas}
-                onChange={(e) => setQuantidadeAulas(e.target.value === "" ? 0 : Math.max(1, Math.min(20, parseInt(e.target.value))))}
-                onBlur={() => { if (quantidadeAulas === 0) setQuantidadeAulas(1); }}
-                placeholder="1"
-              />
-              {quantidadeAulas > 1 && (
-                <p className="text-xs text-muted-foreground">A IA gerará um cronograma aula a aula ({quantidadeAulas} aulas)</p>
-              )}
-            </div>
+
+          <div className="space-y-2">
+            <Label>Quantidade de Aulas</Label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={quantidadeAulas === 0 ? "" : quantidadeAulas}
+              onChange={(e) => setQuantidadeAulas(e.target.value === "" ? 0 : Math.max(1, Math.min(20, parseInt(e.target.value))))}
+              onBlur={() => { if (quantidadeAulas === 0) setQuantidadeAulas(1); }}
+              placeholder="1"
+            />
+            {quantidadeAulas > 1 && (
+              <p className="text-xs text-muted-foreground">A IA gerará um cronograma aula a aula ({quantidadeAulas} aulas)</p>
+            )}
+          </div>
           </div>
 
           <Button
