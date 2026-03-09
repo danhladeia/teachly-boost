@@ -58,7 +58,7 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
         ul { padding-left: 5mm; }
         .header { text-align: center; margin-bottom: 6mm; font-weight: bold; font-size: 14pt; }
         .section { page-break-inside: avoid; }
-        @page { size: A4; margin: 20mm 15mm; }
+        @page { size: A4; margin: 15mm; }
       </style></head><body>`);
     pw.document.write(el.innerHTML);
     pw.document.write("</body></html>");
