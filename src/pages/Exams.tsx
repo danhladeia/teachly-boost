@@ -757,7 +757,18 @@ export default function Exams() {
                     <Switch checked={showHeader} onCheckedChange={setShowHeader} id="exam-hdr" />
                     <Label htmlFor="exam-hdr" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Timbre da escola</Label>
                   </div>
-                  {showHeader && <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />}
+                  {showHeader && (
+                    <>
+                      <TimbreSelector
+                        selectedId={selectedTimbreId}
+                        onSelect={t => {
+                          if (t) { setSelectedTimbreId(t.id); setEscola(t.escola); }
+                          else { setSelectedTimbreId(undefined); }
+                        }}
+                      />
+                      <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                    </>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <Input placeholder="Professor(a)" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
                     <Input placeholder="Turma" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
