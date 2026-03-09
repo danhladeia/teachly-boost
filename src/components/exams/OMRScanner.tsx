@@ -327,7 +327,7 @@ export default function OMRScanner() {
   const hasLowConfidence = current?.respostas.some(r => r.confianca === "low") ?? false;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4 overflow-x-hidden">
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-lg flex items-center gap-2">
