@@ -71,28 +71,7 @@ const plans = [
     features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
     cta: "Assinar Ultra",
   },
-    priceOriginal: "R$ 44,90",
-    priceDiscount: "R$ 33,67",
-    priceDisplay: "R$ 44,90",
-    period: "/mês",
-    popular: true,
-    features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
-    cta: "Assinar Master",
-  },
-  {
-    id: "ultra",
-    planType: "ultra",
-    name: "Ultra",
-    image: planUltra,
-    priceId: "price_1T8ZZu98wNeD9azwHd3KFd6W",
-    priceOriginal: "R$ 89,90",
-    priceDiscount: "R$ 67,42",
-    priceDisplay: "R$ 89,90",
-    period: "/mês",
-    popular: false,
-    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
-    cta: "Assinar Ultra",
-  },
+];
 ];
 
 export default function Pricing() {
