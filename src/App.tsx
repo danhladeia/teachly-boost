@@ -54,6 +54,7 @@ const AppRoutes = () => (
       <Route path="slides" element={<SlidesGenerator />} />
       <Route path="jogos" element={<GameFactory />} />
       <Route path="provas" element={<Exams />} />
+      <Route path="diagramas" element={<DiagramGenerator />} />
       <Route path="notas" element={<Notepad />} />
       <Route path="suporte" element={<Support />} />
       <Route path="planos" element={<Pricing />} />
