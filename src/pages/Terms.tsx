@@ -23,7 +23,7 @@ export default function Terms() {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground">2. Uso da Inteligência Artificial</h2>
-            <p>O GoPedagoX utiliza modelos avançados de inteligência artificial (Gemini 3 Flash) para geração de conteúdos pedagógicos. Os materiais gerados são sugestões automatizadas e <strong>devem ser revisados pelo professor antes da aplicação em sala de aula</strong>.</p>
+            <p>O GoPedagoX utiliza modelos avançados de inteligência artificial para geração de conteúdos pedagógicos. Os modelos podem ser atualizados periodicamente para garantir a melhor qualidade possível. Os materiais gerados são sugestões automatizadas e <strong>devem ser revisados pelo professor antes da aplicação em sala de aula</strong>.</p>
             <p className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-foreground font-medium">
               ⚠️ Segurança Pedagógica: O GoPedagoX é uma ferramenta de apoio. A responsabilidade final sobre o conteúdo ensinado e as questões aplicadas em provas é exclusiva do docente usuário. O GoPedagoX não se responsabiliza por imprecisões pedagógicas geradas pela IA.
             </p>
