@@ -878,7 +878,7 @@ export default function Exams() {
               <Card className="shadow-card">
                 <CardHeader className="py-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-semibold">📝 Questões ({questoes.length})</CardTitle>
+                    <CardTitle className="text-xs font-semibold">📝 Questões ({questoes.length}) — <span className="text-primary">{questoes.reduce((s, q) => s + (q.pontos || 0), 0).toFixed(1).replace(/\.0$/, '')} pontos</span></CardTitle>
                     <div className="flex gap-1">
                       <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setQuestoes(prev => [...prev, emptyMC()])}>
                         <Plus className="h-3 w-3 mr-0.5" /> M.E.
