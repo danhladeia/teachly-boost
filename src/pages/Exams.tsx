@@ -651,14 +651,14 @@ export default function Exams() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Provas e Correção
+          <h1 className="font-display text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Provas e Correção
           </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
+          <p className="text-muted-foreground text-[10px] sm:text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
         </div>
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex gap-1 sm:gap-2 flex-wrap">
           {questoes.length > 0 && (
             <>
               <Button size="sm" variant="outline" onClick={handlePrint} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Printer className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Imprimir</span><span className="sm:hidden">Imp.</span></Button>
@@ -675,17 +675,17 @@ export default function Exams() {
       </div>
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList className="w-full flex overflow-x-auto">
-          <TabsTrigger value="criar" className="text-xs flex-1 min-w-0">Criar</TabsTrigger>
-          <TabsTrigger value="minhas" className="text-xs flex-1 min-w-0">Minhas</TabsTrigger>
-          <TabsTrigger value="corrigir" className="text-xs flex-1 min-w-0">Corrigir</TabsTrigger>
-          <TabsTrigger value="camera" className="text-xs flex-1 min-w-0"><Camera className="mr-1 h-3 w-3" /> Câmera</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="criar" className="text-[10px] sm:text-xs px-1 sm:px-3">Criar</TabsTrigger>
+          <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas</TabsTrigger>
+          <TabsTrigger value="corrigir" className="text-[10px] sm:text-xs px-1 sm:px-3">Corrigir</TabsTrigger>
+          <TabsTrigger value="camera" className="text-[10px] sm:text-xs px-1 sm:px-3"><Camera className="mr-0.5 sm:mr-1 h-3 w-3" /> Câmera</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
           <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
             {/* LEFT - Config */}
-            <div className="space-y-4 pr-1">
+            <div className="space-y-4 overflow-x-hidden">
               {/* TIMBRE - Primeiro */}
               <Card className="shadow-card">
                 <CardContent className="pt-4 space-y-3">
@@ -948,12 +948,12 @@ export default function Exams() {
             </div>
 
             {/* RIGHT - Preview */}
-            <div>
-              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center">
+            <div className="overflow-x-auto">
+              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center min-w-0">
                 <div
                   id="prova-print-area"
-                  className="bg-white text-black shadow-lg"
-                  style={{ width: "210mm", minHeight: "297mm", padding: "15mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  className="bg-white text-black shadow-lg w-full lg:w-[210mm]"
+                  style={{ minHeight: "297mm", padding: "10mm 8mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {showHeader && selectedTimbre?.bannerUrl && (
                     <div style={{ textAlign: "center", marginBottom: "4mm" }}>
@@ -976,8 +976,8 @@ export default function Exams() {
                     {professor && <span><strong>Professor(a):</strong> {professor}</span>}
                     {turma && <span><strong>Turma:</strong> {turma}</span>}
                   </div>
-                  <div style={{ display: "flex", gap: "10mm", fontSize: "10pt", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "4mm" }}>
-                    <span>Nome: ________________________________________</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "3mm 10mm", fontSize: "10pt", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "4mm" }}>
+                    <span style={{ flex: "1 1 auto", minWidth: "0" }}>Nome: ______________________________</span>
                     <span>Data: ___/___/___</span>
                     <span>Nota: _____</span>
                   </div>

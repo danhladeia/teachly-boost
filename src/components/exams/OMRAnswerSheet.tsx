@@ -88,9 +88,9 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
       </div>
 
       {/* Student fields */}
-      <div style={{ display: "flex", gap: "8mm", fontSize: "9pt", marginBottom: "4mm", borderBottom: "1px solid #cbd5e1", paddingBottom: "3mm" }}>
-        <span style={{ flex: 1 }}>Nome: _____________________________________________</span>
-        <span>Turma: {turma || "___________"}</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2mm 8mm", fontSize: "9pt", marginBottom: "4mm", borderBottom: "1px solid #cbd5e1", paddingBottom: "3mm" }}>
+        <span style={{ flex: "1 1 auto", minWidth: "0" }}>Nome: _________________________________</span>
+        <span>Turma: {turma || "________"}</span>
         <span>Data: ___/___/___</span>
       </div>
 
@@ -99,8 +99,8 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
       </p>
 
       {/* Bubble grid + QR Code */}
-      <div style={{ display: "flex", gap: "10mm", alignItems: "flex-start" }}>
-        <div data-omr-grid style={{ flex: 1, display: "flex", gap: "8mm", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6mm 10mm", alignItems: "flex-start" }}>
+        <div data-omr-grid style={{ flex: "1 1 auto", minWidth: "0", display: "flex", gap: "6mm 8mm", flexWrap: "wrap" }}>
           {columns.map((col, ci) => (
             <div key={ci} style={{ minWidth: "30mm" }} data-omr-col={ci}>
               <div style={{ display: "flex", gap: "2mm", alignItems: "center", marginBottom: "3mm", paddingLeft: "9mm" }}>

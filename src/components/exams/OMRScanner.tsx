@@ -327,7 +327,7 @@ export default function OMRScanner() {
   const hasLowConfidence = current?.respostas.some(r => r.confianca === "low") ?? false;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4 overflow-x-hidden">
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-lg flex items-center gap-2">
@@ -465,11 +465,11 @@ export default function OMRScanner() {
               )}
 
               {current && current.status === "done" && (
-                <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+                <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
                   {/* Left: Original image */}
-                  <div className="space-y-3">
+                  <div className="space-y-3 min-w-0">
                     <div className="rounded-lg overflow-hidden border">
-                      <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[500px] bg-muted" />
+                      <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[300px] sm:max-h-[500px] bg-muted" />
                     </div>
                     <div className="space-y-1 text-xs">
                       {current.prova_info && (
@@ -563,7 +563,7 @@ export default function OMRScanner() {
                       Respostas detectadas <span className="text-primary">(clique para corrigir)</span>
                     </h4>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
                       {(current.gabarito || current.respostas).map((item, idx) => {
                         const qNum = "q" in item ? item.q : item.questao;
                         const detected = current.respostas.find(r => r.questao === qNum);
