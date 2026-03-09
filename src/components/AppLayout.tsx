@@ -12,7 +12,7 @@ export default function AppLayout() {
           <header className="flex h-14 items-center gap-3 border-b border-sidebar-border px-4 bg-sidebar">
             <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" />
             <div className="h-6 w-px bg-sidebar-border" />
-            <img src={logoHeader} alt="GoPedagoX" className="h-4 sm:h-5 w-auto opacity-70" />
+            <img src={logoHeader} alt="GoPedagoX" className="h-3 sm:h-3.5 w-auto opacity-70" />
           </header>
           <div className="flex-1 p-3 sm:p-6 overflow-auto">
             <Outlet />
