@@ -150,7 +150,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
             <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
               <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
             </p>
-            {Array.from({ length: block.lines || 4 }).map((_, li) => (
+            {showLines && Array.from({ length: block.lines || 4 }).map((_, li) => (
               <div key={li} style={{ borderBottom: "1px solid #d1d5db", height: "8mm", marginBottom: "1mm" }} />
             ))}
           </div>
