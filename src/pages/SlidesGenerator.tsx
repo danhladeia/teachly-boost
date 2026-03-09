@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Presentation, Sparkles, AlertTriangle } from "lucide-react";
+import { Presentation, Sparkles, AlertTriangle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
 import SlideConfigPanel from "@/components/slides/SlideConfigPanel";
 import SlideEditor from "@/components/slides/SlideEditor";
+import EditorTopBar from "@/components/EditorTopBar";
 import type { Slide, SlideTemplate, SlideDensity } from "@/components/slides/types";
 import { estilosImagem } from "@/components/slides/types";
 
@@ -105,12 +106,31 @@ export default function SlidesGenerator() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <Presentation className="h-6 w-6 text-primary" /> Gerador de Slides
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">Apresentações pedagógicas com imagens IA, exportação PPTX e modo handout</p>
-      </div>
+      {slides.length > 0 && (
+        <EditorTopBar
+          title="Gerador de Slides"
+          onPrint={() => (window as any).__slidesPrintHandout?.()}
+          onPptx={() => (window as any).__slidesExportPPTX?.()}
+          leading={
+            <button
+              onClick={() => setSlides([])}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Nova Apresentação
+            </button>
+          }
+        />
+      )}
+      
+      {slides.length === 0 && (
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <Presentation className="h-6 w-6 text-primary" /> Gerador de Slides
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">Apresentações pedagógicas com imagens IA, exportação PPTX e modo handout</p>
+        </div>
+      )}
 
       {/* Development banner */}
       <div className="flex items-center gap-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 px-4 py-3">
@@ -148,6 +168,14 @@ export default function SlidesGenerator() {
           generatingImages={generatingImages}
           imageProgress={imageProgress}
           imageTotal={imageTotal}
+          onPrint={(printFn) => {
+            // Store the print function to use in the top bar
+            (window as any).__slidesPrintHandout = printFn;
+          }}
+          onPptx={(pptxFn) => {
+            // Store the PPTX function to use in the top bar 
+            (window as any).__slidesExportPPTX = pptxFn;
+          }}
         />
       )}
     </div>

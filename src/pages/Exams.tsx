@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,6 +84,11 @@ export default function Exams() {
   const [shuffling, setShuffling] = useState(false);
   const [loadingProvas, setLoadingProvas] = useState(false);
 
+  // Import activities state
+  const [savedActivities, setSavedActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [showActivityPicker, setShowActivityPicker] = useState(false);
+
   // Load profile data
   useEffect(() => {
     if (!user) return;
@@ -93,7 +98,64 @@ export default function Exams() {
       if (data?.nome) setProfessor(data.nome);
     })();
     loadSavedProvas();
+    loadSavedActivities();
   }, [user]);
+
+  const loadSavedActivities = async () => {
+    if (!user) return;
+    setLoadingActivities(true);
+    try {
+      const { data } = await supabase
+        .from("documentos_salvos")
+        .select("id, titulo, disciplina, nivel, created_at, conteudo")
+        .eq("tipo", "atividade")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setSavedActivities(data || []);
+    } catch {} finally { setLoadingActivities(false); }
+  };
+
+  const importActivityAsQuestions = (activity: any) => {
+    const conteudo = activity.conteudo as any;
+    const blocks = conteudo?.blocks || [];
+    
+    const newQuestions: ExamQuestion[] = [];
+    
+    blocks.forEach((block: any) => {
+      if (block.type === "question-open") {
+        newQuestions.push({
+          id: genId(),
+          type: "open",
+          content: block.content || "",
+          alternatives: [],
+          correctIndex: -1,
+          lines: block.lines || 4,
+          pontos: 1,
+          imageUrl: block.imageUrl,
+        });
+      } else if (block.type === "question-mc") {
+        newQuestions.push({
+          id: genId(),
+          type: "mc",
+          content: block.content || "",
+          alternatives: block.alternatives || ["", "", "", ""],
+          correctIndex: block.correctIndex ?? 0,
+          lines: 0,
+          pontos: 1,
+          imageUrl: block.imageUrl,
+        });
+      }
+    });
+
+    if (newQuestions.length === 0) {
+      toast.error("Nenhuma questão encontrada nesta atividade");
+      return;
+    }
+
+    setQuestoes(prev => [...prev, ...newQuestions]);
+    setShowActivityPicker(false);
+    toast.success(`${newQuestions.length} questões importadas da atividade`);
+  };
 
   const loadSavedProvas = async () => {
     if (!user) return;
@@ -509,6 +571,39 @@ export default function Exams() {
                   <Button onClick={handleAiGenerate} disabled={loading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
                     {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Questões</>}
                   </Button>
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => setShowActivityPicker(!showActivityPicker)}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      Importar de Atividade
+                    </Button>
+                    {showActivityPicker && (
+                      <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {loadingActivities ? (
+                          <div className="p-4 text-center text-xs text-muted-foreground">Carregando...</div>
+                        ) : savedActivities.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma atividade salva</div>
+                        ) : (
+                          savedActivities.map((a) => (
+                            <button
+                              key={a.id}
+                              onClick={() => importActivityAsQuestions(a)}
+                              className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0"
+                            >
+                              <p className="font-medium truncate">{a.titulo}</p>
+                              <p className="text-muted-foreground text-[10px]">
+                                {a.disciplina || "Sem disciplina"} • {new Date(a.created_at).toLocaleDateString("pt-BR")}
+                              </p>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 

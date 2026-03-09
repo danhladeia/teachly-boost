@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronLeft, ChevronRight, Maximize2, X, Download, FileText, Loader2, ImageIcon,
   Printer, RotateCcw, StickyNote, Layout,
@@ -25,11 +25,13 @@ interface Props {
   generatingImages: boolean;
   imageProgress: number;
   imageTotal: number;
+  onPrint?: (printFn: () => void) => void;
+  onPptx?: (pptxFn: () => void) => void;
 }
 
 export default function SlideEditor({
   slides, setSlides, template, setTemplate, onReset,
-  generatingImages, imageProgress, imageTotal,
+  generatingImages, imageProgress, imageTotal, onPrint, onPptx
 }: Props) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -40,6 +42,12 @@ export default function SlideEditor({
 
   const colors = templateColorMap[template];
   const slide = slides[currentSlide];
+
+  // Register functions with parent for top bar usage
+  useEffect(() => {
+    if (onPrint) onPrint(printHandout);
+    if (onPptx) onPptx(exportPPTX);
+  }, [onPrint, onPptx]);
 
   const goTo = (dir: -1 | 1) => setCurrentSlide(prev => Math.max(0, Math.min(slides.length - 1, prev + dir)));
 
@@ -141,10 +149,9 @@ export default function SlideEditor({
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Toolbar */}
+          {/* Internal toolbar for templates and layout */}
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={onReset}><ChevronLeft className="mr-1 h-3.5 w-3.5" /> Nova</Button>
               <Select value={template} onValueChange={v => setTemplate(v as SlideTemplate)}>
                 <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -177,12 +184,6 @@ export default function SlideEditor({
               )}
               <Button variant="outline" size="sm" onClick={() => setShowNotes(!showNotes)} className="text-xs">
                 <StickyNote className="mr-1 h-3.5 w-3.5" /> Notas
-              </Button>
-              <Button variant="outline" size="sm" onClick={printHandout} className="text-xs">
-                <Printer className="mr-1 h-3.5 w-3.5" /> Handout
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportPPTX} className="text-xs">
-                <Download className="mr-1 h-3.5 w-3.5" /> PPTX
               </Button>
               <Button variant="outline" size="sm" onClick={() => setFullscreen(true)} className="text-xs">
                 <Maximize2 className="mr-1 h-3.5 w-3.5" /> Apresentar
