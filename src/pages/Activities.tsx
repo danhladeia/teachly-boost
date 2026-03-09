@@ -706,48 +706,24 @@ export default function Activities() {
             </CardContent>
           </Card>
 
-          {/* Global Settings */}
+          {/* Block list */}
           <Card className="shadow-card">
-            <CardContent className="pt-4 space-y-3">
-              <h3 className="text-xs font-semibold flex items-center gap-1"><Settings2 className="h-3 w-3" /> Configurações</h3>
-              <div className="flex items-center gap-2">
-                <Switch checked={showHeader} onCheckedChange={setShowHeader} id="act-header" />
-                <Label htmlFor="act-header" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Escola</Label>
-              </div>
-              {showHeader && (
-                <>
-                  <TimbreSelector
-                    selectedId={selectedTimbreId}
-                    onSelect={t => {
-                      if (t) {
-                        setSelectedTimbreId(t.id);
-                        setEscola(t.escola);
-                      } else {
-                        setSelectedTimbreId(undefined);
-                      }
-                    }}
-                  />
-                  <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
-                </>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Professor(a)</Label>
-                  <Input placeholder="Nome" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Turma</Label>
-                  <Input placeholder="Ex: 5ºA" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={autoNumber} onCheckedChange={setAutoNumber} id="auto-num" />
-                <Label htmlFor="auto-num" className="text-xs flex items-center gap-1"><Hash className="h-3 w-3" /> Numeração automática</Label>
-              </div>
+            <CardHeader className="py-3"><CardTitle className="text-xs font-semibold">📝 Blocos ({blocks.length})</CardTitle></CardHeader>
+            <CardContent className="space-y-2 max-h-[350px] overflow-y-auto">
+              {blocks.map((block, i) => (
+                <BlockEditor
+                  key={block.id}
+                  block={block}
+                  index={i}
+                  totalBlocks={blocks.length}
+                  onUpdate={(updates) => updateBlock(block.id, updates)}
+                  onRemove={() => removeBlock(block.id)}
+                  onMove={(dir) => moveBlock(i, dir)}
+                />
+              ))}
             </CardContent>
           </Card>
-
-          {/* Block list */}
+        </div>
           <Card className="shadow-card">
             <CardHeader className="py-3"><CardTitle className="text-xs font-semibold">📝 Blocos ({blocks.length})</CardTitle></CardHeader>
             <CardContent className="space-y-2 max-h-[350px] overflow-y-auto">
