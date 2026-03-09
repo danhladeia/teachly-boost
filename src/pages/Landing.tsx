@@ -215,7 +215,7 @@ export default function Landing() {
         <div className="container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Tudo em uma plataforma</motion.h2>
-            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">5 módulos integrados para o professor completo</motion.p>
+            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">7 módulos integrados para o professor completo</motion.p>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) =>
