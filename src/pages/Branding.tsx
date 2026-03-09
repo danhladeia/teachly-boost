@@ -164,6 +164,31 @@ export default function Branding() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label>Banner completo (opcional)</Label>
+              <p className="text-xs text-muted-foreground">Cabeçalho personalizado que substitui logo + nome da escola</p>
+              {editing.bannerUrl ? (
+                <div className="space-y-2">
+                  <img src={editing.bannerUrl} alt="Banner" className="w-full h-20 object-cover rounded border" crossOrigin="anonymous" />
+                  <div className="flex gap-2">
+                    <Label htmlFor="banner-replace" className="cursor-pointer text-xs text-primary hover:underline">Trocar banner</Label>
+                    <input id="banner-replace" type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleBannerUpload} />
+                    <button onClick={() => setEditing({ ...editing, bannerUrl: "" })} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                      <Trash2 className="h-3 w-3" /> Remover
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors">
+                  <div className="text-center">
+                    {uploading ? <Loader2 className="h-6 w-6 text-muted-foreground mx-auto mb-1 animate-spin" /> : <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1" />}
+                    <p className="text-xs text-muted-foreground">{uploading ? "Enviando..." : "PNG, JPG - max 5MB"}</p>
+                  </div>
+                  <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={handleBannerUpload} />
+                </label>
+              )}
+            </div>
+
             {/* Optional fields toggles */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Campos do cabeçalho</Label>
