@@ -66,7 +66,6 @@ export default function Activities() {
   const [importFileName, setImportFileName] = useState("");
   const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSavedDocs();
