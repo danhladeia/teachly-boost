@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Presentation, Sparkles, AlertTriangle, ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Presentation, Sparkles, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
@@ -8,6 +8,7 @@ import SlideEditor from "@/components/slides/SlideEditor";
 import EditorTopBar from "@/components/EditorTopBar";
 import type { Slide, SlideTemplate, SlideDensity } from "@/components/slides/types";
 import { estilosImagem } from "@/components/slides/types";
+import type { TimbreData } from "@/hooks/useTimbre";
 
 export default function SlidesGenerator() {
   const [tema, setTema] = useState("");
@@ -26,8 +27,21 @@ export default function SlidesGenerator() {
   const [generatingImages, setGeneratingImages] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [imageTotal, setImageTotal] = useState(0);
+  const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
+  const [professor, setProfessor] = useState("");
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("nome").eq("user_id", user.id).single();
+      if (data?.nome) setProfessor(data.nome);
+    } catch {}
+  };
     const file = e.target.files?.[0];
     if (file) setArquivo(file);
   };
