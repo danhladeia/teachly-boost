@@ -105,36 +105,80 @@ export default function OMRScanner() {
     if (!selectedProvaId) { toast.error("Selecione uma prova"); return; }
     setLoadingGabarito(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Faça login primeiro");
+      // Busca gabarito diretamente do banco (sem passar pela edge function de OCR)
+      const { data: prova, error: provaErr } = await supabase
+        .from("provas")
+        .select("id, titulo")
+        .eq("id", selectedProvaId)
+        .single();
 
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const resp = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/process-omr`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prova_id: selectedProvaId,
-            versao_id: selectedVersaoId || null,
-          }),
-        }
-      );
+      if (provaErr || !prova) throw new Error("Prova não encontrada");
 
-      const result = await resp.json();
-      if (!result.success) throw new Error(result.error || "Erro ao buscar gabarito");
+      let gabarito: { q: number; correct: number; pontos: number }[] = [];
+      let provaInfo: { titulo: string; prova_id: string; versao_id: string | null; versao_label: string };
 
-      if (!result.gabarito || result.gabarito.length === 0) {
+      if (selectedVersaoId && selectedVersaoId !== "original") {
+        // Busca gabarito da versão embaralhada
+        const [{ data: versao }, { data: questoes }] = await Promise.all([
+          supabase.from("versoes_prova").select("*").eq("id", selectedVersaoId).eq("prova_id", selectedProvaId).single(),
+          supabase.from("questoes").select("id, pontos").eq("prova_id", selectedProvaId).order("ordem"),
+        ]);
+
+        if (!versao) throw new Error("Versão não encontrada");
+
+        const pontosMap: Record<string, number> = {};
+        (questoes || []).forEach((q: any) => { pontosMap[q.id] = q.pontos ?? 1; });
+
+        const mapa = versao.mapa_questoes as any[];
+        const mcItems = mapa
+          .filter((item: any) => item.resposta_correta_nova !== null && item.resposta_correta_nova !== undefined)
+          .sort((a: any, b: any) => a.nova_ordem - b.nova_ordem);
+
+        gabarito = mcItems.map((item: any, idx: number) => ({
+          q: idx + 1,
+          correct: item.resposta_correta_nova,
+          pontos: pontosMap[item.questao_id] ?? 1,
+        }));
+
+        provaInfo = {
+          titulo: `${prova.titulo} — Versão ${versao.versao_label}`,
+          prova_id: prova.id,
+          versao_id: versao.id,
+          versao_label: versao.versao_label,
+        };
+      } else {
+        // Busca gabarito original (questões na ordem original)
+        const { data: questoes, error: qErr } = await supabase
+          .from("questoes")
+          .select("ordem, tipo, resposta_correta, pontos")
+          .eq("prova_id", selectedProvaId)
+          .order("ordem");
+
+        if (qErr) throw new Error("Erro ao buscar questões");
+
+        const mcQuestoes = (questoes || []).filter((q: any) => q.tipo === "mc" && q.resposta_correta !== null);
+        gabarito = mcQuestoes.map((q: any, idx: number) => ({
+          q: idx + 1,
+          correct: q.resposta_correta,
+          pontos: q.pontos ?? 1,
+        }));
+
+        provaInfo = {
+          titulo: prova.titulo,
+          prova_id: prova.id,
+          versao_id: null,
+          versao_label: "Original",
+        };
+      }
+
+      if (gabarito.length === 0) {
         toast.error("Nenhuma questão de múltipla escolha encontrada nesta prova");
         return;
       }
 
-      setPreloadedGabarito(result.gabarito);
-      setPreloadedProvaInfo(result.prova_info);
-      toast.success(`Gabarito carregado: ${result.gabarito.length} questões`);
+      setPreloadedGabarito(gabarito);
+      setPreloadedProvaInfo(provaInfo);
+      toast.success(`Gabarito carregado: ${gabarito.length} questões`);
       setStep("upload");
     } catch (err: any) {
       toast.error(err.message || "Erro ao buscar gabarito");

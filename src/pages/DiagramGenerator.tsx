@@ -86,7 +86,11 @@ export default function DiagramGenerator() {
     try {
       const id = "mermaid-" + Date.now();
       const { svg } = await mermaid.render(id, code);
-      setSvgOutput(svg);
+      // Force SVG to fill available width
+      const scaledSvg = svg
+        .replace(/width="[^"]*"/, 'width="100%"')
+        .replace(/style="[^"]*max-width:[^;"]*;?/g, (m) => m.replace(/max-width:[^;"]*/g, "max-width:100%"));
+      setSvgOutput(scaledSvg);
     } catch (err) {
       console.error("Mermaid render error:", err);
       setSvgOutput(`<p style="color:red;padding:16px;">Erro na sintaxe Mermaid. Ajuste o código e tente novamente.</p>`);
@@ -388,33 +392,41 @@ export default function DiagramGenerator() {
           )}
         </div>
 
-        {/* Right Panel — Diagram Preview */}
-        <div className="flex-1 flex items-start justify-center overflow-auto">
+        {/* Right Panel — Diagram Preview A4 */}
+        <div className="flex-1 flex items-start justify-center overflow-auto pb-4">
           <div
             ref={printRef}
-            className="bg-background border rounded-lg shadow-sm"
-            style={previewStyle}
+            className="bg-white border rounded-lg shadow-sm shrink-0"
+            style={{
+              ...previewStyle,
+              maxWidth: "100%",
+              boxSizing: "border-box",
+            }}
           >
             {/* Header / Branding */}
             {(bannerUrl || logoUrl || escolaFinal) && (
-              <div className="mb-4 pb-3 border-b border-border">
+              <div className="mb-4 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
                 {bannerUrl ? (
-                  <img src={bannerUrl} alt="Banner" className="w-full max-h-24 object-contain" crossOrigin="anonymous" />
+                  <img src={bannerUrl} alt="Banner" style={{ width: "100%", maxHeight: "96px", objectFit: "contain" }} crossOrigin="anonymous" />
                 ) : (
-                  <div className="flex items-center gap-3">
-                    {logoUrl && <img src={logoUrl} alt="Logo" className="h-10 w-10 object-contain" crossOrigin="anonymous" />}
-                    {escolaFinal && <span className="font-semibold text-sm">{escolaFinal}</span>}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "contain" }} crossOrigin="anonymous" />}
+                    {escolaFinal && <span style={{ fontWeight: 600, fontSize: "14px" }}>{escolaFinal}</span>}
                   </div>
                 )}
               </div>
             )}
 
             {svgOutput ? (
-              <div ref={diagramRef} className="w-full overflow-auto flex items-center justify-center" dangerouslySetInnerHTML={{ __html: svgOutput }} />
+              <div
+                ref={diagramRef}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                dangerouslySetInnerHTML={{ __html: svgOutput }}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <Image className="h-12 w-12 mb-3 opacity-30" />
-                <p className="text-sm">Seu diagrama aparecerá aqui</p>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "256px", color: "#9ca3af" }}>
+                <Image style={{ width: "48px", height: "48px", marginBottom: "12px", opacity: 0.3 }} />
+                <p style={{ fontSize: "14px" }}>Seu diagrama aparecerá aqui em formato A4</p>
               </div>
             )}
           </div>
