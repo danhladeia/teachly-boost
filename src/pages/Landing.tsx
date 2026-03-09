@@ -48,9 +48,9 @@ const features = [
   {
     icon: Gamepad2,
     title: "Fábrica de Jogos Pedagógicos",
-    desc: "17+ jogos educativos prontos para imprimir em A4: caça-palavras, cruzadinha, criptograma, sudoku, labirinto, anagrama, forca, jogo da velha, pixel art, sequência lógica e muito mais. Com níveis de dificuldade e gabarito automático.",
-    tag: "17+ jogos",
-    highlights: ["Caça-palavras", "Cruzadinha", "Sudoku", "Labirinto"]
+    desc: "Diversos jogos educativos prontos para imprimir em A4 com níveis de dificuldade e gabarito automático. Ideal para fixação de conteúdo de forma lúdica e engajadora.",
+    tag: "Jogos",
+    highlights: ["Imprimíveis A4", "Gabarito automático", "Níveis de dificuldade"]
   },
   {
     icon: GitBranch,
@@ -104,7 +104,7 @@ const faqs = [
   { q: "Como funciona a correção de provas por foto?", a: "Você cria a prova na plataforma, imprime com QR Code e gabarito OMR. Depois da aplicação, tire foto ou faça upload dos gabaritos preenchidos. A IA lê as respostas, identifica a versão da prova e calcula a nota automaticamente." },
   { q: "Os materiais gerados pela IA são confiáveis?", a: "Os conteúdos são gerados por modelos avançados de IA e alinhados à BNCC, mas recomendamos que o professor sempre revise o material antes de aplicar em sala de aula. A responsabilidade pedagógica final é do docente." },
   { q: "O que acontece com meus créditos se eu trocar de plano?", a: "Ao fazer upgrade, você recebe imediatamente os créditos do novo plano. Ao fazer downgrade, a mudança ocorre no próximo ciclo de faturamento." },
-  { q: "Como funciona o cupom GOPEDAGOX?", a: "O cupom GOPEDAGOX oferece 25% de desconto em qualquer plano pago (Pro, Master ou Ultra) por tempo limitado. Basta inserir o código no momento da assinatura. O desconto é aplicado em todos os ciclos de pagamento enquanto o cupom estiver ativo." }
+  { q: "Como funciona o cupom GOPEDAGOX?", a: "O cupom GOPEDAGOX oferece 25% de desconto em qualquer plano pago (Pro, Master ou Ultra) por tempo limitado. Basta inserir o código no momento da assinatura. O desconto é aplicado em todos os ciclos de pagamento enquanto o cupom estiver ativo. Aproveite antes que expire!" }
 ];
 
 export default function Landing() {
@@ -249,9 +249,9 @@ export default function Landing() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos para cada necessidade</motion.h2>
             <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Comece grátis, evolua quando precisar</motion.p>
-            <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">🔥 Por tempo limitado: use o cupom <span className="font-bold">GOPEDAGOX</span> e ganhe 25% OFF!</span>
+            <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-6 py-3 shadow-lg animate-pulse">
+              <Sparkles className="h-5 w-5 text-destructive" />
+              <span className="text-sm font-bold text-destructive">⏰ TEMPO LIMITADO: use o cupom <span className="rounded bg-destructive px-2 py-0.5 text-destructive-foreground font-extrabold">GOPEDAGOX</span> e ganhe 25% OFF em qualquer plano!</span>
             </motion.div>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

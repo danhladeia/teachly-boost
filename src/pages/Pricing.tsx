@@ -12,7 +12,7 @@ import planPro from "@/assets/plan-pro.png";
 import planMaster from "@/assets/plan-master.png";
 import planUltra from "@/assets/plan-ultra.png";
 
-const STRIPE_COUPON_ID = "EEnPYZCe";
+const STRIPE_COUPON_ID = "promo_1T8wfd7gJSrf8FzwdQboSbV2";
 
 const plans = [
   {
