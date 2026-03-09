@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  BookOpen, Brain, Gamepad2, Presentation, FileCheck,
+  BookOpen, Brain, Gamepad2, Presentation, FileCheck, GitBranch,
   Stamp, Clock, Sparkles, CheckCircle2, ArrowRight, ChevronDown,
   Zap, Shield, Users, Star, Crown, Rocket } from
 "lucide-react";
@@ -48,9 +48,16 @@ const features = [
   {
     icon: Gamepad2,
     title: "Fábrica de Jogos Pedagógicos",
-    desc: "5 jogos educativos prontos para imprimir em A4: caça-palavras, palavras cruzadas, criptograma, sudoku e labirinto. Com níveis de dificuldade, gabarito automático e modos de cor.",
-    tag: "5 jogos",
-    highlights: ["Caça-palavras", "Cruzadas", "Sudoku"]
+    desc: "17+ jogos educativos prontos para imprimir em A4: caça-palavras, cruzadinha, criptograma, sudoku, labirinto, anagrama, forca, jogo da velha, pixel art, sequência lógica e muito mais. Com níveis de dificuldade e gabarito automático.",
+    tag: "17+ jogos",
+    highlights: ["Caça-palavras", "Cruzadinha", "Sudoku", "Labirinto"]
+  },
+  {
+    icon: GitBranch,
+    title: "Gerador de Diagramas",
+    desc: "Crie fluxogramas, mapas mentais, diagramas de sequência e muito mais com IA. Visualize conceitos complexos de forma clara e exporte em PDF, DOCX ou PPTX com escala automática para folha A4.",
+    tag: "IA",
+    highlights: ["Fluxogramas", "Mapas mentais", "Export PDF/DOCX"]
   },
   {
     icon: Brain,
@@ -193,7 +200,7 @@ export default function Landing() {
                 <h3 className="font-display text-xl font-bold text-primary">Com GoPedagoX</h3>
               </div>
               <ul className="space-y-3 text-muted-foreground">
-                {["Plano BNCC em 2 minutos", "Atividades auto-formatadas", "Habilidades sugeridas por IA", "20 jogos prontos para imprimir", "Correção por foto em segundos"].map((t) =>
+                {["Plano BNCC em 2 minutos", "Atividades auto-formatadas", "Habilidades sugeridas por IA", "17+ jogos prontos para imprimir", "Correção por foto em segundos"].map((t) =>
                   <li key={t} className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />{t}</li>
                 )}
               </ul>
@@ -208,7 +215,7 @@ export default function Landing() {
         <div className="container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Tudo em uma plataforma</motion.h2>
-            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">5 módulos integrados para o professor completo</motion.p>
+            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">7 módulos integrados para o professor completo</motion.p>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) =>
