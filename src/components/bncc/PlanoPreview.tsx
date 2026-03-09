@@ -17,9 +17,10 @@ interface PlanoPreviewProps {
   serie?: string;
   escola?: string;
   logoUrl?: string;
+  bannerUrl?: string;
 }
 
-export default function PlanoPreview({ plano, modelo, professor, turma, serie, escola: escolaProp, logoUrl }: PlanoPreviewProps) {
+export default function PlanoPreview({ plano, modelo, professor, turma, serie, escola: escolaProp, logoUrl, bannerUrl }: PlanoPreviewProps) {
   const [showHeader, setShowHeader] = useState(!!escolaProp);
   const [escola, setEscola] = useState(escolaProp || "");
   const [saving, setSaving] = useState(false);
