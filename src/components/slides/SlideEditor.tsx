@@ -43,6 +43,12 @@ export default function SlideEditor({
   const colors = templateColorMap[template];
   const slide = slides[currentSlide];
 
+  // Register functions with parent for top bar usage
+  useEffect(() => {
+    if (onPrint) onPrint(printHandout);
+    if (onPptx) onPptx(exportPPTX);
+  }, [onPrint, onPptx]);
+
   const goTo = (dir: -1 | 1) => setCurrentSlide(prev => Math.max(0, Math.min(slides.length - 1, prev + dir)));
 
   const updateSlide = (idx: number, patch: Partial<Slide>) => {
