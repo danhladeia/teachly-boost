@@ -101,7 +101,7 @@ export default function OMRScanner() {
     })();
   }, [selectedProvaId]);
 
-  const fetchManualGabarito = async () => {
+  const fetchGabaritoAndAdvance = async () => {
     if (!selectedProvaId) { toast.error("Selecione uma prova"); return; }
     setLoadingGabarito(true);
     try {
@@ -132,20 +132,22 @@ export default function OMRScanner() {
         return;
       }
 
-      // Apply gabarito to current sheet
-      setSheets(prev => prev.map((s, idx) => idx === currentIdx ? {
-        ...s,
-        gabarito: result.gabarito,
-        prova_info: result.prova_info,
-        correctionResult: null,
-      } : s));
-
+      setPreloadedGabarito(result.gabarito);
+      setPreloadedProvaInfo(result.prova_info);
       toast.success(`Gabarito carregado: ${result.gabarito.length} questões`);
+      setStep("upload");
     } catch (err: any) {
       toast.error(err.message || "Erro ao buscar gabarito");
     } finally {
       setLoadingGabarito(false);
     }
+  };
+
+  // Legacy: apply preloaded gabarito to a sheet that didn't get one from QR
+  const applyPreloadedGabarito = (sheet: ProcessedSheet): ProcessedSheet => {
+    if (sheet.gabarito && sheet.gabarito.length > 0) return sheet; // QR detected its own
+    if (!preloadedGabarito) return sheet;
+    return { ...sheet, gabarito: preloadedGabarito, prova_info: preloadedProvaInfo };
   };
 
   const addFiles = useCallback((files: FileList | File[]) => {
