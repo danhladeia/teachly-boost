@@ -15,16 +15,23 @@ interface PlanoPreviewProps {
   professor?: string;
   turma?: string;
   serie?: string;
+  escola?: string;
+  logoUrl?: string;
 }
 
-export default function PlanoPreview({ plano, modelo, professor, turma, serie }: PlanoPreviewProps) {
-  const [showHeader, setShowHeader] = useState(false);
-  const [escola, setEscola] = useState("");
+export default function PlanoPreview({ plano, modelo, professor, turma, serie, escola: escolaProp, logoUrl }: PlanoPreviewProps) {
+  const [showHeader, setShowHeader] = useState(!!escolaProp);
+  const [escola, setEscola] = useState(escolaProp || "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadEscola();
-  }, []);
+    if (escolaProp) {
+      setEscola(escolaProp);
+      setShowHeader(true);
+    } else {
+      loadEscola();
+    }
+  }, [escolaProp]);
 
   const loadEscola = async () => {
     try {
