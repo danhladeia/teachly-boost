@@ -952,10 +952,19 @@ export default function Exams() {
                   className="bg-white text-black shadow-lg w-full max-w-[210mm]"
                   style={{ minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
-                  {/* School header */}
-                  {showHeader && escola && (
-                    <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
-                      {escola}
+                  {/* Timbre banner image */}
+                  {showHeader && selectedTimbre?.bannerUrl && (
+                    <div style={{ textAlign: "center", marginBottom: "4mm" }}>
+                      <img src={selectedTimbre.bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
+                    </div>
+                  )}
+                  {/* Logo + school name */}
+                  {showHeader && (escola || selectedTimbre?.logoUrl) && (
+                    <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm" }}>
+                      {selectedTimbre?.logoUrl && !selectedTimbre?.bannerUrl && (
+                        <img src={selectedTimbre.logoUrl} alt="" style={{ maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />
+                      )}
+                      {escola && <span>{escola}</span>}
                     </div>
                   )}
                   <h1 style={{ textAlign: "center", fontSize: "14pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
