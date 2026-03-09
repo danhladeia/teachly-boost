@@ -40,23 +40,45 @@ const estilos = [
 
 type Orientation = "portrait" | "landscape";
 
-/** Convert SVG element to PNG blob at given scale */
-async function svgToPngBlob(svgEl: SVGSVGElement, scale = 2): Promise<Blob | null> {
+// A4 dimensions in pixels at 96 DPI (minus 10mm margins = ~38px each side)
+const A4_PORTRAIT = { width: 595 - 76, height: 842 - 76 }; // ~519 x 766
+const A4_LANDSCAPE = { width: 842 - 76, height: 595 - 76 }; // ~766 x 519
+
+/** Convert SVG element to PNG blob, scaled to fit A4 */
+async function svgToPngBlob(
+  svgEl: SVGSVGElement,
+  scale = 2,
+  fitToA4?: { isLandscape: boolean }
+): Promise<Blob | null> {
   return new Promise((resolve) => {
     const bbox = svgEl.getBoundingClientRect();
+    let targetW = bbox.width;
+    let targetH = bbox.height;
+
+    // Scale down to fit A4 if requested
+    if (fitToA4) {
+      const maxDims = fitToA4.isLandscape ? A4_LANDSCAPE : A4_PORTRAIT;
+      const scaleX = maxDims.width / bbox.width;
+      const scaleY = maxDims.height / bbox.height;
+      const fitScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+      targetW = bbox.width * fitScale;
+      targetH = bbox.height * fitScale;
+    }
+
     const canvas = document.createElement("canvas");
-    canvas.width = bbox.width * scale;
-    canvas.height = bbox.height * scale;
+    canvas.width = targetW * scale;
+    canvas.height = targetH * scale;
     const ctx = canvas.getContext("2d")!;
     ctx.scale(scale, scale);
     ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, bbox.width, bbox.height);
+    ctx.fillRect(0, 0, targetW, targetH);
+    
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const img = new window.Image();
     img.onload = () => {
-      ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
+      ctx.drawImage(img, 0, 0, targetW, targetH);
       URL.revokeObjectURL(url);
       canvas.toBlob((b) => resolve(b), "image/png");
     };
@@ -144,53 +166,124 @@ export default function DiagramGenerator() {
     }
   };
 
-  // ── Export: PNG ──
+  // ── Export: PNG (fit to A4) ──
   const handleDownloadPng = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) return;
-    const blob = await svgToPngBlob(svgEl);
+    const isLandscape = orientation === "landscape";
+    const blob = await svgToPngBlob(svgEl, 2, { isLandscape });
     if (!blob) { toast.error("Erro ao exportar PNG"); return; }
     saveAs(blob, "diagrama.png");
   };
 
-  // ── Export: PDF (A4 portrait or landscape) ──
+  // ── Export: PDF (A4 portrait or landscape, diagram scaled to fit) ──
   const handleExportPdf = async () => {
-    const el = printRef.current;
-    if (!el) return;
-    const html2pdf = (await import("html2pdf.js")).default;
-    const origW = el.style.width;
-    const origMinH = el.style.minHeight;
-    const origShadow = el.style.boxShadow;
+    const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
+    if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
+    
     const isLandscape = orientation === "landscape";
-    el.style.width = isLandscape ? "267mm" : "180mm";
-    el.style.minHeight = "auto";
-    el.style.boxShadow = "none";
+    // Get PNG blob scaled to fit A4
+    const pngBlob = await svgToPngBlob(svgEl, 3, { isLandscape });
+    if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    
+    // Create a temporary container with proper A4 layout
+    const tempDiv = document.createElement("div");
+    tempDiv.style.width = isLandscape ? "267mm" : "180mm";
+    tempDiv.style.padding = "0";
+    tempDiv.style.background = "#fff";
+    tempDiv.style.fontFamily = "'Inter', 'Arial', sans-serif";
+    
+    // Add branding if present
+    if (bannerUrl || logoUrl || escolaFinal) {
+      const headerDiv = document.createElement("div");
+      headerDiv.style.marginBottom = "12px";
+      headerDiv.style.paddingBottom = "8px";
+      headerDiv.style.borderBottom = "1px solid #e5e7eb";
+      
+      if (bannerUrl) {
+        const bannerImg = document.createElement("img");
+        bannerImg.src = bannerUrl;
+        bannerImg.style.width = "100%";
+        bannerImg.style.maxHeight = "80px";
+        bannerImg.style.objectFit = "contain";
+        bannerImg.crossOrigin = "anonymous";
+        headerDiv.appendChild(bannerImg);
+      } else {
+        headerDiv.style.display = "flex";
+        headerDiv.style.alignItems = "center";
+        headerDiv.style.gap = "12px";
+        if (logoUrl) {
+          const logoImg = document.createElement("img");
+          logoImg.src = logoUrl;
+          logoImg.style.height = "36px";
+          logoImg.style.width = "36px";
+          logoImg.style.objectFit = "contain";
+          logoImg.crossOrigin = "anonymous";
+          headerDiv.appendChild(logoImg);
+        }
+        if (escolaFinal) {
+          const escolaSpan = document.createElement("span");
+          escolaSpan.textContent = escolaFinal;
+          escolaSpan.style.fontWeight = "600";
+          escolaSpan.style.fontSize = "13px";
+          headerDiv.appendChild(escolaSpan);
+        }
+      }
+      tempDiv.appendChild(headerDiv);
+    }
+    
+    // Add diagram image centered and scaled
+    const imgContainer = document.createElement("div");
+    imgContainer.style.display = "flex";
+    imgContainer.style.justifyContent = "center";
+    imgContainer.style.alignItems = "center";
+    
+    const diagramImg = document.createElement("img");
+    diagramImg.src = URL.createObjectURL(pngBlob);
+    diagramImg.style.maxWidth = "100%";
+    diagramImg.style.maxHeight = isLandscape ? "160mm" : "230mm";
+    diagramImg.style.objectFit = "contain";
+    imgContainer.appendChild(diagramImg);
+    tempDiv.appendChild(imgContainer);
+    
+    document.body.appendChild(tempDiv);
+    
+    const html2pdf = (await import("html2pdf.js")).default;
     await html2pdf().set({
-      margin: [15, 15, 15, 15],
+      margin: [10, 10, 10, 10],
       filename: "diagrama.pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, width: el.scrollWidth },
+      html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: isLandscape ? "landscape" : "portrait" },
-    }).from(el).save();
-    el.style.width = origW;
-    el.style.minHeight = origMinH;
-    el.style.boxShadow = origShadow;
+    }).from(tempDiv).save();
+    
+    document.body.removeChild(tempDiv);
+    URL.revokeObjectURL(diagramImg.src);
   };
 
-  // ── Export: DOCX ──
+  // ── Export: DOCX (scaled to fit A4) ──
   const handleExportDocx = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
-    const blob = await svgToPngBlob(svgEl, 3);
+    const isLandscape = orientation === "landscape";
+    const blob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!blob) { toast.error("Erro ao gerar imagem"); return; }
     const buffer = await blob.arrayBuffer();
-    const bbox = svgEl.getBoundingClientRect();
-    const isLandscape = orientation === "landscape";
-    const maxW = isLandscape ? 800 : 550;
-    const maxH = isLandscape ? 500 : 700;
-    let w = bbox.width, h = bbox.height;
+    
+    // DOCX dimensions: A4 is 595x842 points, margins ~50pt each side
+    // Max content area: ~495x742 (portrait) or ~742x495 (landscape)
+    const maxW = isLandscape ? 680 : 480;
+    const maxH = isLandscape ? 420 : 680;
+    
+    // Get the scaled image dimensions from the blob
+    const imgBitmap = await createImageBitmap(blob);
+    let w = imgBitmap.width / 3; // Divide by scale factor used in svgToPngBlob
+    let h = imgBitmap.height / 3;
+    
+    // Further constrain to DOCX max dimensions
     if (w > maxW) { h = h * (maxW / w); w = maxW; }
     if (h > maxH) { w = w * (maxH / h); h = maxH; }
+    
     const children: Paragraph[] = [];
     if (escolaFinal) {
       const { TextRun } = await import("docx");
@@ -204,7 +297,7 @@ export default function DiagramGenerator() {
       sections: [{
         properties: {
           page: {
-            margin: { top: 850, bottom: 850, left: 850, right: 850 },
+            margin: { top: 720, bottom: 720, left: 720, right: 720 }, // ~1cm margins
             size: isLandscape ? { orientation: "landscape" } : undefined,
           },
         },
@@ -215,33 +308,50 @@ export default function DiagramGenerator() {
     saveAs(docBlob, "diagrama.docx");
   };
 
-  // ── Export: PPTX ──
+  // ── Export: PPTX (scaled to fit slide) ──
   const handleExportPptx = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
-    const pngBlob = await svgToPngBlob(svgEl, 3);
+    const isLandscape = orientation === "landscape";
+    const pngBlob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    
     const base64 = await new Promise<string>((res) => {
       const reader = new FileReader();
       reader.onloadend = () => res((reader.result as string).split(",")[1]);
       reader.readAsDataURL(pngBlob);
     });
+    
     const pptxgenjs = (await import("pptxgenjs")).default;
     const pres = new pptxgenjs();
-    const isLandscape = orientation === "landscape";
-    if (!isLandscape) pres.defineLayout({ name: "A4V", width: 7.5, height: 10 });
+    
+    // Define A4 layout
+    if (isLandscape) {
+      pres.defineLayout({ name: "A4H", width: 11.69, height: 8.27 }); // A4 landscape in inches
+    } else {
+      pres.defineLayout({ name: "A4V", width: 8.27, height: 11.69 }); // A4 portrait in inches
+    }
+    
     const slide = pres.addSlide();
     if (escolaFinal) {
-      slide.addText(escolaFinal, { x: 0.5, y: 0.3, w: isLandscape ? 9 : 6.5, h: 0.5, fontSize: 14, bold: true, align: "center" });
+      slide.addText(escolaFinal, { x: 0.5, y: 0.3, w: isLandscape ? 10.69 : 7.27, h: 0.5, fontSize: 14, bold: true, align: "center" });
     }
-    const bbox = svgEl.getBoundingClientRect();
-    const aspect = bbox.width / bbox.height;
-    const slideW = isLandscape ? 8 : 6;
-    const slideH = isLandscape ? 5 : 7;
-    let imgW = slideW, imgH = slideW / aspect;
-    if (imgH > slideH) { imgH = slideH; imgW = slideH * aspect; }
-    const xOff = isLandscape ? (10 - imgW) / 2 : (7.5 - imgW) / 2;
-    const yOff = escolaFinal ? 1 : (isLandscape ? (7.5 - imgH) / 2 : (10 - imgH) / 2);
+    
+    // Get actual image dimensions from blob
+    const imgBitmap = await createImageBitmap(pngBlob);
+    const imgAspect = imgBitmap.width / imgBitmap.height;
+    
+    // Max content area (leaving margins)
+    const maxW = isLandscape ? 10 : 7;
+    const maxH = isLandscape ? 6.5 : 9.5;
+    
+    let imgW = maxW;
+    let imgH = maxW / imgAspect;
+    if (imgH > maxH) { imgH = maxH; imgW = maxH * imgAspect; }
+    
+    const xOff = isLandscape ? (11.69 - imgW) / 2 : (8.27 - imgW) / 2;
+    const yOff = escolaFinal ? 1 : (isLandscape ? (8.27 - imgH) / 2 : (11.69 - imgH) / 2);
+    
     slide.addImage({ data: `image/png;base64,${base64}`, x: xOff, y: yOff, w: imgW, h: imgH });
     const buf = await pres.write({ outputType: "arraybuffer" });
     saveAs(new Blob([buf as ArrayBuffer]), "diagrama.pptx");
