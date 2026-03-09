@@ -976,8 +976,8 @@ export default function Exams() {
                     {professor && <span><strong>Professor(a):</strong> {professor}</span>}
                     {turma && <span><strong>Turma:</strong> {turma}</span>}
                   </div>
-                  <div style={{ display: "flex", gap: "10mm", fontSize: "10pt", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "4mm" }}>
-                    <span>Nome: ________________________________________</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "3mm 10mm", fontSize: "10pt", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "4mm" }}>
+                    <span style={{ flex: "1 1 auto", minWidth: "0" }}>Nome: ______________________________</span>
                     <span>Data: ___/___/___</span>
                     <span>Nota: _____</span>
                   </div>
