@@ -426,6 +426,7 @@ export type Database = {
           show_aluno: boolean
           show_data: boolean
           show_disciplina: boolean
+          show_nome_escola: boolean | null
           show_professor: boolean
           show_serie: boolean
           updated_at: string
@@ -439,6 +440,7 @@ export type Database = {
           show_aluno?: boolean
           show_data?: boolean
           show_disciplina?: boolean
+          show_nome_escola?: boolean | null
           show_professor?: boolean
           show_serie?: boolean
           updated_at?: string
@@ -452,6 +454,7 @@ export type Database = {
           show_aluno?: boolean
           show_data?: boolean
           show_disciplina?: boolean
+          show_nome_escola?: boolean | null
           show_professor?: boolean
           show_serie?: boolean
           updated_at?: string
