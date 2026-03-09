@@ -76,7 +76,7 @@ const plans = [
 export default function Pricing() {
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
   const { plan } = useCredits();
 
