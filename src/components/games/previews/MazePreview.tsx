@@ -32,16 +32,10 @@ export default function MazePreview({ data, config }: Props) {
                         width: cellSize,
                         height: cellSize,
                         padding: 0,
-                        textAlign: "center",
-                        verticalAlign: "middle",
-                        background: cell === 1 ? "#1a1a1a" : isCheckpoint ? "#fef3c7" : "#fff",
-                        fontSize: `${cellSize * 0.5}px`,
-                        fontWeight: 700,
-                        color: "#b45309",
+                        background: cell === 1 ? "#1a1a1a" : "#fff",
                         border: "none",
                       }}
                     >
-                      {isCheckpoint && checkpoint ? String.fromCharCode(65 + checkpoint.questionIndex) : ""}
                     </td>
                   );
                 })}
