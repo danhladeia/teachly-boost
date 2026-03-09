@@ -28,9 +28,10 @@ function renderKaTeX(text: string): string {
   }
 }
 
+/* A4 page: 210mm x 297mm, padding 20mm top/bottom, 15mm left/right
+   Content area: 180mm x 257mm */
 const PAGE_STYLE: React.CSSProperties = {
-  width: "100%",
-  maxWidth: "210mm",
+  width: "210mm",
   minHeight: "297mm",
   padding: "20mm 15mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
@@ -38,6 +39,8 @@ const PAGE_STYLE: React.CSSProperties = {
   lineHeight: 1.6,
   position: "relative",
   boxSizing: "border-box",
+  background: "#fff",
+  color: "#000",
 };
 
 export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
@@ -58,7 +61,12 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
   const imageSizeMap = { small: "30%", medium: "50%", large: "80%" };
 
   return (
-    <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center w-full overflow-hidden">
+    <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6 w-full overflow-hidden">
+      {/* 
+        The preview container uses CSS columns to simulate multi-page A4. 
+        For PDF export, html2pdf handles page breaks with margins on every page.
+        The id is used by exportToPdf which temporarily removes padding and lets html2pdf add margins per page.
+      */}
       <div
         id="atividade-print-area"
         ref={containerRef}

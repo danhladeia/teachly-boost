@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { exportToPdf } from "@/lib/export-utils";
+import { exportToPdf, exportExamToDocx } from "@/lib/export-utils";
 import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@/lib/shuffle-utils";
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
@@ -663,6 +663,7 @@ export default function Exams() {
             <>
               <Button size="sm" variant="outline" onClick={handlePrint} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Printer className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Imprimir</span><span className="sm:hidden">Imp.</span></Button>
               <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> PDF</Button>
+              <Button size="sm" variant="outline" onClick={() => exportExamToDocx(previewQuestions, { titulo, escola: showHeader ? escola : undefined, professor, turma, bannerUrl: showHeader ? selectedTimbre?.bannerUrl : undefined, logoUrl: showHeader ? selectedTimbre?.logoUrl : undefined })} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> DOCX</Button>
               <Button size="sm" variant="outline" onClick={handleShuffle} disabled={shuffling || !currentProvaId} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3">
                 <Shuffle className="mr-1 h-3.5 w-3.5" /> {shuffling ? "..." : <span className="hidden sm:inline">Embaralhar</span>}{!shuffling && <span className="sm:hidden">Emb.</span>}
               </Button>
@@ -949,10 +950,9 @@ export default function Exams() {
               <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center">
                 <div
                   id="prova-print-area"
-                  className="bg-white text-black shadow-lg w-full max-w-[210mm]"
-                  style={{ minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  className="bg-white text-black shadow-lg"
+                  style={{ width: "210mm", minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
-                  {/* Timbre banner image */}
                   {showHeader && selectedTimbre?.bannerUrl && (
                     <div style={{ textAlign: "center", marginBottom: "4mm" }}>
                       <img src={selectedTimbre.bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />

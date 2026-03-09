@@ -1,21 +1,60 @@
 import { saveAs } from "file-saver";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, SectionType, PageBreakBefore } from "docx";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun } from "docx";
+
+async function fetchImageAsBuffer(url: string): Promise<{ buffer: ArrayBuffer; width: number; height: number } | null> {
+  try {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.src = url;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject();
+      setTimeout(() => reject(), 8000);
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0);
+    const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, "image/png"));
+    if (!blob) return null;
+    const buffer = await blob.arrayBuffer();
+    return { buffer, width: img.naturalWidth, height: img.naturalHeight };
+  } catch {
+    return null;
+  }
+}
+
+function fitImage(origW: number, origH: number, maxW: number, maxH: number) {
+  let w = origW, h = origH;
+  if (w > maxW) { h = h * (maxW / w); w = maxW; }
+  if (h > maxH) { w = w * (maxH / h); h = maxH; }
+  return { width: Math.round(w), height: Math.round(h) };
+}
 
 export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
   if (!element) return;
+
+  // Remove padding from the element during export — html2pdf will handle margins per page
+  const origPadding = element.style.padding;
+  element.style.padding = "0";
+
   const html2pdf = (await import("html2pdf.js")).default;
   await html2pdf()
     .set({
-      margin: 0,
+      margin: [20, 15, 20, 15], // top, left, bottom, right in mm — applied to EVERY page
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"], avoid: ["div[style*='page-break-inside: avoid']"] },
+      pagebreak: { mode: ["css", "legacy"], avoid: ["div[style*='page-break-inside: avoid']", ".question"] },
     })
     .from(element)
     .save();
+
+  // Restore padding
+  element.style.padding = origPadding;
 }
 
 export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string }) {
@@ -28,7 +67,6 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
     );
   }
 
-  // Title without model type
   children.push(new Paragraph({
     alignment: AlignmentType.CENTER,
     heading: HeadingLevel.HEADING_1,
@@ -87,7 +125,7 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
     sections: [{
       properties: {
         page: {
-          margin: { top: 756, bottom: 756, left: 567, right: 567 }, // top/bottom ~20mm, left/right ~15mm
+          margin: { top: 1134, bottom: 1134, left: 850, right: 850 }, // 20mm top/bottom, 15mm left/right in twips
         },
       },
       children,
@@ -99,9 +137,32 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
 
 export async function exportAtividadeToDocx(
   blocks: any[],
-  opts?: { escola?: string; professor?: string; turma?: string; autoNumber?: boolean }
+  opts?: { escola?: string; professor?: string; turma?: string; autoNumber?: boolean; bannerUrl?: string; logoUrl?: string }
 ) {
   const children: Paragraph[] = [];
+
+  // Banner image in DOCX header
+  if (opts?.bannerUrl) {
+    const imgData = await fetchImageAsBuffer(opts.bannerUrl);
+    if (imgData) {
+      const { width, height } = fitImage(imgData.width, imgData.height, 600, 120);
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+        spacing: { after: 200 },
+      }));
+    }
+  } else if (opts?.logoUrl) {
+    const imgData = await fetchImageAsBuffer(opts.logoUrl);
+    if (imgData) {
+      const { width, height } = fitImage(imgData.width, imgData.height, 200, 80);
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+        spacing: { after: 100 },
+      }));
+    }
+  }
 
   if (opts?.escola) {
     children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: opts.escola, bold: true, size: 28, font: "Arial" })] }));
@@ -117,6 +178,21 @@ export async function exportAtividadeToDocx(
 
   let qNum = 0;
   for (const block of blocks) {
+    // Handle image blocks
+    if (block.type === "image" && block.imageUrl) {
+      const imgData = await fetchImageAsBuffer(block.imageUrl);
+      if (imgData) {
+        const maxW = block.imageSize === "small" ? 200 : block.imageSize === "large" ? 500 : 350;
+        const { width, height } = fitImage(imgData.width, imgData.height, maxW, 300);
+        children.push(new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+          spacing: { before: 100, after: 200 },
+        }));
+      }
+      continue;
+    }
+
     if (block.type === "title") {
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -136,19 +212,75 @@ export async function exportAtividadeToDocx(
         children: [new TextRun({ text: block.content || "", size: 22, font: "Arial" })],
         spacing: { after: 200 },
       }));
-    } else if (block.type === "question-open") {
+    } else if (block.type === "question-open" || block.type === "question-enem") {
       qNum++;
       const prefix = opts?.autoNumber ? `${qNum}) ` : "";
+
+      // ENEM text base
+      if (block.type === "question-enem" && block.textoBase) {
+        children.push(new Paragraph({
+          alignment: AlignmentType.JUSTIFIED,
+          children: [new TextRun({ text: block.textoBase, size: 20, font: "Arial", italics: true })],
+          spacing: { before: 200, after: 100 },
+        }));
+        if (block.fonte) {
+          children.push(new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            children: [new TextRun({ text: block.fonte, size: 16, font: "Arial", italics: true, color: "64748b" })],
+            spacing: { after: 100 },
+          }));
+        }
+      }
+
+      // Question image
+      if (block.questionImageUrl) {
+        const imgData = await fetchImageAsBuffer(block.questionImageUrl);
+        if (imgData) {
+          const { width, height } = fitImage(imgData.width, imgData.height, 350, 250);
+          children.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+            spacing: { before: 100, after: 100 },
+          }));
+        }
+      }
+
       children.push(new Paragraph({
         children: [new TextRun({ text: `${prefix}${block.content || "Questão"}`, bold: true, size: 22, font: "Arial" })],
         spacing: { before: 200, after: 100 },
       }));
-      for (let i = 0; i < (block.lines || 4); i++) {
-        children.push(new Paragraph({ children: [new TextRun({ text: "________________________________________", size: 22, font: "Arial", color: "999999" })], spacing: { after: 50 } }));
+
+      // ENEM alternatives
+      if (block.type === "question-enem" && block.alternatives?.length) {
+        block.alternatives.forEach((alt: string, ai: number) => {
+          children.push(new Paragraph({
+            children: [new TextRun({ text: `(${String.fromCharCode(65 + ai)}) ${alt || ""}`, size: 22, font: "Arial" })],
+            spacing: { after: 50 },
+          }));
+        });
+      } else {
+        // Open question lines
+        for (let i = 0; i < (block.lines || 4); i++) {
+          children.push(new Paragraph({ children: [new TextRun({ text: "________________________________________", size: 22, font: "Arial", color: "999999" })], spacing: { after: 50 } }));
+        }
       }
     } else if (block.type === "question-mc") {
       qNum++;
       const prefix = opts?.autoNumber ? `${qNum}) ` : "";
+
+      // Question image
+      if (block.questionImageUrl) {
+        const imgData = await fetchImageAsBuffer(block.questionImageUrl);
+        if (imgData) {
+          const { width, height } = fitImage(imgData.width, imgData.height, 350, 250);
+          children.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+            spacing: { before: 100, after: 100 },
+          }));
+        }
+      }
+
       children.push(new Paragraph({
         children: [new TextRun({ text: `${prefix}${block.content || "Questão"}`, bold: true, size: 22, font: "Arial" })],
         spacing: { before: 200, after: 100 },
@@ -166,7 +298,7 @@ export async function exportAtividadeToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 756, bottom: 756, left: 567, right: 567 },
+          margin: { top: 1134, bottom: 1134, left: 850, right: 850 }, // 20mm top/bottom, 15mm left/right
         },
       },
       children,
@@ -174,4 +306,103 @@ export async function exportAtividadeToDocx(
   });
   const blob = await Packer.toBlob(doc);
   saveAs(blob, "atividade.docx");
+}
+
+export async function exportExamToDocx(
+  questoes: any[],
+  opts?: { titulo?: string; escola?: string; professor?: string; turma?: string; bannerUrl?: string; logoUrl?: string }
+) {
+  const children: Paragraph[] = [];
+
+  // Banner/logo
+  if (opts?.bannerUrl) {
+    const imgData = await fetchImageAsBuffer(opts.bannerUrl);
+    if (imgData) {
+      const { width, height } = fitImage(imgData.width, imgData.height, 600, 120);
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+        spacing: { after: 200 },
+      }));
+    }
+  } else if (opts?.logoUrl) {
+    const imgData = await fetchImageAsBuffer(opts.logoUrl);
+    if (imgData) {
+      const { width, height } = fitImage(imgData.width, imgData.height, 200, 80);
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+        spacing: { after: 100 },
+      }));
+    }
+  }
+
+  if (opts?.escola) {
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: opts.escola, bold: true, size: 28, font: "Arial" })] }));
+    children.push(new Paragraph({ text: "" }));
+  }
+
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    heading: HeadingLevel.HEADING_1,
+    children: [new TextRun({ text: opts?.titulo || "Prova", bold: true, size: 28, font: "Arial" })],
+    spacing: { after: 200 },
+  }));
+
+  if (opts?.professor || opts?.turma) {
+    const parts: string[] = [];
+    if (opts.professor) parts.push(`Professor(a): ${opts.professor}`);
+    if (opts.turma) parts.push(`Turma: ${opts.turma}`);
+    children.push(new Paragraph({ children: [new TextRun({ text: parts.join("   |   "), size: 20, font: "Arial" })], spacing: { after: 100 } }));
+  }
+
+  children.push(new Paragraph({ children: [new TextRun({ text: "Nome: ________________________________________   Data: ___/___/___   Nota: _____", size: 20, font: "Arial" })], spacing: { after: 300 } }));
+
+  for (let idx = 0; idx < questoes.length; idx++) {
+    const q = questoes[idx];
+
+    // Question image
+    if (q.imageUrl) {
+      const imgData = await fetchImageAsBuffer(q.imageUrl);
+      if (imgData) {
+        const { width, height } = fitImage(imgData.width, imgData.height, 350, 250);
+        children.push(new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+          spacing: { before: 100, after: 100 },
+        }));
+      }
+    }
+
+    children.push(new Paragraph({
+      children: [new TextRun({ text: `${idx + 1}) ${q.content || "Questão"}`, bold: true, size: 22, font: "Arial" })],
+      spacing: { before: 200, after: 100 },
+    }));
+
+    if (q.type === "mc" && q.alternatives?.length) {
+      q.alternatives.forEach((alt: string, ai: number) => {
+        children.push(new Paragraph({
+          children: [new TextRun({ text: `${String.fromCharCode(65 + ai)}) ${alt || ""}`, size: 22, font: "Arial" })],
+          spacing: { after: 50 },
+        }));
+      });
+    } else if (q.type === "open") {
+      for (let i = 0; i < (q.lines || 4); i++) {
+        children.push(new Paragraph({ children: [new TextRun({ text: "________________________________________", size: 22, font: "Arial", color: "999999" })], spacing: { after: 50 } }));
+      }
+    }
+  }
+
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          margin: { top: 1134, bottom: 1134, left: 850, right: 850 },
+        },
+      },
+      children,
+    }],
+  });
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `${opts?.titulo || "prova"}.docx`);
 }
