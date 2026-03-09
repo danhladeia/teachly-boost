@@ -36,25 +36,50 @@ export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
   if (!element) return;
 
-  // Remove padding from the element during export — html2pdf will handle margins per page
-  const origPadding = element.style.padding;
-  element.style.padding = "0";
+  // For paginated previews: temporarily flatten pages for html2pdf
+  // Remove page-level padding/height so html2pdf handles margins per page
+  const pageChildren = element.querySelectorAll<HTMLElement>('[style*="height"]');
+  const savedStyles: { el: HTMLElement; padding: string; height: string; overflow: string; boxShadow: string }[] = [];
+  
+  pageChildren.forEach(el => {
+    savedStyles.push({ 
+      el, 
+      padding: el.style.padding, 
+      height: el.style.height,
+      overflow: el.style.overflow,
+      boxShadow: el.style.boxShadow,
+    });
+    el.style.padding = "0";
+    el.style.height = "auto";
+    el.style.overflow = "visible";
+    el.style.boxShadow = "none";
+  });
+
+  // Also remove gap between pages
+  const origGap = element.style.gap;
+  element.style.gap = "0";
 
   const html2pdf = (await import("html2pdf.js")).default;
   await html2pdf()
     .set({
-      margin: [20, 15, 20, 15], // top, left, bottom, right in mm — applied to EVERY page
+      margin: [20, 15, 20, 15], // top, left, bottom, right in mm
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"], avoid: ["div[style*='page-break-inside: avoid']", ".question"] },
+      pagebreak: { mode: ["css", "legacy"], avoid: [".question"] },
     })
     .from(element)
     .save();
 
-  // Restore padding
-  element.style.padding = origPadding;
+  // Restore
+  savedStyles.forEach(s => {
+    s.el.style.padding = s.padding;
+    s.el.style.height = s.height;
+    s.el.style.overflow = s.overflow;
+    s.el.style.boxShadow = s.boxShadow;
+  });
+  element.style.gap = origGap;
 }
 
 export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string }) {
