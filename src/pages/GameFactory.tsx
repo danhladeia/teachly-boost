@@ -250,7 +250,7 @@ export default function GameFactory() {
     if (!pw) return;
     pw.document.write(`<html><head><title>${tema || "Jogo"}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      @page { size: A4; margin: 20mm 15mm; }
+      @page { size: A4; margin: 15mm; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);

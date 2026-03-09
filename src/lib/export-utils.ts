@@ -62,7 +62,7 @@ export async function exportToPdf(elementId: string, filename: string) {
   const html2pdf = (await import("html2pdf.js")).default;
   await html2pdf()
     .set({
-      margin: [20, 15, 20, 15], // top, left, bottom, right in mm
+      margin: [15, 15, 15, 15], // top, left, bottom, right in mm
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
@@ -150,7 +150,7 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
     sections: [{
       properties: {
         page: {
-          margin: { top: 1134, bottom: 1134, left: 850, right: 850 }, // 20mm top/bottom, 15mm left/right in twips
+          margin: { top: 850, bottom: 850, left: 850, right: 850 }, // 15mm all sides in twips
         },
       },
       children,
@@ -323,7 +323,7 @@ export async function exportAtividadeToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 1134, bottom: 1134, left: 850, right: 850 }, // 20mm top/bottom, 15mm left/right
+          margin: { top: 850, bottom: 850, left: 850, right: 850 }, // 15mm all sides
         },
       },
       children,
@@ -422,7 +422,7 @@ export async function exportExamToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 1134, bottom: 1134, left: 850, right: 850 },
+          margin: { top: 850, bottom: 850, left: 850, right: 850 },
         },
       },
       children,
