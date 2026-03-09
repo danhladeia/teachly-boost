@@ -110,7 +110,103 @@ export default function Exams() {
     })();
     loadSavedProvas();
     loadSavedActivities();
+    loadSavedPlans();
   }, [user]);
+
+  const loadSavedPlans = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("documentos_salvos")
+        .select("id, titulo, disciplina, nivel, created_at, conteudo")
+        .eq("tipo", "plano")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      setSavedPlans(data || []);
+    } catch {}
+  };
+
+  const handleFileImportProva = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    setImportFileNameProva(file.name);
+    if (name.endsWith(".txt") || name.endsWith(".md")) {
+      const text = await file.text();
+      setTextoImportadoProva(text);
+      toast.success(`Arquivo "${file.name}" importado!`);
+    } else if (name.endsWith(".pdf")) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const decoder = new TextDecoder("latin1");
+        const raw = decoder.decode(bytes);
+        let text = "";
+        const btMatches = raw.matchAll(/BT\s([\s\S]*?)ET/g);
+        for (const match of btMatches) {
+          const inner = match[1];
+          const tjMatches = inner.matchAll(/\(([^)]*)\)\s*Tj/g);
+          for (const tj of tjMatches) text += tj[1];
+          const tdMatches = inner.matchAll(/\[([^\]]*)\]\s*TJ/g);
+          for (const td of tdMatches) {
+            const parts = td[1].matchAll(/\(([^)]*)\)/g);
+            for (const p of parts) text += p[1];
+          }
+          text += "\n";
+        }
+        if (text.trim().length < 20) text = "⚠️ Não foi possível extrair texto deste PDF. Cole o texto manualmente.";
+        setTextoImportadoProva(text.trim());
+        toast.success(`PDF "${file.name}" importado! Revise o texto.`);
+      } catch { toast.error("Erro ao processar PDF"); }
+    } else if (name.endsWith(".docx") || name.endsWith(".doc")) {
+      try {
+        const text = await file.text();
+        const cleanText = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        setTextoImportadoProva(cleanText.length > 50 ? cleanText.substring(0, 10000) : "⚠️ Cole o conteúdo manualmente.");
+        toast.success(`Arquivo "${file.name}" importado!`);
+      } catch { toast.error("Erro ao processar arquivo"); }
+    } else {
+      toast.error("Formato não suportado. Use PDF, DOCX ou TXT.");
+    }
+    e.target.value = "";
+  };
+
+  const handleImportPlanAsContext = (plan: any) => {
+    const p = plan.conteudo || plan;
+    let contextText = "";
+    if (p.identificacao?.tema) contextText += `Tema: ${p.identificacao.tema}\n`;
+    if (p.identificacao?.disciplina) contextText += `Disciplina: ${p.identificacao.disciplina}\n`;
+    if (p.objetivos?.length) contextText += `\nObjetivos:\n${p.objetivos.join('\n')}\n`;
+    if (p.desenvolvimento) contextText += `\nDesenvolvimento:\n${p.desenvolvimento}\n`;
+    if (p.conteudo) contextText += `\nConteúdo:\n${p.conteudo}\n`;
+    setTextoImportadoProva(contextText || JSON.stringify(p, null, 2).slice(0, 5000));
+    setImportFileNameProva(plan.titulo || "Plano de aula");
+    if (p.identificacao?.tema) setTemas(p.identificacao.tema);
+    setShowPlanPicker(false);
+    toast.success("Plano importado! Clique em 'Gerar Questões' para criar as questões da prova.");
+  };
+
+  const handleImportActivityViaAI = (activity: any) => {
+    const conteudo = activity.conteudo as any;
+    const blocks = conteudo?.blocks || [];
+    let textContent = "";
+    blocks.forEach((block: any) => {
+      if (block.type === "title") textContent += `# ${block.content}\n\n`;
+      if (block.type === "text") textContent += block.content + "\n\n";
+      if (block.type === "question-open") textContent += `Questão: ${block.content}\n\n`;
+      if (block.type === "question-mc" || block.type === "question-enem") {
+        textContent += `Questão: ${block.content}\n`;
+        if (block.alternatives) block.alternatives.forEach((alt: string, i: number) => {
+          textContent += `  ${String.fromCharCode(65 + i)}) ${alt}\n`;
+        });
+        textContent += "\n";
+      }
+    });
+    setTextoImportadoProva(textContent);
+    setImportFileNameProva(activity.titulo || "Atividade importada");
+    setShowActivityPicker(false);
+    toast.success("Atividade importada! Clique em 'Gerar Questões' para criar questões de prova com base no conteúdo.");
+  };
 
   const loadSavedActivities = async () => {
     if (!user) return;
