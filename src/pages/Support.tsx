@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Loader2, Plus, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { MessageSquare, Send, Loader2, Plus, Clock, CheckCircle2, AlertCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 import { toast } from "sonner";
+
+const WHATSAPP_URL = "https://wa.me/5500000000000?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20GoPedagoX%20Ultra";
 
 interface Ticket {
   id: string;

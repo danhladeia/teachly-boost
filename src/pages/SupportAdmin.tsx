@@ -82,6 +82,8 @@ export default function SupportAdmin() {
     if (error) toast.error("Credenciais inválidas");
   };
 
+  const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
+
   const loadTickets = async () => {
     let query = (supabase.from("support_tickets" as any) as any)
       .select("id, subject, status, priority, user_email, user_name, user_plan, created_at")
@@ -89,7 +91,16 @@ export default function SupportAdmin() {
     if (filterStatus !== "all") query = query.eq("status", filterStatus);
     if (filterPriority !== "all") query = query.eq("priority", filterPriority);
     const { data } = await query;
-    if (data) setTickets(data);
+    if (data) {
+      // Sort by priority (Ultra/urgent first) then by date
+      const sorted = [...data].sort((a: any, b: any) => {
+        const pa = priorityOrder[a.priority] ?? 9;
+        const pb = priorityOrder[b.priority] ?? 9;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      setTickets(sorted);
+    }
   };
 
   const loadMessages = async (ticketId: string) => {
