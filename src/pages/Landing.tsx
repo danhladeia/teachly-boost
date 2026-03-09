@@ -90,7 +90,7 @@ const plans = [
   {
     name: "Ultra", price: "R$ 67,42", originalPrice: "R$ 89,90", period: "/mês", icon: Rocket,
     color: "text-plan-mestre", logo: planUltra,
-    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
+    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
     cta: "Assinar Ultra"
   }
 ];
