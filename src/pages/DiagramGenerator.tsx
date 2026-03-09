@@ -40,23 +40,45 @@ const estilos = [
 
 type Orientation = "portrait" | "landscape";
 
-/** Convert SVG element to PNG blob at given scale */
-async function svgToPngBlob(svgEl: SVGSVGElement, scale = 2): Promise<Blob | null> {
+// A4 dimensions in pixels at 96 DPI (minus 10mm margins = ~38px each side)
+const A4_PORTRAIT = { width: 595 - 76, height: 842 - 76 }; // ~519 x 766
+const A4_LANDSCAPE = { width: 842 - 76, height: 595 - 76 }; // ~766 x 519
+
+/** Convert SVG element to PNG blob, scaled to fit A4 */
+async function svgToPngBlob(
+  svgEl: SVGSVGElement,
+  scale = 2,
+  fitToA4?: { isLandscape: boolean }
+): Promise<Blob | null> {
   return new Promise((resolve) => {
     const bbox = svgEl.getBoundingClientRect();
+    let targetW = bbox.width;
+    let targetH = bbox.height;
+
+    // Scale down to fit A4 if requested
+    if (fitToA4) {
+      const maxDims = fitToA4.isLandscape ? A4_LANDSCAPE : A4_PORTRAIT;
+      const scaleX = maxDims.width / bbox.width;
+      const scaleY = maxDims.height / bbox.height;
+      const fitScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+      targetW = bbox.width * fitScale;
+      targetH = bbox.height * fitScale;
+    }
+
     const canvas = document.createElement("canvas");
-    canvas.width = bbox.width * scale;
-    canvas.height = bbox.height * scale;
+    canvas.width = targetW * scale;
+    canvas.height = targetH * scale;
     const ctx = canvas.getContext("2d")!;
     ctx.scale(scale, scale);
     ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, bbox.width, bbox.height);
+    ctx.fillRect(0, 0, targetW, targetH);
+    
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const img = new window.Image();
     img.onload = () => {
-      ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
+      ctx.drawImage(img, 0, 0, targetW, targetH);
       URL.revokeObjectURL(url);
       canvas.toBlob((b) => resolve(b), "image/png");
     };
