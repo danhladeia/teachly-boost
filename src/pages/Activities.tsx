@@ -673,7 +673,20 @@ export default function Activities() {
                 <Label htmlFor="act-header" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Escola</Label>
               </div>
               {showHeader && (
-                <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                <>
+                  <TimbreSelector
+                    selectedId={selectedTimbreId}
+                    onSelect={t => {
+                      if (t) {
+                        setSelectedTimbreId(t.id);
+                        setEscola(t.escola);
+                      } else {
+                        setSelectedTimbreId(undefined);
+                      }
+                    }}
+                  />
+                  <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                </>
               )}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
