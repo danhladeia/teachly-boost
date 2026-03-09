@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BookOpen, FileText, Presentation, Gamepad2,
-  FileCheck, Stamp, Settings, LogOut, CreditCard, StickyNote, MessageSquare, Library
+  FileCheck, Stamp, Settings, LogOut, CreditCard, StickyNote, MessageSquare, Library, GitBranch
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
