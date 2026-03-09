@@ -170,6 +170,7 @@ export default function Branding() {
               <p className="text-xs text-muted-foreground">Escolha quais campos aparecem no timbre</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                 {[
+                  { key: "showNomeEscola" as const, label: "Nome da Escola" },
                   { key: "showProfessor" as const, label: "Professor(a)" },
                   { key: "showDisciplina" as const, label: "Disciplina" },
                   { key: "showSerie" as const, label: "Série" },
