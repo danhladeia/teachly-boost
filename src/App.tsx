@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { CreditsProvider } from "@/hooks/useCredits";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -39,6 +41,22 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase.from("support_admins").select("id").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
+
+  if (loading || isAdmin === null) return <div className="flex min-h-screen items-center justify-center"><p>Carregando...</p></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/app" replace />;
+  return <>{children}</>;
+}
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
@@ -48,8 +66,8 @@ const AppRoutes = () => (
     <Route path="/register" element={<Register />} />
     <Route path="/termos" element={<Terms />} />
     <Route path="/privacidade" element={<Privacy />} />
-    <Route path="/suporte-admin" element={<SupportAdmin />} />
-    <Route path="/admin" element={<AdminDashboard />} />
+    <Route path="/suporte-admin" element={<AdminRoute><SupportAdmin /></AdminRoute>} />
+    <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="biblioteca" element={<LibraryPage />} />
