@@ -80,26 +80,9 @@ export function generateMaze(config: GameConfig): MazeData {
     }
   }
 
-  // Questions are optional — only place checkpoints if questions exist
-  const questions = config.mazeQuestions || [];
+  // Simplified maze without questions/checkpoints
+  const questions: MazeQuestion[] = [];
   const checkpoints: { row: number; col: number; questionIndex: number }[] = [];
-
-  if (questions.length > 0) {
-    const pathCells: { row: number; col: number }[] = [];
-    for (let r = 1; r < s - 1; r++)
-      for (let c = 1; c < s - 1; c++)
-        if (maze[r][c] === 0) pathCells.push({ row: r, col: c });
-
-    const step = Math.floor(pathCells.length / (questions.length + 1));
-    for (let i = 0; i < Math.min(questions.length, 5); i++) {
-      const idx = step * (i + 1);
-      if (idx < pathCells.length) {
-        const cell = pathCells[idx];
-        maze[cell.row][cell.col] = 2;
-        checkpoints.push({ row: cell.row, col: cell.col, questionIndex: i });
-      }
-    }
-  }
 
   return {
     grid: maze,
