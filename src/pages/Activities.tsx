@@ -64,6 +64,8 @@ export default function Activities() {
   const [modoEnem, setModoEnem] = useState(false);
   const [textoImportado, setTextoImportado] = useState("");
   const [importFileName, setImportFileName] = useState("");
+  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
