@@ -166,6 +166,14 @@ export default function SlidesGenerator() {
           generatingImages={generatingImages}
           imageProgress={imageProgress}
           imageTotal={imageTotal}
+          onPrint={(printFn) => {
+            // Store the print function to use in the top bar
+            (window as any).__slidesPrintHandout = printFn;
+          }}
+          onPptx={(pptxFn) => {
+            // Store the PPTX function to use in the top bar 
+            (window as any).__slidesExportPPTX = pptxFn;
+          }}
         />
       )}
     </div>
