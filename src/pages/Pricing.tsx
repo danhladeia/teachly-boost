@@ -175,7 +175,7 @@ export default function Pricing() {
         </div>
         {couponApplied && (
           <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> Cupom aplicado! Você economizou 25%
+            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! Você economizou 25% (oferta por tempo limitado)
           </p>
         )}
       </div>
