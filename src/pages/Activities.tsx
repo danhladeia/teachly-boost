@@ -55,6 +55,9 @@ export default function Activities() {
   const [professor, setProfessor] = useState("");
   const [turma, setTurma] = useState("");
   const [autoNumber, setAutoNumber] = useState(true);
+  const [showLines, setShowLines] = useState(true);
+  const [showAluno, setShowAluno] = useState(false);
+  const [showData, setShowData] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedDocs, setSavedDocs] = useState<any[]>([]);
   const [tab, setTab] = useState("ia");
@@ -103,6 +106,9 @@ export default function Activities() {
           setProfessor(content.settings.professor || "");
           setTurma(content.settings.turma || "");
           setAutoNumber(content.settings.autoNumber ?? true);
+          setShowLines(content.settings.showLines ?? true);
+          setShowAluno(content.settings.showAluno ?? false);
+          setShowData(content.settings.showData ?? false);
         }
         setCurrentDocId(docId);
         setTab("manual");
@@ -416,7 +422,7 @@ export default function Activities() {
       const titulo = blocks.find(b => b.type === "title")?.content || "Atividade sem título";
       const { error } = await supabase.from("documentos_salvos").insert({
         user_id: user.id, tipo: "atividade", titulo,
-        conteudo: { blocks, settings: { autoNumber, showHeader, escola, professor, turma } } as any,
+        conteudo: { blocks, settings: { autoNumber, showLines, showAluno, showData, showHeader, escola, professor, turma } } as any,
       });
       if (error) throw error;
       toast.success("Atividade salva na biblioteca!");
@@ -431,7 +437,8 @@ export default function Activities() {
   const handleExportDocx = () => {
     exportAtividadeToDocx(blocks, {
       escola: showHeader ? escola : undefined,
-      professor, turma, autoNumber,
+      professor, turma, autoNumber, showLines,
+      showAluno, showData,
       bannerUrl: showHeader ? selectedTimbre?.bannerUrl : undefined,
       logoUrl: showHeader ? selectedTimbre?.logoUrl : undefined,
     });
@@ -493,6 +500,18 @@ export default function Activities() {
               <div className="flex items-center gap-2">
                 <Switch checked={autoNumber} onCheckedChange={setAutoNumber} id="auto-num" />
                 <Label htmlFor="auto-num" className="text-xs flex items-center gap-1"><Hash className="h-3 w-3" /> Numeração automática</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={showLines} onCheckedChange={setShowLines} id="show-lines" />
+                <Label htmlFor="show-lines" className="text-xs">Linhas para resposta (questões abertas)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={showAluno} onCheckedChange={setShowAluno} id="show-aluno" />
+                <Label htmlFor="show-aluno" className="text-xs">Campo "Nome do Aluno"</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={showData} onCheckedChange={setShowData} id="show-data" />
+                <Label htmlFor="show-data" className="text-xs">Campo "Data"</Label>
               </div>
             </CardContent>
           </Card>
@@ -770,7 +789,7 @@ export default function Activities() {
 
         {/* RIGHT PANEL - A4 Preview */}
         <div>
-          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} professor={professor} turma={turma} logoUrl={selectedTimbre?.logoUrl} bannerUrl={selectedTimbre?.bannerUrl} />
+          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} showLines={showLines} showAluno={showAluno} showData={showData} professor={professor} turma={turma} logoUrl={selectedTimbre?.logoUrl} bannerUrl={selectedTimbre?.bannerUrl} />
         </div>
       </div>
     </div>

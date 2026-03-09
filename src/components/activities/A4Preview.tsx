@@ -6,6 +6,9 @@ interface A4PreviewProps {
   showHeader: boolean;
   escola: string;
   autoNumber: boolean;
+  showLines?: boolean;
+  showAluno?: boolean;
+  showData?: boolean;
   professor?: string;
   turma?: string;
   logoUrl?: string;
@@ -44,7 +47,7 @@ const baseFontStyle: React.CSSProperties = {
   color: "#000",
 };
 
-export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
+export default function A4Preview({ blocks, showHeader, escola, autoNumber, showLines = true, showAluno = false, showData = false, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
   const measureRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<number[][]>([]); // array of arrays of child indices per page
 
@@ -147,7 +150,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
             <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
               <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
             </p>
-            {Array.from({ length: block.lines || 4 }).map((_, li) => (
+            {showLines && Array.from({ length: block.lines || 4 }).map((_, li) => (
               <div key={li} style={{ borderBottom: "1px solid #d1d5db", height: "8mm", marginBottom: "1mm" }} />
             ))}
           </div>
@@ -283,7 +286,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
     }, 150); // wait for images/katex to load
 
     return () => clearTimeout(timer);
-  }, [blocksKey, showHeader, escola, professor, turma, bannerUrl, logoUrl]);
+  }, [blocksKey, showHeader, showLines, showAluno, showData, escola, professor, turma, bannerUrl, logoUrl]);
 
   // Separate header and block elements from rendered
   const headerElements: JSX.Element[] = [];
@@ -306,9 +309,15 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
         </div>
       )}
       {(professor || turma) && (
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "4mm", color: "#475569" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
           {professor && <span><strong>Professor(a):</strong> {professor}</span>}
           {turma && <span><strong>Turma:</strong> {turma}</span>}
+        </div>
+      )}
+      {(showAluno || showData) && (
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "4mm", gap: "4mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
+          {showAluno && <span><strong>Aluno(a):</strong> ________________________________________</span>}
+          {showData && <span><strong>Data:</strong> ____/____/________</span>}
         </div>
       )}
     </>
