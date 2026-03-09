@@ -313,7 +313,6 @@ export default function Activities() {
   };
 
   const handleImportPlano = (doc: any) => {
-    const newBlocks: Block[] = [];
     const p = doc.conteudo || doc;
 
     // If it's a saved activity, restore blocks directly
@@ -330,13 +329,23 @@ export default function Activities() {
       return;
     }
 
-    // Lesson plan import
-    if (p.identificacao?.tema) newBlocks.push({ ...emptyBlock("title"), content: p.identificacao.tema });
-    if (p.desenvolvimento) newBlocks.push({ ...emptyBlock("text"), content: p.desenvolvimento });
-    if (p.objetivos?.length) newBlocks.push({ ...emptyBlock("text"), content: p.objetivos.join("\n") });
-    if (newBlocks.length === 0) newBlocks.push(emptyBlock("title"));
-    setBlocks(newBlocks);
-    toast.success("Plano importado para o editor!");
+    // Lesson plan import → use as context for AI to generate student-facing activity
+    let contextText = "";
+    if (p.identificacao?.tema) contextText += `Tema: ${p.identificacao.tema}\n`;
+    if (p.identificacao?.disciplina) contextText += `Disciplina: ${p.identificacao.disciplina}\n`;
+    if (p.identificacao?.serie) contextText += `Série: ${p.identificacao.serie}\n`;
+    if (p.objetivos?.length) contextText += `\nObjetivos de Aprendizagem:\n${p.objetivos.join('\n')}\n`;
+    if (p.desenvolvimento) contextText += `\nDesenvolvimento da Aula:\n${p.desenvolvimento}\n`;
+    if (p.conteudo) contextText += `\nConteúdo:\n${p.conteudo}\n`;
+    if (p.recursos) contextText += `\nRecursos: ${p.recursos}\n`;
+    
+    // Set as AI context
+    setTextoImportado(contextText || JSON.stringify(p, null, 2).slice(0, 5000));
+    setImportFileName(doc.titulo || "Plano de aula");
+    if (p.identificacao?.tema) setAiPrompt(`Crie uma atividade para os alunos sobre: ${p.identificacao.tema}`);
+    if (p.identificacao?.disciplina) setAiDisciplina(p.identificacao.disciplina);
+    setTab("ia");
+    toast.success("Plano importado! Configure e clique em 'Gerar Atividade' para criar material para os alunos.");
   };
 
   const handlePrint = () => {
