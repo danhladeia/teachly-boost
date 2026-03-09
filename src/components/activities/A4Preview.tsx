@@ -47,7 +47,7 @@ const baseFontStyle: React.CSSProperties = {
   color: "#000",
 };
 
-export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
+export default function A4Preview({ blocks, showHeader, escola, autoNumber, showLines = true, showAluno = false, showData = false, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
   const measureRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<number[][]>([]); // array of arrays of child indices per page
 
