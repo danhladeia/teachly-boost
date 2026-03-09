@@ -243,6 +243,7 @@ export default function OMRScanner() {
     }
 
     setProcessing(false);
+    setStep("results");
     toast.success("Processamento concluído!");
   };
 
