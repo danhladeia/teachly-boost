@@ -104,7 +104,7 @@ const faqs = [
   { q: "Como funciona a correção de provas por foto?", a: "Você cria a prova na plataforma, imprime com QR Code e gabarito OMR. Depois da aplicação, tire foto ou faça upload dos gabaritos preenchidos. A IA lê as respostas, identifica a versão da prova e calcula a nota automaticamente." },
   { q: "Os materiais gerados pela IA são confiáveis?", a: "Os conteúdos são gerados por modelos avançados de IA e alinhados à BNCC, mas recomendamos que o professor sempre revise o material antes de aplicar em sala de aula. A responsabilidade pedagógica final é do docente." },
   { q: "O que acontece com meus créditos se eu trocar de plano?", a: "Ao fazer upgrade, você recebe imediatamente os créditos do novo plano. Ao fazer downgrade, a mudança ocorre no próximo ciclo de faturamento." },
-  { q: "Como funciona o cupom GOPEDAGOX?", a: "O cupom GOPEDAGOX oferece 25% de desconto em qualquer plano pago (Pro, Master ou Ultra) por tempo limitado. Basta inserir o código no momento da assinatura. O desconto é aplicado em todos os ciclos de pagamento enquanto o cupom estiver ativo." }
+  { q: "Como funciona o cupom GOPEDAGOX?", a: "O cupom GOPEDAGOX oferece 25% de desconto em qualquer plano pago (Pro, Master ou Ultra) por tempo limitado. Basta inserir o código no momento da assinatura. O desconto é aplicado em todos os ciclos de pagamento enquanto o cupom estiver ativo. Aproveite antes que expire!" }
 ];
 
 export default function Landing() {
