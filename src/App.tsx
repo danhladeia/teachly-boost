@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { CreditsProvider } from "@/hooks/useCredits";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
