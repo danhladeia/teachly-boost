@@ -201,7 +201,7 @@ export default function BNCCPlanner() {
             <div className="space-y-2">
               <Label>Nome da Disciplina / Itinerário Formativo</Label>
               <Input
-                placeholder="Ex: Projeto de Vida, Cultura Digital, etc."
+                placeholder="Ex: Projeto de Vida, Cultura Digital, Robótica, etc."
                 value={disciplinaCustom}
                 onChange={(e) => setDisciplinaCustom(e.target.value)}
               />
