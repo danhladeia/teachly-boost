@@ -17,6 +17,7 @@ import A4Preview from "@/components/activities/A4Preview";
 import BlockEditor from "@/components/activities/BlockEditor";
 import EditorTopBar from "@/components/EditorTopBar";
 import TimbreSelector from "@/components/TimbreSelector";
+import type { TimbreData } from "@/hooks/useTimbre";
 import type { Block, BlockType, ImageFloat } from "@/components/activities/types";
 
 const genId = () => Math.random().toString(36).slice(2, 10);
