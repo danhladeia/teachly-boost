@@ -37,6 +37,17 @@ export default function Branding() {
     setUploading(false);
   };
 
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB"); return; }
+    setUploading(true);
+    const url = await uploadLogo(file);
+    if (url) setEditing({ ...editing, bannerUrl: url });
+    else toast.error("Erro ao enviar banner");
+    setUploading(false);
+  };
+
   const handleSave = async () => {
     if (!user || !editing) return;
     setSaving(true);
