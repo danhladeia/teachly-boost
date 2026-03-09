@@ -286,7 +286,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
     }, 150); // wait for images/katex to load
 
     return () => clearTimeout(timer);
-  }, [blocksKey, showHeader, escola, professor, turma, bannerUrl, logoUrl]);
+  }, [blocksKey, showHeader, showLines, showAluno, showData, escola, professor, turma, bannerUrl, logoUrl]);
 
   // Separate header and block elements from rendered
   const headerElements: JSX.Element[] = [];
