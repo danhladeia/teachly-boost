@@ -84,49 +84,35 @@ export async function exportToPdf(elementId: string, filename: string) {
     return;
   }
 
-  // Generic handling for non-paginated previews
+  // Generic handling for non-paginated previews (planos, provas, etc.)
   const origPadding = element.style.padding;
-  const pageChildren = element.querySelectorAll<HTMLElement>('[style*="height"]');
-  const savedStyles: { el: HTMLElement; padding: string; height: string; overflow: string; boxShadow: string }[] = [];
+  const origWidth = element.style.width;
+  const origMinHeight = element.style.minHeight;
+  const origBoxShadow = element.style.boxShadow;
 
-  pageChildren.forEach((el) => {
-    savedStyles.push({
-      el,
-      padding: el.style.padding,
-      height: el.style.height,
-      overflow: el.style.overflow,
-      boxShadow: el.style.boxShadow,
-    });
-    el.style.padding = "0";
-    el.style.height = "auto";
-    el.style.overflow = "visible";
-    el.style.boxShadow = "none";
-  });
-
-  const origGap = element.style.gap;
-  element.style.gap = "0";
+  // Temporarily normalize: remove internal padding and constrain width to
+  // A4 minus margins so html2pdf doesn't double-count padding.
   element.style.padding = "0";
+  element.style.width = "180mm"; // 210mm - 15mm*2
+  element.style.minHeight = "auto";
+  element.style.boxShadow = "none";
 
   await html2pdf()
     .set({
       margin: [15, 15, 15, 15],
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, width: element.scrollWidth },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["css", "legacy"], avoid: [".question"] },
     })
     .from(element)
     .save();
 
-  savedStyles.forEach((s) => {
-    s.el.style.padding = s.padding;
-    s.el.style.height = s.height;
-    s.el.style.overflow = s.overflow;
-    s.el.style.boxShadow = s.boxShadow;
-  });
-  element.style.gap = origGap;
   element.style.padding = origPadding;
+  element.style.width = origWidth;
+  element.style.minHeight = origMinHeight;
+  element.style.boxShadow = origBoxShadow;
 }
 
 export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string; bannerUrl?: string }) {
