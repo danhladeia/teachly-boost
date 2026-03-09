@@ -118,9 +118,15 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
 
       <Card className="shadow-card overflow-auto">
         <div id="plano-print-area" className="bg-white text-black mx-auto" style={{ width: "210mm", minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}>
+          {/* Timbre banner image */}
+          {showHeader && bannerUrl && (
+            <div style={{ textAlign: "center", marginBottom: "4mm" }}>
+              <img src={bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
+            </div>
+          )}
           {showHeader && (escola || logoUrl) && (
-            <div style={{ textAlign: "center", marginBottom: "6mm", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
-              {logoUrl && <img src={logoUrl} alt="" style={{ maxHeight: "50px", margin: "0 auto 3mm" }} crossOrigin="anonymous" />}
+            <div style={{ textAlign: "center", marginBottom: "6mm", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm" }}>
+              {logoUrl && !bannerUrl && <img src={logoUrl} alt="" style={{ maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />}
               {escola && <div style={{ fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>{escola}</div>}
             </div>
           )}
