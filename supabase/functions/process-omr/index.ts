@@ -13,18 +13,24 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) throw new Error("Não autorizado");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Não autorizado");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    
+    // Create client with user's auth header for proper authentication
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // Validate user authentication
+    const { data: userData, error: authErr } = await anonClient.auth.getUser();
+    if (authErr || !userData?.user) throw new Error("Não autorizado");
+    const user = userData.user;
+    
+    // Service role client for privileged operations
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get user from token
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await anonClient.auth.getUser(token);
-    if (authErr || !user) throw new Error("Não autorizado");
 
     const contentType = req.headers.get("content-type") || "";
 
