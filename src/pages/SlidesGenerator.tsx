@@ -168,6 +168,10 @@ export default function SlidesGenerator() {
             gerarImagens={gerarImagens} setGerarImagens={setGerarImagens}
             loading={loading} onGenerate={handleGenerate}
             onFileUpload={handleFileUpload} arquivo={arquivo}
+            selectedTimbre={selectedTimbre}
+            onTimbreSelect={setSelectedTimbre}
+            professor={professor}
+            setProfessor={setProfessor}
           />
         </div>
       ) : (
