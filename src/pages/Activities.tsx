@@ -17,6 +17,7 @@ import A4Preview from "@/components/activities/A4Preview";
 import BlockEditor from "@/components/activities/BlockEditor";
 import EditorTopBar from "@/components/EditorTopBar";
 import TimbreSelector from "@/components/TimbreSelector";
+import type { TimbreData } from "@/hooks/useTimbre";
 import type { Block, BlockType, ImageFloat } from "@/components/activities/types";
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -66,7 +67,7 @@ export default function Activities() {
   const [modoEnem, setModoEnem] = useState(false);
   const [textoImportado, setTextoImportado] = useState("");
   const [importFileName, setImportFileName] = useState("");
-  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const [currentDocId, setCurrentDocId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -465,14 +466,10 @@ export default function Activities() {
               {showHeader && (
                 <>
                   <TimbreSelector
-                    selectedId={selectedTimbreId}
+                    selectedId={selectedTimbre?.id}
                     onSelect={t => {
-                      if (t) {
-                        setSelectedTimbreId(t.id);
-                        setEscola(t.escola);
-                      } else {
-                        setSelectedTimbreId(undefined);
-                      }
+                      setSelectedTimbre(t);
+                      if (t) setEscola(t.escola);
                     }}
                   />
                   <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
@@ -768,7 +765,7 @@ export default function Activities() {
 
         {/* RIGHT PANEL - A4 Preview */}
         <div>
-          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} professor={professor} turma={turma} />
+          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} professor={professor} turma={turma} logoUrl={selectedTimbre?.logoUrl} bannerUrl={selectedTimbre?.bannerUrl} />
         </div>
       </div>
     </div>

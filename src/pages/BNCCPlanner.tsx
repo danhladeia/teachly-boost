@@ -174,6 +174,7 @@ export default function BNCCPlanner() {
 
   const escolaFinal = selectedTimbre?.escola || escola;
   const logoUrl = selectedTimbre?.logoUrl;
+  const bannerUrl = selectedTimbre?.bannerUrl;
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -329,7 +330,7 @@ export default function BNCCPlanner() {
       {/* Plano gerado */}
       {plano && !plano.raw && (
         <>
-          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} escola={escolaFinal} logoUrl={logoUrl} />
+          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} escola={escolaFinal} logoUrl={logoUrl} bannerUrl={bannerUrl} />
 
           {/* Refinamento */}
           <Card className="shadow-card">
