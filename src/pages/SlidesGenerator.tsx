@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Presentation, Sparkles, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { estilosImagem } from "@/components/slides/types";
 import type { TimbreData } from "@/hooks/useTimbre";
 
 export default function SlidesGenerator() {
+  const location = useLocation();
   const [tema, setTema] = useState("");
   const [descricao, setDescricao] = useState("");
   const [textoBase, setTextoBase] = useState("");
@@ -29,10 +31,45 @@ export default function SlidesGenerator() {
   const [imageTotal, setImageTotal] = useState(0);
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const [professor, setProfessor] = useState("");
+  const [currentDocId, setCurrentDocId] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Load document from Library navigation
+  useEffect(() => {
+    const state = location.state as { loadDocId?: string; source?: string } | null;
+    if (state?.loadDocId && state?.source === "documentos") {
+      loadDocumentById(state.loadDocId);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const loadDocumentById = async (docId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("documentos_salvos")
+        .select("*")
+        .eq("id", docId)
+        .single();
+      if (error) throw error;
+      if (data?.conteudo) {
+        const content = data.conteudo as any;
+        if (Array.isArray(content)) {
+          setSlides(content);
+        } else if (content.slides) {
+          setSlides(content.slides);
+        }
+        setCurrentDocId(docId);
+        setTema(data.titulo || "");
+        toast.success(`Apresentação "${data.titulo}" carregada!`);
+      }
+    } catch (err) {
+      console.error("Error loading document:", err);
+      toast.error("Erro ao carregar apresentação");
+    }
+  };
 
   const loadProfile = async () => {
     try {
