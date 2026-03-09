@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil, AlertTriangle } from "lucide-react";
+import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PlanoPreview from "@/components/bncc/PlanoPreview";
+import TimbreSelector from "@/components/TimbreSelector";
+import type { TimbreData } from "@/hooks/useTimbre";
 
 const niveis = [
   { value: "fundamental_iniciais", label: "Fundamental - Séries Iniciais (1º ao 5º ano)" },
@@ -61,6 +63,8 @@ export default function BNCCPlanner() {
   const [showRefinamento, setShowRefinamento] = useState(false);
   const [professor, setProfessor] = useState("");
   const [turma, setTurma] = useState("");
+  const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
+  const [escola, setEscola] = useState("");
 
   const disciplinaFinal = disciplina === "Itinerário Formativo/EMTI" ? disciplinaCustom : disciplina;
   const nivelLabel = niveis.find(n => n.value === nivel)?.label || nivel;
@@ -73,8 +77,9 @@ export default function BNCCPlanner() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("profiles").select("nome").eq("user_id", user.id).single();
+      const { data } = await supabase.from("profiles").select("nome, escola").eq("user_id", user.id).single();
       if (data?.nome) setProfessor(data.nome);
+      if (data?.escola) setEscola(data.escola);
     } catch {}
   };
 
@@ -129,6 +134,9 @@ export default function BNCCPlanner() {
     }
   };
 
+  const escolaFinal = selectedTimbre?.escola || escola;
+  const logoUrl = selectedTimbre?.logoUrl;
+
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
@@ -141,6 +149,37 @@ export default function BNCCPlanner() {
       <Card className="shadow-card">
         <CardHeader><CardTitle className="font-display text-lg">Configurar Plano de Aula</CardTitle></CardHeader>
         <CardContent className="space-y-5">
+          {/* TIMBRE - Primeiro */}
+          <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+            <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+            <TimbreSelector
+              selectedId={selectedTimbre?.id}
+              onSelect={t => {
+                setSelectedTimbre(t);
+                if (t?.escola) setEscola(t.escola);
+              }}
+              label="Selecionar escola/timbre"
+            />
+            {!selectedTimbre && (
+              <Input
+                placeholder="Ou digite o nome da escola"
+                value={escola}
+                onChange={e => setEscola(e.target.value)}
+                className="h-8 text-xs"
+              />
+            )}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-[10px]">Professor(a)</Label>
+                <Input placeholder="Nome do professor" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Turma</Label>
+                <Input placeholder="Ex: 5ºA, Turma 301" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
+              </div>
+            </div>
+          </div>
+
           {/* Modelo selector */}
           <div className="space-y-2">
             <Label className="font-semibold">Modelo do Plano</Label>
@@ -234,18 +273,6 @@ export default function BNCCPlanner() {
             </div>
           </div>
 
-          {/* Professor e Turma opcionais */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Professor(a) <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-              <Input placeholder="Nome do professor" value={professor} onChange={e => setProfessor(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Turma <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-              <Input placeholder="Ex: 5ºA, Turma 301" value={turma} onChange={e => setTurma(e.target.value)} />
-            </div>
-          </div>
-
           <Button
             onClick={handleGenerate}
             disabled={loading || !nivel || !disciplinaFinal || !conteudo.trim()}
@@ -264,7 +291,7 @@ export default function BNCCPlanner() {
       {/* Plano gerado */}
       {plano && !plano.raw && (
         <>
-          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} />
+          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} escola={escolaFinal} logoUrl={logoUrl} />
 
           {/* Refinamento */}
           <Card className="shadow-card">

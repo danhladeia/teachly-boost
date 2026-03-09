@@ -47,13 +47,20 @@ export default function WordSearchPreview({ data, config }: Props) {
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "5mm", overflow: "hidden" }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        marginBottom: "5mm", 
+        overflow: "hidden",
+        pageBreakInside: "avoid",
+      }}>
         <table
           cellSpacing={0}
           cellPadding={0}
           style={{
             borderCollapse: "collapse",
             border: isCircle || isNoBg ? "none" : "2px solid #000",
+            tableLayout: "fixed",
           }}
         >
           <tbody>
@@ -65,16 +72,19 @@ export default function WordSearchPreview({ data, config }: Props) {
                     style={{
                       width: `${cellSize}px`,
                       height: `${cellSize}px`,
+                      minWidth: `${cellSize}px`,
+                      maxWidth: `${cellSize}px`,
                       textAlign: "center",
                       verticalAlign: "middle",
                       fontSize: `${Math.floor(cellSize * 0.5)}px`,
                       fontWeight: 600,
-                      fontFamily: "monospace",
-                      lineHeight: 1,
+                      fontFamily: "'Courier New', Courier, monospace",
+                      lineHeight: `${cellSize}px`,
                       padding: 0,
                       border: isCircle || isNoBg ? "none" : "1px solid #d1d5db",
                       borderRadius: isCircle ? "50%" : undefined,
-                      background: isCircle ? "#f8fafc" : isNoBg ? "transparent" : undefined,
+                      background: isCircle ? "#f8fafc" : isNoBg ? "transparent" : "#fff",
+                      boxSizing: "border-box",
                     }}
                   >
                     {letter}

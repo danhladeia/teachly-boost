@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Presentation, Sparkles, AlertTriangle, ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Presentation, Sparkles, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
@@ -8,6 +8,7 @@ import SlideEditor from "@/components/slides/SlideEditor";
 import EditorTopBar from "@/components/EditorTopBar";
 import type { Slide, SlideTemplate, SlideDensity } from "@/components/slides/types";
 import { estilosImagem } from "@/components/slides/types";
+import type { TimbreData } from "@/hooks/useTimbre";
 
 export default function SlidesGenerator() {
   const [tema, setTema] = useState("");
@@ -26,12 +27,26 @@ export default function SlidesGenerator() {
   const [generatingImages, setGeneratingImages] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [imageTotal, setImageTotal] = useState(0);
+  const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
+  const [professor, setProfessor] = useState("");
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("nome").eq("user_id", user.id).single();
+      if (data?.nome) setProfessor(data.nome);
+    } catch {}
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setArquivo(file);
   };
-
   const generateImageForSlide = async (slide: Slide, style: string): Promise<string | undefined> => {
     if (!slide.image_prompt) return undefined;
     try {
@@ -132,15 +147,11 @@ export default function SlidesGenerator() {
         </div>
       )}
 
-      {/* Development banner */}
-      <div className="flex items-center gap-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 px-4 py-3">
-        <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
-        <div>
-          <p className="font-semibold text-yellow-800 text-sm">⚠️ Sistema de Slides em Desenvolvimento</p>
-          <p className="text-yellow-700 text-xs mt-0.5">
-            Recomenda-se gerar os slides e editá-los no <strong>PowerPoint</strong> ou <strong>Google Slides</strong> para melhor personalização.
-          </p>
-        </div>
+      {/* Recommendation banner */}
+      <div className="flex items-center gap-3 rounded-lg border border-muted-foreground/20 bg-muted/50 px-4 py-2.5">
+        <p className="text-muted-foreground text-xs">
+          💡 Recomenda-se gerar os slides e editá-los no <strong>PowerPoint</strong> ou <strong>Google Slides</strong> para melhor personalização.
+        </p>
       </div>
 
       {slides.length === 0 ? (
@@ -158,6 +169,10 @@ export default function SlidesGenerator() {
             gerarImagens={gerarImagens} setGerarImagens={setGerarImagens}
             loading={loading} onGenerate={handleGenerate}
             onFileUpload={handleFileUpload} arquivo={arquivo}
+            selectedTimbre={selectedTimbre}
+            onTimbreSelect={setSelectedTimbre}
+            professor={professor}
+            setProfessor={setProfessor}
           />
         </div>
       ) : (
