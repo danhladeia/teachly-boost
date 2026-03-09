@@ -69,7 +69,7 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
   };
 
   const handleExportPdf = () => exportToPdf("plano-print-area", "plano-de-aula");
-  const handleExportDocx = () => exportPlanoToDocx(plano, showHeader ? { escola } : undefined);
+  const handleExportDocx = () => exportPlanoToDocx(plano, showHeader ? { escola, logoUrl: bannerUrl || logoUrl } : undefined);
 
   const handleSave = async () => {
     setSaving(true);
