@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import LibraryPage from "./pages/Library";
 import BNCCPlanner from "./pages/BNCCPlanner";
 import Activities from "./pages/Activities";
 import SlidesGenerator from "./pages/SlidesGenerator";
