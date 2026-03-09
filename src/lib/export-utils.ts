@@ -36,24 +36,63 @@ export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
   if (!element) return;
 
-  // Save original styles to restore later
+  const html2pdf = (await import("html2pdf.js")).default;
+  const directChildren = Array.from(element.children).filter((child): child is HTMLElement => child instanceof HTMLElement);
+  const isPaginatedA4 = directChildren.some((el) => el.style.height.includes("297mm"));
+
+  // Special handling for paginated A4 previews (atividades)
+  if (isPaginatedA4) {
+    const origGap = element.style.gap;
+    const savedPageStyles = directChildren.map((el) => ({
+      el,
+      boxShadow: el.style.boxShadow,
+      margin: el.style.margin,
+      pageBreakAfter: el.style.pageBreakAfter,
+      pageBreakInside: el.style.pageBreakInside,
+      breakInside: el.style.breakInside,
+    }));
+
+    directChildren.forEach((el, index) => {
+      el.style.boxShadow = "none";
+      el.style.margin = "0";
+      el.style.pageBreakInside = "avoid";
+      el.style.breakInside = "avoid";
+      el.style.pageBreakAfter = index === directChildren.length - 1 ? "auto" : "always";
+    });
+    element.style.gap = "0";
+
+    await html2pdf()
+      .set({
+        margin: [0, 0, 0, 0],
+        filename: `${filename}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] },
+      })
+      .from(element)
+      .save();
+
+    savedPageStyles.forEach((s) => {
+      s.el.style.boxShadow = s.boxShadow;
+      s.el.style.margin = s.margin;
+      s.el.style.pageBreakAfter = s.pageBreakAfter;
+      s.el.style.pageBreakInside = s.pageBreakInside;
+      s.el.style.breakInside = s.breakInside;
+    });
+    element.style.gap = origGap;
+    return;
+  }
+
+  // Generic handling for non-paginated previews
   const origPadding = element.style.padding;
-  const origWidth = element.style.width;
-  const origMinHeight = element.style.minHeight;
-
-  // Remove element padding — html2pdf will apply its own margins
-  element.style.padding = "0";
-  element.style.width = "180mm"; // A4 (210mm) minus 15mm margins each side
-  element.style.minHeight = "auto";
-
-  // For paginated previews: temporarily flatten pages for html2pdf
   const pageChildren = element.querySelectorAll<HTMLElement>('[style*="height"]');
   const savedStyles: { el: HTMLElement; padding: string; height: string; overflow: string; boxShadow: string }[] = [];
-  
-  pageChildren.forEach(el => {
-    savedStyles.push({ 
-      el, 
-      padding: el.style.padding, 
+
+  pageChildren.forEach((el) => {
+    savedStyles.push({
+      el,
+      padding: el.style.padding,
       height: el.style.height,
       overflow: el.style.overflow,
       boxShadow: el.style.boxShadow,
@@ -64,14 +103,13 @@ export async function exportToPdf(elementId: string, filename: string) {
     el.style.boxShadow = "none";
   });
 
-  // Also remove gap between pages
   const origGap = element.style.gap;
   element.style.gap = "0";
+  element.style.padding = "0";
 
-  const html2pdf = (await import("html2pdf.js")).default;
   await html2pdf()
     .set({
-      margin: [15, 15, 15, 15], // top, left, bottom, right in mm
+      margin: [15, 15, 15, 15],
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
@@ -81,17 +119,14 @@ export async function exportToPdf(elementId: string, filename: string) {
     .from(element)
     .save();
 
-  // Restore all styles
-  element.style.padding = origPadding;
-  element.style.width = origWidth;
-  element.style.minHeight = origMinHeight;
-  element.style.gap = origGap;
-  savedStyles.forEach(s => {
+  savedStyles.forEach((s) => {
     s.el.style.padding = s.padding;
     s.el.style.height = s.height;
     s.el.style.overflow = s.overflow;
     s.el.style.boxShadow = s.boxShadow;
   });
+  element.style.gap = origGap;
+  element.style.padding = origPadding;
 }
 
 export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string; bannerUrl?: string }) {
