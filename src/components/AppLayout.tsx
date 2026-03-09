@@ -8,7 +8,7 @@ export default function AppLayout() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden max-w-full">
           <header className="flex h-14 items-center gap-3 border-b border-sidebar-border px-4 bg-sidebar">
             <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" />
             <div className="h-6 w-px bg-sidebar-border" />
