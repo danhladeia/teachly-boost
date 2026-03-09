@@ -464,7 +464,7 @@ export default function Activities() {
         saving={saving}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[380px_1fr] overflow-hidden">
         {/* LEFT PANEL */}
         <div className="space-y-4 pr-1">
           {/* TIMBRE - Primeiro */}
