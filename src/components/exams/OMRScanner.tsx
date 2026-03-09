@@ -55,12 +55,17 @@ const altLabels = ["A", "B", "C", "D"];
 
 export default function OMRScanner() {
   const { user } = useAuth();
+  const [step, setStep] = useState<"select-gabarito" | "upload" | "results">("select-gabarito");
   const [sheets, setSheets] = useState<ProcessedSheet[]>([]);
   const [processing, setProcessing] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Preloaded gabarito (loaded before upload)
+  const [preloadedGabarito, setPreloadedGabarito] = useState<{ q: number; correct: number }[] | null>(null);
+  const [preloadedProvaInfo, setPreloadedProvaInfo] = useState<{ titulo: string; prova_id: string; versao_id: string | null; versao_label: string } | null>(null);
 
   // Manual prova/versao selector state
   const [provasList, setProvasList] = useState<SavedProva[]>([]);
