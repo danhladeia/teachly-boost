@@ -18,27 +18,9 @@ interface PlanoPreviewProps {
 }
 
 export default function PlanoPreview({ plano, modelo, professor, turma, serie, escola: escolaProp, logoUrl, bannerUrl }: PlanoPreviewProps) {
-  const [showHeader, setShowHeader] = useState(!!escolaProp);
-  const [escola, setEscola] = useState(escolaProp || "");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (escolaProp) {
-      setEscola(escolaProp);
-      setShowHeader(true);
-    } else {
-      loadEscola();
-    }
-  }, [escolaProp]);
-
-  const loadEscola = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from("profiles").select("escola").eq("user_id", user.id).single();
-      if (data?.escola) { setEscola(data.escola); setShowHeader(true); }
-    } catch {}
-  };
+  const showHeader = !!(escolaProp || logoUrl || bannerUrl);
+  const escola = escolaProp || "";
 
   const handlePrint = () => {
     const el = document.getElementById("plano-print-area");
