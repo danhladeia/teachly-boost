@@ -34,9 +34,9 @@ const disciplinasPorNivel: Record<string, string[]> = {
     "Arte", "Educação Física", "Língua Inglesa", "Ensino Religioso",
   ],
   ensino_medio: [
-    "Língua Portuguesa", "Matemática", "Linguagens e suas Tecnologias",
-    "Ciências da Natureza e suas Tecnologias", "Ciências Humanas e Sociais Aplicadas",
-    "Arte", "Educação Física", "Língua Inglesa", "Novo Ensino Médio",
+    "Português", "Inglês", "Artes", "Ed. Física", "Matemática",
+    "Biologia", "Física", "Química", "História", "Geografia", 
+    "Sociologia", "Filosofia", "Itinerário Formativo/EMTI",
   ],
 };
 
@@ -62,7 +62,7 @@ export default function BNCCPlanner() {
   const [professor, setProfessor] = useState("");
   const [turma, setTurma] = useState("");
 
-  const disciplinaFinal = disciplina === "Novo Ensino Médio" ? disciplinaCustom : disciplina;
+  const disciplinaFinal = disciplina === "Itinerário Formativo/EMTI" ? disciplinaCustom : disciplina;
   const nivelLabel = niveis.find(n => n.value === nivel)?.label || nivel;
 
   useEffect(() => {
@@ -197,11 +197,11 @@ export default function BNCCPlanner() {
             )}
           </div>
 
-          {disciplina === "Novo Ensino Médio" && (
+          {disciplina === "Itinerário Formativo/EMTI" && (
             <div className="space-y-2">
               <Label>Nome da Disciplina / Itinerário Formativo</Label>
               <Input
-                placeholder="Ex: Projeto de Vida, Cultura Digital, etc."
+                placeholder="Ex: Projeto de Vida, Cultura Digital, Robótica, etc."
                 value={disciplinaCustom}
                 onChange={(e) => setDisciplinaCustom(e.target.value)}
               />
