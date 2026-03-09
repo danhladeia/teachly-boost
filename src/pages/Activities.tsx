@@ -497,7 +497,18 @@ export default function Activities() {
                 <Switch checked={autoNumber} onCheckedChange={setAutoNumber} id="auto-num" />
                 <Label htmlFor="auto-num" className="text-xs flex items-center gap-1"><Hash className="h-3 w-3" /> Numeração automática</Label>
               </div>
-            </CardContent>
+              <div className="flex items-center gap-2">
+                <Switch checked={showLines} onCheckedChange={setShowLines} id="show-lines" />
+                <Label htmlFor="show-lines" className="text-xs">Linhas para resposta (questões abertas)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={showAluno} onCheckedChange={setShowAluno} id="show-aluno" />
+                <Label htmlFor="show-aluno" className="text-xs">Campo "Nome do Aluno"</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={showData} onCheckedChange={setShowData} id="show-data" />
+                <Label htmlFor="show-data" className="text-xs">Campo "Data"</Label>
+              </div>
           </Card>
 
           {/* Geração de conteúdo */}
