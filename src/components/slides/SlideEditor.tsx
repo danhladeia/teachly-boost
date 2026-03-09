@@ -25,6 +25,8 @@ interface Props {
   generatingImages: boolean;
   imageProgress: number;
   imageTotal: number;
+  onPrint?: (printFn: () => void) => void;
+  onPptx?: (pptxFn: () => void) => void;
 }
 
 export default function SlideEditor({
