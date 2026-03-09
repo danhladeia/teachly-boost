@@ -323,7 +323,7 @@ export async function exportAtividadeToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 1134, bottom: 1134, left: 850, right: 850 }, // 20mm top/bottom, 15mm left/right
+          margin: { top: 850, bottom: 850, left: 850, right: 850 }, // 15mm all sides
         },
       },
       children,
