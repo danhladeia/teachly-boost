@@ -457,61 +457,17 @@ export default function CameraScanner() {
               </div>
             </div>
 
-            {/* Instruction - compact */}
-            <div className="rounded-md bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 px-2 py-1.5">
-              <p className="text-[10px] sm:text-[11px] text-amber-800 dark:text-amber-300">
-                Revise abaixo. <span className="text-amber-500 font-bold">Amarelo</span> = duvidosa. Toque para corrigir.
-              </p>
+            {/* OMR Column Layout */}
+            <div className="overflow-x-auto">
+              <OMRResultView
+                gabarito={gabarito || []}
+                respostas={respostas}
+                manualOverrides={manualOverrides}
+                onOverrideUpdate={updateOverride}
+              />
             </div>
 
-            {/* Answer grid - responsive columns */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-1">
-              {(gabarito || respostas).map((item) => {
-                const qNum = "q" in item ? item.q : item.questao;
-                const detected = respostas.find(r => r.questao === qNum);
-                const finalAlt = manualOverrides[qNum] ?? detected?.alternativa;
-                const isManual = qNum in manualOverrides;
-                const isLow = detected?.confianca === "low";
-                const isNone = detected?.confianca === "none" || detected?.alternativa === null;
-
-                return (
-                  <div key={qNum} className={`flex items-center gap-0.5 sm:gap-1 rounded p-0.5 sm:p-1 ${
-                    isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 ring-1 ring-amber-300" :
-                    isNone && !isManual ? "bg-red-50 dark:bg-red-900/10 ring-1 ring-red-300" : ""
-                  }`}>
-                    <span className="text-[10px] sm:text-xs font-mono w-4 sm:w-5 text-right font-bold shrink-0">{qNum}.</span>
-                    <div className="flex gap-0.5">
-                      {[0, 1, 2, 3].map(alt => (
-                        <button
-                          key={alt}
-                          onClick={() => updateOverride(qNum, alt)}
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full text-[10px] sm:text-[11px] font-bold border-2 transition-all ${
-                            finalAlt === alt
-                              ? isManual
-                                ? "border-amber-500 bg-amber-500 text-white"
-                                : isLow
-                                  ? "border-amber-400 bg-amber-400 text-white"
-                                  : "border-primary bg-primary text-primary-foreground"
-                              : "border-border hover:border-muted-foreground"
-                          }`}
-                        >
-                          {altLabels[alt]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Legend - single line */}
-            <div className="flex items-center gap-2 text-[8px] sm:text-[9px] text-muted-foreground">
-              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary inline-block" /> OK</span>
-              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400 inline-block" /> Duvidosa</span>
-              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-500 inline-block" /> Manual</span>
-            </div>
-
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2 border-t">
               <Button variant="outline" onClick={retakePhoto} size="sm" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm">
                 <RotateCcw className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Nova Foto
               </Button>
