@@ -723,6 +723,7 @@ export default function Activities() {
               ))}
             </CardContent>
           </Card>
+        </div>
 
         {/* RIGHT PANEL - A4 Preview */}
         <div>
@@ -730,7 +731,5 @@ export default function Activities() {
         </div>
       </div>
     </div>
-  );
-}
   );
 }
