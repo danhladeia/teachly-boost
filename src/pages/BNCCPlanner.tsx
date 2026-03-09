@@ -197,7 +197,7 @@ export default function BNCCPlanner() {
             )}
           </div>
 
-          {disciplina === "Novo Ensino Médio" && (
+          {disciplina === "Itinerário Formativo/EMTI" && (
             <div className="space-y-2">
               <Label>Nome da Disciplina / Itinerário Formativo</Label>
               <Input
