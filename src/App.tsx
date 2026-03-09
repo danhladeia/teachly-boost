@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import LibraryPage from "./pages/Library";
 import BNCCPlanner from "./pages/BNCCPlanner";
 import Activities from "./pages/Activities";
 import SlidesGenerator from "./pages/SlidesGenerator";
@@ -46,6 +47,7 @@ const AppRoutes = () => (
     <Route path="/admin" element={<AdminDashboard />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
+      <Route path="biblioteca" element={<LibraryPage />} />
       <Route path="bncc" element={<BNCCPlanner />} />
       <Route path="atividades" element={<Activities />} />
       <Route path="slides" element={<SlidesGenerator />} />

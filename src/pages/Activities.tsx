@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { FileText, Sparkles, FileDown, Type, ListOrdered, AlignLeft, Loader2, Image, Save, Printer, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
+import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { exportToPdf, exportAtividadeToDocx } from "@/lib/export-utils";
 import A4Preview from "@/components/activities/A4Preview";
 import BlockEditor from "@/components/activities/BlockEditor";
+import EditorTopBar from "@/components/EditorTopBar";
+import TimbreSelector from "@/components/TimbreSelector";
 import type { Block, BlockType, ImageFloat } from "@/components/activities/types";
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -62,6 +64,7 @@ export default function Activities() {
   const [modoEnem, setModoEnem] = useState(false);
   const [textoImportado, setTextoImportado] = useState("");
   const [importFileName, setImportFileName] = useState("");
+  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -309,7 +312,6 @@ export default function Activities() {
   };
 
   const handleImportPlano = (doc: any) => {
-    const newBlocks: Block[] = [];
     const p = doc.conteudo || doc;
 
     // If it's a saved activity, restore blocks directly
@@ -326,13 +328,23 @@ export default function Activities() {
       return;
     }
 
-    // Lesson plan import
-    if (p.identificacao?.tema) newBlocks.push({ ...emptyBlock("title"), content: p.identificacao.tema });
-    if (p.desenvolvimento) newBlocks.push({ ...emptyBlock("text"), content: p.desenvolvimento });
-    if (p.objetivos?.length) newBlocks.push({ ...emptyBlock("text"), content: p.objetivos.join("\n") });
-    if (newBlocks.length === 0) newBlocks.push(emptyBlock("title"));
-    setBlocks(newBlocks);
-    toast.success("Plano importado para o editor!");
+    // Lesson plan import → use as context for AI to generate student-facing activity
+    let contextText = "";
+    if (p.identificacao?.tema) contextText += `Tema: ${p.identificacao.tema}\n`;
+    if (p.identificacao?.disciplina) contextText += `Disciplina: ${p.identificacao.disciplina}\n`;
+    if (p.identificacao?.serie) contextText += `Série: ${p.identificacao.serie}\n`;
+    if (p.objetivos?.length) contextText += `\nObjetivos de Aprendizagem:\n${p.objetivos.join('\n')}\n`;
+    if (p.desenvolvimento) contextText += `\nDesenvolvimento da Aula:\n${p.desenvolvimento}\n`;
+    if (p.conteudo) contextText += `\nConteúdo:\n${p.conteudo}\n`;
+    if (p.recursos) contextText += `\nRecursos: ${p.recursos}\n`;
+    
+    // Set as AI context
+    setTextoImportado(contextText || JSON.stringify(p, null, 2).slice(0, 5000));
+    setImportFileName(doc.titulo || "Plano de aula");
+    if (p.identificacao?.tema) setAiPrompt(`Crie uma atividade para os alunos sobre: ${p.identificacao.tema}`);
+    if (p.identificacao?.disciplina) setAiDisciplina(p.identificacao.disciplina);
+    setTab("ia");
+    toast.success("Plano importado! Configure e clique em 'Gerar Atividade' para criar material para os alunos.");
   };
 
   const handlePrint = () => {
@@ -389,20 +401,14 @@ export default function Activities() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" /> Editor de Atividades A4
-          </h1>
-          <p className="text-muted-foreground text-sm">Diagramador automático para impressão</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
-          <Button size="sm" variant="outline" onClick={() => exportToPdf("atividade-print-area", "atividade")}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
-          <Button size="sm" variant="outline" onClick={handleExportDocx}><FileDown className="mr-1 h-4 w-4" /> DOCX</Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}</Button>
-        </div>
-      </div>
+      <EditorTopBar
+        title="Criador de Atividades A4"
+        onPrint={handlePrint}
+        onPdf={() => exportToPdf("atividade-print-area", "atividade")}
+        onDocx={handleExportDocx}
+        onSave={handleSave}
+        saving={saving}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         {/* LEFT PANEL */}
@@ -513,10 +519,12 @@ export default function Activities() {
                         <Input type="number" min={0} max={20} value={aiNumAbertas === 0 ? "" : aiNumAbertas} onChange={e => setAiNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Questões fechadas"}</Label>
-                      <Input type="number" min={0} max={20} value={aiNumFechadas === 0 ? "" : aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
-                    </div>
+                    {(modoEnem || aiTipo !== "aberta") && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Questões fechadas"}</Label>
+                        <Input type="number" min={0} max={20} value={aiNumFechadas === 0 ? "" : aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -665,7 +673,20 @@ export default function Activities() {
                 <Label htmlFor="act-header" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Escola</Label>
               </div>
               {showHeader && (
-                <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                <>
+                  <TimbreSelector
+                    selectedId={selectedTimbreId}
+                    onSelect={t => {
+                      if (t) {
+                        setSelectedTimbreId(t.id);
+                        setEscola(t.escola);
+                      } else {
+                        setSelectedTimbreId(undefined);
+                      }
+                    }}
+                  />
+                  <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                </>
               )}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
 import CameraScanner from "@/components/exams/CameraScanner";
+import TimbreSelector from "@/components/TimbreSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 
@@ -89,6 +90,16 @@ export default function Exams() {
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [showActivityPicker, setShowActivityPicker] = useState(false);
 
+  // Import plans state
+  const [savedPlans, setSavedPlans] = useState<any[]>([]);
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+
+  // File import state  
+  const [textoImportadoProva, setTextoImportadoProva] = useState("");
+  const [importFileNameProva, setImportFileNameProva] = useState("");
+  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Load profile data
   useEffect(() => {
     if (!user) return;
@@ -99,7 +110,103 @@ export default function Exams() {
     })();
     loadSavedProvas();
     loadSavedActivities();
+    loadSavedPlans();
   }, [user]);
+
+  const loadSavedPlans = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("documentos_salvos")
+        .select("id, titulo, disciplina, nivel, created_at, conteudo")
+        .eq("tipo", "plano")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      setSavedPlans(data || []);
+    } catch {}
+  };
+
+  const handleFileImportProva = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    setImportFileNameProva(file.name);
+    if (name.endsWith(".txt") || name.endsWith(".md")) {
+      const text = await file.text();
+      setTextoImportadoProva(text);
+      toast.success(`Arquivo "${file.name}" importado!`);
+    } else if (name.endsWith(".pdf")) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const decoder = new TextDecoder("latin1");
+        const raw = decoder.decode(bytes);
+        let text = "";
+        const btMatches = raw.matchAll(/BT\s([\s\S]*?)ET/g);
+        for (const match of btMatches) {
+          const inner = match[1];
+          const tjMatches = inner.matchAll(/\(([^)]*)\)\s*Tj/g);
+          for (const tj of tjMatches) text += tj[1];
+          const tdMatches = inner.matchAll(/\[([^\]]*)\]\s*TJ/g);
+          for (const td of tdMatches) {
+            const parts = td[1].matchAll(/\(([^)]*)\)/g);
+            for (const p of parts) text += p[1];
+          }
+          text += "\n";
+        }
+        if (text.trim().length < 20) text = "⚠️ Não foi possível extrair texto deste PDF. Cole o texto manualmente.";
+        setTextoImportadoProva(text.trim());
+        toast.success(`PDF "${file.name}" importado! Revise o texto.`);
+      } catch { toast.error("Erro ao processar PDF"); }
+    } else if (name.endsWith(".docx") || name.endsWith(".doc")) {
+      try {
+        const text = await file.text();
+        const cleanText = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        setTextoImportadoProva(cleanText.length > 50 ? cleanText.substring(0, 10000) : "⚠️ Cole o conteúdo manualmente.");
+        toast.success(`Arquivo "${file.name}" importado!`);
+      } catch { toast.error("Erro ao processar arquivo"); }
+    } else {
+      toast.error("Formato não suportado. Use PDF, DOCX ou TXT.");
+    }
+    e.target.value = "";
+  };
+
+  const handleImportPlanAsContext = (plan: any) => {
+    const p = plan.conteudo || plan;
+    let contextText = "";
+    if (p.identificacao?.tema) contextText += `Tema: ${p.identificacao.tema}\n`;
+    if (p.identificacao?.disciplina) contextText += `Disciplina: ${p.identificacao.disciplina}\n`;
+    if (p.objetivos?.length) contextText += `\nObjetivos:\n${p.objetivos.join('\n')}\n`;
+    if (p.desenvolvimento) contextText += `\nDesenvolvimento:\n${p.desenvolvimento}\n`;
+    if (p.conteudo) contextText += `\nConteúdo:\n${p.conteudo}\n`;
+    setTextoImportadoProva(contextText || JSON.stringify(p, null, 2).slice(0, 5000));
+    setImportFileNameProva(plan.titulo || "Plano de aula");
+    if (p.identificacao?.tema) setTemas(p.identificacao.tema);
+    setShowPlanPicker(false);
+    toast.success("Plano importado! Clique em 'Gerar Questões' para criar as questões da prova.");
+  };
+
+  const handleImportActivityViaAI = (activity: any) => {
+    const conteudo = activity.conteudo as any;
+    const blocks = conteudo?.blocks || [];
+    let textContent = "";
+    blocks.forEach((block: any) => {
+      if (block.type === "title") textContent += `# ${block.content}\n\n`;
+      if (block.type === "text") textContent += block.content + "\n\n";
+      if (block.type === "question-open") textContent += `Questão: ${block.content}\n\n`;
+      if (block.type === "question-mc" || block.type === "question-enem") {
+        textContent += `Questão: ${block.content}\n`;
+        if (block.alternatives) block.alternatives.forEach((alt: string, i: number) => {
+          textContent += `  ${String.fromCharCode(65 + i)}) ${alt}\n`;
+        });
+        textContent += "\n";
+      }
+    });
+    setTextoImportadoProva(textContent);
+    setImportFileNameProva(activity.titulo || "Atividade importada");
+    setShowActivityPicker(false);
+    toast.success("Atividade importada! Clique em 'Gerar Questões' para criar questões de prova com base no conteúdo.");
+  };
 
   const loadSavedActivities = async () => {
     if (!user) return;
@@ -265,7 +372,7 @@ export default function Exams() {
   const { canUseAI, deductCredit } = useCredits();
 
   const handleAiGenerate = async () => {
-    if (!temas.trim()) { toast.error("Insira os temas da prova"); return; }
+    if (!temas.trim() && !textoImportadoProva.trim()) { toast.error("Insira os temas ou importe um texto"); return; }
     if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setLoading(true);
     try {
@@ -273,8 +380,11 @@ export default function Exams() {
       if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
       const nA = tipoQuestoes === "multipla_escolha" ? 0 : numAbertas;
       const nF = tipoQuestoes === "aberta" ? 0 : numFechadas;
+      const temasComContexto = textoImportadoProva
+        ? `${temas}\n\nTexto base para gerar as questões:\n${textoImportadoProva.slice(0, 4000)}`
+        : temas;
       const { data, error } = await supabase.functions.invoke("generate-prova", {
-        body: { temas, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
+        body: { temas: temasComContexto, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
       });
       if (error) throw error;
       if (data?.questoes) {
@@ -524,9 +634,21 @@ export default function Exams() {
                     <Input placeholder="Prova de Ciências" value={titulo} onChange={e => setTitulo(e.target.value)} className="h-8 text-xs" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px]">Temas / Conteúdos</Label>
-                    <Textarea placeholder="Ex: Sistema Solar, Frações..." value={temas} onChange={e => setTemas(e.target.value)} className="min-h-[60px] text-xs" />
+                    <Label className="text-[10px]">Tema e instruções</Label>
+                    <Textarea placeholder="Ex: Sistema Solar - Gere questões sobre planetas, órbitas e gravidade..." value={temas} onChange={e => setTemas(e.target.value)} className="min-h-[60px] text-xs" />
                   </div>
+
+                  {/* Imported text preview */}
+                  {textoImportadoProva && (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold flex items-center gap-1"><FileUp className="h-3 w-3" /> Texto importado{importFileNameProva ? `: ${importFileNameProva}` : ""}</Label>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setTextoImportadoProva(""); setImportFileNameProva(""); }}>✕</Button>
+                      </div>
+                      <Textarea value={textoImportadoProva} onChange={e => setTextoImportadoProva(e.target.value)} className="min-h-[60px] text-[10px] bg-background" />
+                      <p className="text-[9px] text-muted-foreground">A IA usará este texto como base para gerar as questões.</p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-[10px]">Nível</Label>
@@ -571,38 +693,58 @@ export default function Exams() {
                   <Button onClick={handleAiGenerate} disabled={loading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
                     {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Questões</>}
                   </Button>
-                  <div className="relative">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => setShowActivityPicker(!showActivityPicker)}
-                    >
-                      <FileText className="mr-1 h-4 w-4" />
-                      Importar de Atividade
-                    </Button>
-                    {showActivityPicker && (
-                      <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {loadingActivities ? (
-                          <div className="p-4 text-center text-xs text-muted-foreground">Carregando...</div>
-                        ) : savedActivities.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma atividade salva</div>
-                        ) : (
-                          savedActivities.map((a) => (
-                            <button
-                              key={a.id}
-                              onClick={() => importActivityAsQuestions(a)}
-                              className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0"
-                            >
-                              <p className="font-medium truncate">{a.titulo}</p>
-                              <p className="text-muted-foreground text-[10px]">
-                                {a.disciplina || "Sem disciplina"} • {new Date(a.created_at).toLocaleDateString("pt-BR")}
-                              </p>
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
+                  {/* Import options */}
+                  <div className="space-y-1.5 rounded-lg border border-dashed border-muted-foreground/30 p-2">
+                    <Label className="text-[10px] font-semibold">📥 Importar conteúdo</Label>
+                    
+                    {/* File import */}
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-primary/30 px-2 py-1.5 hover:bg-primary/5 transition-colors text-xs">
+                      <Upload className="h-3.5 w-3.5 text-primary" />
+                      <span>Importar PDF, DOCX ou TXT</span>
+                      <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt,.md" className="hidden" onChange={handleFileImportProva} />
+                    </label>
+
+                    {/* Activity import */}
+                    <div className="relative">
+                      <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => { setShowActivityPicker(!showActivityPicker); setShowPlanPicker(false); }}>
+                        <FileText className="mr-1 h-3.5 w-3.5" /> Importar Atividade Salva
+                      </Button>
+                      {showActivityPicker && (
+                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {savedActivities.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-muted-foreground">Nenhuma atividade salva</div>
+                          ) : (
+                            savedActivities.map((a) => (
+                              <button key={a.id} onClick={() => handleImportActivityViaAI(a)} className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0">
+                                <p className="font-medium truncate">{a.titulo}</p>
+                                <p className="text-muted-foreground text-[10px]">{a.disciplina || "Sem disciplina"} • {new Date(a.created_at).toLocaleDateString("pt-BR")}</p>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Plan import */}
+                    <div className="relative">
+                      <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => { setShowPlanPicker(!showPlanPicker); setShowActivityPicker(false); }}>
+                        <BookOpen className="mr-1 h-3.5 w-3.5" /> Importar Plano de Aula
+                      </Button>
+                      {showPlanPicker && (
+                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {savedPlans.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-muted-foreground">Nenhum plano salvo</div>
+                          ) : (
+                            savedPlans.map((p) => (
+                              <button key={p.id} onClick={() => handleImportPlanAsContext(p)} className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0">
+                                <p className="font-medium truncate">{p.titulo}</p>
+                                <p className="text-muted-foreground text-[10px]">{p.disciplina || "Sem disciplina"} • {new Date(p.created_at).toLocaleDateString("pt-BR")}</p>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -615,7 +757,18 @@ export default function Exams() {
                     <Switch checked={showHeader} onCheckedChange={setShowHeader} id="exam-hdr" />
                     <Label htmlFor="exam-hdr" className="text-xs flex items-center gap-1"><Building2 className="h-3 w-3" /> Timbre da escola</Label>
                   </div>
-                  {showHeader && <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />}
+                  {showHeader && (
+                    <>
+                      <TimbreSelector
+                        selectedId={selectedTimbreId}
+                        onSelect={t => {
+                          if (t) { setSelectedTimbreId(t.id); setEscola(t.escola); }
+                          else { setSelectedTimbreId(undefined); }
+                        }}
+                      />
+                      <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                    </>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <Input placeholder="Professor(a)" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
                     <Input placeholder="Turma" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
