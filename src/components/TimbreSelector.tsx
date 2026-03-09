@@ -42,9 +42,9 @@ export default function TimbreSelector({ onSelect, selectedId, label = "Timbre d
     <div className="space-y-1">
       {label && <Label className="text-[10px] font-semibold flex items-center gap-1"><Stamp className="h-3 w-3" /> {label}</Label>}
       <Select
-        value={selectedId || ""}
+        value={selectedId || "__none__"}
         onValueChange={id => {
-          if (!id) { onSelect(null); return; }
+          if (id === "__none__") { onSelect(null); return; }
           const t = timbres.find(t => t.id === id);
           onSelect(t || null);
         }}
@@ -65,7 +65,7 @@ export default function TimbreSelector({ onSelect, selectedId, label = "Timbre d
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">
+          <SelectItem value="__none__">
             <span className="text-muted-foreground">Sem timbre</span>
           </SelectItem>
           {timbres.map(t => (
