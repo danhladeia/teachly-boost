@@ -765,7 +765,7 @@ export default function Activities() {
 
         {/* RIGHT PANEL - A4 Preview */}
         <div>
-          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} professor={professor} turma={turma} />
+          <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} professor={professor} turma={turma} logoUrl={selectedTimbre?.logoUrl} bannerUrl={selectedTimbre?.bannerUrl} />
         </div>
       </div>
     </div>
