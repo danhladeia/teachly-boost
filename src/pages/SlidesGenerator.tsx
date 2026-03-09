@@ -42,10 +42,11 @@ export default function SlidesGenerator() {
       if (data?.nome) setProfessor(data.nome);
     } catch {}
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setArquivo(file);
   };
-
   const generateImageForSlide = async (slide: Slide, style: string): Promise<string | undefined> => {
     if (!slide.image_prompt) return undefined;
     try {
