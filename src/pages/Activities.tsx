@@ -429,7 +429,12 @@ export default function Activities() {
   };
 
   const handleExportDocx = () => {
-    exportAtividadeToDocx(blocks, { escola: showHeader ? escola : undefined, professor, turma, autoNumber });
+    exportAtividadeToDocx(blocks, {
+      escola: showHeader ? escola : undefined,
+      professor, turma, autoNumber,
+      bannerUrl: showHeader ? selectedTimbre?.bannerUrl : undefined,
+      logoUrl: showHeader ? selectedTimbre?.logoUrl : undefined,
+    });
   };
 
   const handleNumAiImagesChange = (n: number) => {
