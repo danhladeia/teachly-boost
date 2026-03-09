@@ -55,12 +55,17 @@ const altLabels = ["A", "B", "C", "D"];
 
 export default function OMRScanner() {
   const { user } = useAuth();
+  const [step, setStep] = useState<"select-gabarito" | "upload" | "results">("select-gabarito");
   const [sheets, setSheets] = useState<ProcessedSheet[]>([]);
   const [processing, setProcessing] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Preloaded gabarito (loaded before upload)
+  const [preloadedGabarito, setPreloadedGabarito] = useState<{ q: number; correct: number }[] | null>(null);
+  const [preloadedProvaInfo, setPreloadedProvaInfo] = useState<{ titulo: string; prova_id: string; versao_id: string | null; versao_label: string } | null>(null);
 
   // Manual prova/versao selector state
   const [provasList, setProvasList] = useState<SavedProva[]>([]);
@@ -96,7 +101,7 @@ export default function OMRScanner() {
     })();
   }, [selectedProvaId]);
 
-  const fetchManualGabarito = async () => {
+  const fetchGabaritoAndAdvance = async () => {
     if (!selectedProvaId) { toast.error("Selecione uma prova"); return; }
     setLoadingGabarito(true);
     try {
@@ -127,20 +132,22 @@ export default function OMRScanner() {
         return;
       }
 
-      // Apply gabarito to current sheet
-      setSheets(prev => prev.map((s, idx) => idx === currentIdx ? {
-        ...s,
-        gabarito: result.gabarito,
-        prova_info: result.prova_info,
-        correctionResult: null,
-      } : s));
-
+      setPreloadedGabarito(result.gabarito);
+      setPreloadedProvaInfo(result.prova_info);
       toast.success(`Gabarito carregado: ${result.gabarito.length} questões`);
+      setStep("upload");
     } catch (err: any) {
       toast.error(err.message || "Erro ao buscar gabarito");
     } finally {
       setLoadingGabarito(false);
     }
+  };
+
+  // Legacy: apply preloaded gabarito to a sheet that didn't get one from QR
+  const applyPreloadedGabarito = (sheet: ProcessedSheet): ProcessedSheet => {
+    if (sheet.gabarito && sheet.gabarito.length > 0) return sheet; // QR detected its own
+    if (!preloadedGabarito) return sheet;
+    return { ...sheet, gabarito: preloadedGabarito, prova_info: preloadedProvaInfo };
   };
 
   const addFiles = useCallback((files: FileList | File[]) => {
@@ -215,16 +222,19 @@ export default function OMRScanner() {
         const result = await resp.json();
         if (!result.success) throw new Error(result.error || "Erro no processamento");
 
-        setSheets(prev => prev.map((s, idx) => idx === i ? {
-          ...s,
-          status: "done",
+        const processed: ProcessedSheet = {
+          ...sheets[i],
+          status: "done" as const,
           respostas: result.respostas || [],
           nome_aluno: result.nome_aluno,
           qr_detected: result.qr_detected,
           gabarito: result.gabarito,
           prova_info: result.prova_info,
           imagem_url: result.imagem_url,
-        } : s));
+        };
+        // Apply preloaded gabarito if QR didn't detect one
+        const withGabarito = applyPreloadedGabarito(processed);
+        setSheets(prev => prev.map((s, idx) => idx === i ? withGabarito : s));
       } catch (err: any) {
         setSheets(prev => prev.map((s, idx) => idx === i ? { ...s, status: "error", errorMsg: err.message } : s));
       }
@@ -233,6 +243,7 @@ export default function OMRScanner() {
     }
 
     setProcessing(false);
+    setStep("results");
     toast.success("Processamento concluído!");
   };
 
@@ -321,6 +332,11 @@ export default function OMRScanner() {
     setSheets([]);
     setCurrentIdx(0);
     setProgress(0);
+    setPreloadedGabarito(null);
+    setPreloadedProvaInfo(null);
+    setSelectedProvaId("");
+    setSelectedVersaoId("");
+    setStep("select-gabarito");
   };
 
   const current = sheets[currentIdx];
@@ -328,21 +344,93 @@ export default function OMRScanner() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 overflow-x-hidden">
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="font-display text-lg flex items-center gap-2">
-            <Upload className="h-5 w-5 text-primary" />
-            Correção de Provas por Foto
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Upload Area */}
-          {sheets.every(s => s.status === "pending" || sheets.length === 0) && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Envie fotos das <strong>folhas de respostas</strong> preenchidas pelos alunos. A inteligência artificial detecta o QR Code, identifica a versão da prova e lê as respostas marcadas automaticamente.
-              </p>
+      {/* Step indicator */}
+      <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-medium">
+        {[
+          { key: "select-gabarito", label: "Gabarito" },
+          { key: "upload", label: "Fotos" },
+          { key: "results", label: "Resultados" },
+        ].map((s, i) => (
+          <div key={s.key} className="flex items-center gap-0.5 sm:gap-1 flex-1 justify-center">
+            {i > 0 && <div className="w-3 sm:w-6 h-px bg-border shrink-0" />}
+            <span className={`px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap ${step === s.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              {i + 1}. {s.label}
+            </span>
+          </div>
+        ))}
+      </div>
 
+      {/* STEP 1: Select Gabarito */}
+      {step === "select-gabarito" && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+              <Search className="h-4 w-4 text-primary" />
+              Selecione a Prova
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Carregue o gabarito antes de enviar as fotos dos alunos.
+            </p>
+            <div className="space-y-2">
+              <Select value={selectedProvaId} onValueChange={setSelectedProvaId}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Selecione a prova..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {provasList.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.titulo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {versoesList.length > 0 && (
+                <Select value={selectedVersaoId} onValueChange={setSelectedVersaoId}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Original (sem embaralhamento)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="original">Original</SelectItem>
+                    {versoesList.map(v => (
+                      <SelectItem key={v.id} value={v.id}>Versão {v.versao_label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button
+                onClick={fetchGabaritoAndAdvance}
+                disabled={!selectedProvaId || loadingGabarito}
+                className="w-full gradient-primary border-0 text-primary-foreground"
+              >
+                {loadingGabarito ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                Carregar Gabarito
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* STEP 2: Upload Photos */}
+      {step === "upload" && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-sm sm:text-base flex items-center gap-2">
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Enviar Fotos
+              {preloadedProvaInfo && (
+                <Badge variant="secondary" className="text-[9px] sm:text-[10px] ml-auto font-normal truncate max-w-[180px]">
+                  {preloadedProvaInfo.titulo}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Gabarito carregado com <strong>{preloadedGabarito?.length || 0} questões</strong>. Agora envie as fotos das folhas de respostas.
+            </p>
+
+            {/* Upload area */}
+            {sheets.every(s => s.status === "pending" || sheets.length === 0) && !processing && (
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -368,34 +456,33 @@ export default function OMRScanner() {
                   </div>
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-          {/* Thumbnails & Process Button */}
-          {sheets.length > 0 && !processing && sheets.some(s => s.status === "pending") && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold">{sheets.length} gabarito(s) para processar</h4>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={reset}><Trash2 className="mr-1 h-3 w-3" /> Limpar</Button>
-                  <Button size="sm" onClick={processAllSheets} className="gradient-primary border-0 text-primary-foreground">
-                    <Upload className="mr-1 h-4 w-4" /> Processar Todos
-                  </Button>
+            {/* Thumbnails & Process Button */}
+            {sheets.length > 0 && !processing && sheets.some(s => s.status === "pending") && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">{sheets.length} gabarito(s) para processar</h4>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { sheets.forEach(s => URL.revokeObjectURL(s.previewUrl)); setSheets([]); }}><Trash2 className="mr-1 h-3 w-3" /> Limpar</Button>
+                    <Button size="sm" onClick={processAllSheets} className="gradient-primary border-0 text-primary-foreground">
+                      <Upload className="mr-1 h-4 w-4" /> Processar Todos
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {sheets.map((s, i) => (
+                    <div key={i} className="relative group">
+                      <img src={s.previewUrl} alt={`Gabarito ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
+                      <button
+                        onClick={() => removeSheet(i)}
+                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >✕</button>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                {sheets.map((s, i) => (
-                  <div key={i} className="relative group">
-                    <img src={s.previewUrl} alt={`Gabarito ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
-                    <button
-                      onClick={() => removeSheet(i)}
-                      className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >✕</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Processing Progress */}
           {processing && (
@@ -424,268 +511,237 @@ export default function OMRScanner() {
             </div>
           )}
 
-          {/* Results: Tab-like navigation for each sheet */}
-          {!processing && sheets.some(s => s.status === "done" || s.status === "error") && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-sm font-semibold">Resultados</h3>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={reset}><RotateCcw className="mr-1 h-3 w-3" /> Nova Correção</Button>
-                </div>
+            {/* Tips */}
+            {sheets.length === 0 && !processing && (
+              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-semibold text-foreground">📋 Dicas para melhor detecção:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>Fotografe a folha inteira com boa iluminação</li>
+                  <li>Preencha os círculos completamente com caneta preta ou azul</li>
+                  <li>Evite sombras, dobras e reflexos na foto</li>
+                  <li>Você pode enviar múltiplas fotos de uma vez</li>
+                </ul>
               </div>
+            )}
 
-              {/* Sheet selector */}
-              {sheets.length > 1 && (
-                <div className="flex gap-1 flex-wrap">
-                  {sheets.map((s, i) => (
-                    <Button
-                      key={i}
-                      size="sm"
-                      variant={currentIdx === i ? "default" : "outline"}
-                      onClick={() => setCurrentIdx(i)}
-                      className="text-xs h-7"
-                    >
-                      Gabarito {i + 1}
-                      {s.status === "done" && s.correctionResult && (
-                        <Badge variant="secondary" className="ml-1 text-[9px]">{s.correctionResult.percentage}%</Badge>
-                      )}
-                      {s.status === "error" && <XCircle className="ml-1 h-3 w-3 text-destructive" />}
-                    </Button>
-                  ))}
-                </div>
+            <Button variant="ghost" size="sm" onClick={reset} className="w-full">
+              ← Voltar para seleção de prova
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* STEP 3: Results */}
+      {step === "results" && !processing && sheets.some(s => s.status === "done" || s.status === "error") && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              Resultados
+              {preloadedProvaInfo && (
+                <Badge variant="secondary" className="text-[9px] sm:text-[10px] ml-auto font-normal truncate max-w-[180px]">
+                  {preloadedProvaInfo.titulo}
+                </Badge>
               )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={reset}><RotateCcw className="mr-1 h-3 w-3" /> Nova Correção</Button>
+              </div>
+            </div>
 
-              {/* Current sheet detail */}
-              {current && current.status === "error" && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
-                  <XCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
-                  <p className="text-sm font-medium">Erro ao processar</p>
-                  <p className="text-xs text-muted-foreground">{current.errorMsg}</p>
-                </div>
-              )}
+            {/* Sheet selector */}
+            {sheets.length > 1 && (
+              <div className="flex gap-1 flex-wrap">
+                {sheets.map((s, i) => (
+                  <Button
+                    key={i}
+                    size="sm"
+                    variant={currentIdx === i ? "default" : "outline"}
+                    onClick={() => setCurrentIdx(i)}
+                    className="text-xs h-7"
+                  >
+                    Gabarito {i + 1}
+                    {s.status === "done" && s.correctionResult && (
+                      <Badge variant="secondary" className="ml-1 text-[9px]">{s.correctionResult.percentage}%</Badge>
+                    )}
+                    {s.status === "error" && <XCircle className="ml-1 h-3 w-3 text-destructive" />}
+                  </Button>
+                ))}
+              </div>
+            )}
 
-              {current && current.status === "done" && (
-                <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-                  {/* Left: Original image */}
-                  <div className="space-y-3 min-w-0">
-                    <div className="rounded-lg overflow-hidden border">
-                      <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[300px] sm:max-h-[500px] bg-muted" />
-                    </div>
-                    <div className="space-y-1 text-xs">
-                      {current.prova_info && (
-                        <p className="font-semibold text-primary">{current.prova_info.titulo}</p>
-                      )}
-                      {current.nome_aluno && (
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Nome do aluno (detectado)</Label>
-                          <Input
-                            value={current.nome_aluno}
-                            onChange={e => setSheets(prev => prev.map((s, i) => i === currentIdx ? { ...s, nome_aluno: e.target.value } : s))}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                      )}
-                      {!current.nome_aluno && (
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Nome do aluno</Label>
-                          <Input
-                            placeholder="Digite o nome do aluno"
-                            onChange={e => setSheets(prev => prev.map((s, i) => i === currentIdx ? { ...s, nome_aluno: e.target.value || null } : s))}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                      )}
-                      <div className="flex gap-2 mt-2">
-                        <Badge variant={current.qr_detected ? "default" : "destructive"} className="text-[9px]">
-                          {current.qr_detected ? "✓ QR Detectado" : "✗ QR não encontrado"}
-                        </Badge>
-                        <Badge variant="secondary" className="text-[9px]">
-                          {current.respostas.filter(r => r.alternativa !== null).length} respostas
-                        </Badge>
-                        {hasLowConfidence && (
-                          <Badge variant="outline" className="text-[9px] border-amber-500 text-amber-600">
-                            ⚠ Requer validação
-                          </Badge>
-                        )}
+            {/* Current sheet detail */}
+            {current && current.status === "error" && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
+                <XCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+                <p className="text-sm font-medium">Erro ao processar</p>
+                <p className="text-xs text-muted-foreground">{current.errorMsg}</p>
+              </div>
+            )}
+
+            {current && current.status === "done" && (
+              <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+                {/* Left: Original image */}
+                <div className="space-y-3 min-w-0">
+                  <div className="rounded-lg overflow-hidden border">
+                    <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[300px] sm:max-h-[500px] bg-muted" />
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    {current.prova_info && (
+                      <p className="font-semibold text-primary">{current.prova_info.titulo}</p>
+                    )}
+                    {current.nome_aluno && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Nome do aluno (detectado)</Label>
+                        <Input
+                          value={current.nome_aluno}
+                          onChange={e => setSheets(prev => prev.map((s, i) => i === currentIdx ? { ...s, nome_aluno: e.target.value } : s))}
+                          className="h-7 text-xs"
+                        />
                       </div>
-
-                      {/* Manual prova selector when no gabarito */}
-                      {!current.gabarito && (
-                        <div className="mt-3 p-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/10 space-y-2">
-                          <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-                            ⚠ Gabarito não detectado automaticamente
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            Selecione a prova manualmente para carregar o gabarito:
-                          </p>
-                          <div className="space-y-1.5">
-                            <Select value={selectedProvaId} onValueChange={setSelectedProvaId}>
-                              <SelectTrigger className="h-7 text-xs">
-                                <SelectValue placeholder="Selecione a prova" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {provasList.map(p => (
-                                  <SelectItem key={p.id} value={p.id} className="text-xs">{p.titulo}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {versoesList.length > 0 && (
-                              <Select value={selectedVersaoId} onValueChange={setSelectedVersaoId}>
-                                <SelectTrigger className="h-7 text-xs">
-                                  <SelectValue placeholder="Original (sem embaralhamento)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="original" className="text-xs">Original (sem embaralhamento)</SelectItem>
-                                  {versoesList.map(v => (
-                                    <SelectItem key={v.id} value={v.id} className="text-xs">Versão {v.versao_label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                            <Button
-                              size="sm"
-                              className="w-full h-7 text-xs"
-                              onClick={fetchManualGabarito}
-                              disabled={!selectedProvaId || loadingGabarito}
-                            >
-                              {loadingGabarito ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Search className="mr-1 h-3 w-3" />}
-                              Carregar Gabarito
-                            </Button>
-                          </div>
-                        </div>
+                    )}
+                    {!current.nome_aluno && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Nome do aluno</Label>
+                        <Input
+                          placeholder="Digite o nome do aluno"
+                          onChange={e => setSheets(prev => prev.map((s, i) => i === currentIdx ? { ...s, nome_aluno: e.target.value || null } : s))}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      <Badge variant={current.qr_detected ? "default" : "destructive"} className="text-[9px]">
+                        {current.qr_detected ? "✓ QR Detectado" : "✗ QR não encontrado"}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[9px]">
+                        {current.respostas.filter(r => r.alternativa !== null).length} respostas
+                      </Badge>
+                      {hasLowConfidence && (
+                        <Badge variant="outline" className="text-[9px] border-amber-500 text-amber-600">
+                          ⚠ Requer validação
+                        </Badge>
                       )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Right: Answers validation */}
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">
-                      Respostas detectadas <span className="text-primary">(clique para corrigir)</span>
-                    </h4>
+                {/* Right: Answers validation */}
+                <div className="space-y-3 min-w-0">
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">
+                    Respostas detectadas <span className="text-primary">(clique para corrigir)</span>
+                  </h4>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
-                      {(current.gabarito || current.respostas).map((item, idx) => {
-                        const qNum = "q" in item ? item.q : item.questao;
-                        const detected = current.respostas.find(r => r.questao === qNum);
-                        const finalAlt = current.manualOverrides[qNum] ?? detected?.alternativa;
-                        const isManual = qNum in current.manualOverrides;
-                        const isLow = detected?.confianca === "low";
-                        const gabItem = current.gabarito?.find(g => g.q === qNum);
-                        const corrDetail = current.correctionResult?.details.find(d => d.q === qNum);
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
+                    {(current.gabarito || current.respostas).map((item, idx) => {
+                      const qNum = "q" in item ? item.q : item.questao;
+                      const detected = current.respostas.find(r => r.questao === qNum);
+                      const finalAlt = current.manualOverrides[qNum] ?? detected?.alternativa;
+                      const isManual = qNum in current.manualOverrides;
+                      const isLow = detected?.confianca === "low";
+                      const gabItem = current.gabarito?.find(g => g.q === qNum);
+                      const corrDetail = current.correctionResult?.details.find(d => d.q === qNum);
 
-                        return (
-                          <div key={qNum} className={`flex items-center gap-1 ${isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 rounded p-0.5" : ""}`}>
-                            <span className="text-xs font-mono w-6 text-right font-semibold">{qNum}.</span>
-                            <div className="flex gap-0.5">
-                              {[0, 1, 2, 3].map(alt => (
-                                <button
-                                  key={alt}
-                                  onClick={() => updateManualOverride(currentIdx, qNum, alt)}
-                                  className={`w-7 h-7 rounded-full text-[10px] font-bold border-2 transition-all ${
-                                    finalAlt === alt
-                                      ? isManual
-                                        ? "border-amber-500 bg-amber-500 text-white"
-                                        : isLow
-                                          ? "border-amber-400 bg-amber-400 text-white animate-pulse"
-                                          : "border-primary bg-primary text-primary-foreground"
-                                      : "border-border hover:border-muted-foreground"
-                                  }`}
-                                >
-                                  {altLabels[alt]}
-                                </button>
-                              ))}
-                            </div>
-                            {corrDetail && (
-                              corrDetail.isCorrect
-                                ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                                : <XCircle className="h-4 w-4 text-red-500 shrink-0" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Alta confiança</span>
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Baixa confiança</span>
-                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Correção manual</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => correctSheet(currentIdx)}
-                        size="lg"
-                        className="flex-1 gradient-primary border-0 text-primary-foreground hover:opacity-90"
-                        disabled={!current.gabarito}
-                      >
-                        <CheckCircle2 className="mr-2 h-5 w-5" />
-                        {current.gabarito ? "Corrigir Prova" : "Selecione a prova para corrigir ↓"}
-                      </Button>
-                    </div>
-
-                    {/* Correction Result */}
-                    {current.correctionResult && (
-                      <Card className="bg-muted/50 border-primary/20">
-                        <CardContent className="pt-4 space-y-3">
-                          <div className="text-center space-y-1">
-                            <p className="text-4xl font-bold text-primary">{current.correctionResult.percentage}%</p>
-                            <p className="text-sm text-muted-foreground">
-                              {current.correctionResult.earnedPoints} de {current.correctionResult.totalPoints} pontos
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              ({current.correctionResult.correct} de {current.correctionResult.total} questões corretas)
-                            </p>
-                            <p className="text-xl font-semibold">
-                              Nota: {current.correctionResult.totalPoints > 0 ? ((current.correctionResult.earnedPoints / current.correctionResult.totalPoints) * 10).toFixed(1) : "0.0"}
-                            </p>
-                          </div>
-                          <div className="border-t pt-3 grid grid-cols-5 sm:grid-cols-10 gap-1">
-                            {current.correctionResult.details.map(d => (
-                              <div key={d.q} className={`text-center rounded p-1 text-[10px] font-mono ${
-                                d.isCorrect
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                              }`}>
-                                <div className="font-bold">{d.q}</div>
-                                <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
-                                {d.pontos !== 1 && <div className="text-[8px]">{d.pontos}pt</div>}
-                              </div>
+                      return (
+                        <div key={qNum} className={`flex items-center gap-1 ${isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 rounded p-0.5" : ""}`}>
+                          <span className="text-xs font-mono w-6 text-right font-semibold">{qNum}.</span>
+                          <div className="flex gap-0.5">
+                            {[0, 1, 2, 3].map(alt => (
+                              <button
+                                key={alt}
+                                onClick={() => updateManualOverride(currentIdx, qNum, alt)}
+                                className={`w-7 h-7 rounded-full text-[10px] font-bold border-2 transition-all ${
+                                  finalAlt === alt
+                                    ? isManual
+                                      ? "border-amber-500 bg-amber-500 text-white"
+                                      : isLow
+                                        ? "border-amber-400 bg-amber-400 text-white animate-pulse"
+                                        : "border-primary bg-primary text-primary-foreground"
+                                    : "border-border hover:border-muted-foreground"
+                                }`}
+                              >
+                                {altLabels[alt]}
+                              </button>
                             ))}
                           </div>
-                          <Button
-                            onClick={() => saveResult(currentIdx)}
-                            disabled={saving}
-                            className="w-full"
-                            variant="outline"
-                          >
-                            <Save className="mr-2 h-4 w-4" />
-                            {saving ? "Salvando..." : "Salvar Resultado no Banco"}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
+                          {corrDetail && (
+                            corrDetail.isCorrect
+                              ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                              : <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Tips */}
-          {sheets.length === 0 && (
-            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-semibold text-foreground">📋 Dicas para melhor detecção:</p>
-              <ul className="list-disc list-inside space-y-0.5">
-                <li>Fotografe a folha inteira com boa iluminação</li>
-                <li>O QR Code deve estar nítido e sem obstruções</li>
-                <li>Preencha os círculos completamente com caneta preta ou azul</li>
-                <li>Evite sombras, dobras e reflexos na foto</li>
-                <li>Você pode enviar múltiplas fotos de uma vez</li>
-                <li>Se o QR não for detectado, você pode selecionar a prova manualmente</li>
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Alta confiança</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Baixa confiança</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Correção manual</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => correctSheet(currentIdx)}
+                      size="lg"
+                      className="flex-1 gradient-primary border-0 text-primary-foreground hover:opacity-90"
+                      disabled={!current.gabarito}
+                    >
+                      <CheckCircle2 className="mr-2 h-5 w-5" />
+                      Corrigir Prova
+                    </Button>
+                  </div>
+
+                  {/* Correction Result */}
+                  {current.correctionResult && (
+                    <Card className="bg-muted/50 border-primary/20">
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="text-center space-y-1">
+                          <p className="text-4xl font-bold text-primary">{current.correctionResult.percentage}%</p>
+                          <p className="text-sm text-muted-foreground">
+                            {current.correctionResult.earnedPoints} de {current.correctionResult.totalPoints} pontos
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ({current.correctionResult.correct} de {current.correctionResult.total} questões corretas)
+                          </p>
+                          <p className="text-xl font-semibold">
+                            Nota: {current.correctionResult.totalPoints > 0 ? ((current.correctionResult.earnedPoints / current.correctionResult.totalPoints) * 10).toFixed(1) : "0.0"}
+                          </p>
+                        </div>
+                        <div className="border-t pt-3 grid grid-cols-5 sm:grid-cols-10 gap-1">
+                          {current.correctionResult.details.map(d => (
+                            <div key={d.q} className={`text-center rounded p-1 text-[10px] font-mono ${
+                              d.isCorrect
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                            }`}>
+                              <div className="font-bold">{d.q}</div>
+                              <div>{d.isCorrect ? "✓" : `✗${d.selected >= 0 ? altLabels[d.selected] : "?"}`}</div>
+                              {d.pontos !== 1 && <div className="text-[8px]">{d.pontos}pt</div>}
+                            </div>
+                          ))}
+                        </div>
+                        <Button
+                          onClick={() => saveResult(currentIdx)}
+                          disabled={saving}
+                          className="w-full"
+                          variant="outline"
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          {saving ? "Salvando..." : "Salvar Resultado no Banco"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
