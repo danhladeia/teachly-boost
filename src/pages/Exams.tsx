@@ -675,11 +675,11 @@ export default function Exams() {
       </div>
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList className="w-full flex overflow-x-auto">
-          <TabsTrigger value="criar" className="text-xs flex-1 min-w-0">Criar</TabsTrigger>
-          <TabsTrigger value="minhas" className="text-xs flex-1 min-w-0">Minhas</TabsTrigger>
-          <TabsTrigger value="corrigir" className="text-xs flex-1 min-w-0">Corrigir</TabsTrigger>
-          <TabsTrigger value="camera" className="text-xs flex-1 min-w-0"><Camera className="mr-1 h-3 w-3" /> Câmera</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="criar" className="text-[10px] sm:text-xs px-1 sm:px-3">Criar</TabsTrigger>
+          <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas</TabsTrigger>
+          <TabsTrigger value="corrigir" className="text-[10px] sm:text-xs px-1 sm:px-3">Corrigir</TabsTrigger>
+          <TabsTrigger value="camera" className="text-[10px] sm:text-xs px-1 sm:px-3"><Camera className="mr-0.5 sm:mr-1 h-3 w-3" /> Câmera</TabsTrigger>
         </TabsList>
 
         <TabsContent value="criar">
