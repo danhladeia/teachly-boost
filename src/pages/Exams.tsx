@@ -372,7 +372,7 @@ export default function Exams() {
   const { canUseAI, deductCredit } = useCredits();
 
   const handleAiGenerate = async () => {
-    if (!temas.trim()) { toast.error("Insira os temas da prova"); return; }
+    if (!temas.trim() && !textoImportadoProva.trim()) { toast.error("Insira os temas ou importe um texto"); return; }
     if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
     setLoading(true);
     try {
@@ -380,8 +380,11 @@ export default function Exams() {
       if (!ok) { toast.error("Sem créditos disponíveis."); setLoading(false); return; }
       const nA = tipoQuestoes === "multipla_escolha" ? 0 : numAbertas;
       const nF = tipoQuestoes === "aberta" ? 0 : numFechadas;
+      const temasComContexto = textoImportadoProva
+        ? `${temas}\n\nTexto base para gerar as questões:\n${textoImportadoProva.slice(0, 4000)}`
+        : temas;
       const { data, error } = await supabase.functions.invoke("generate-prova", {
-        body: { temas, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
+        body: { temas: temasComContexto, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
       });
       if (error) throw error;
       if (data?.questoes) {
