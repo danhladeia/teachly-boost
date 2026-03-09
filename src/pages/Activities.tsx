@@ -413,6 +413,48 @@ export default function Activities() {
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         {/* LEFT PANEL */}
         <div className="space-y-4 pr-1">
+          {/* TIMBRE - Primeiro */}
+          <Card className="shadow-card">
+            <CardContent className="pt-4 space-y-3">
+              <h3 className="text-xs font-semibold flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Atividade</h3>
+              <div className="flex items-center gap-2">
+                <Switch checked={showHeader} onCheckedChange={setShowHeader} id="act-header" />
+                <Label htmlFor="act-header" className="text-xs">Mostrar timbre da escola</Label>
+              </div>
+              {showHeader && (
+                <>
+                  <TimbreSelector
+                    selectedId={selectedTimbreId}
+                    onSelect={t => {
+                      if (t) {
+                        setSelectedTimbreId(t.id);
+                        setEscola(t.escola);
+                      } else {
+                        setSelectedTimbreId(undefined);
+                      }
+                    }}
+                  />
+                  <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                </>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[10px]">Professor(a)</Label>
+                  <Input placeholder="Nome" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px]">Turma</Label>
+                  <Input placeholder="Ex: 5ºA" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={autoNumber} onCheckedChange={setAutoNumber} id="auto-num" />
+                <Label htmlFor="auto-num" className="text-xs flex items-center gap-1"><Hash className="h-3 w-3" /> Numeração automática</Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Geração de conteúdo */}
           <Card className="shadow-card">
             <CardContent className="pt-4">
               <Tabs value={tab} onValueChange={setTab}>
