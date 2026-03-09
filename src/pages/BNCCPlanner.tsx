@@ -272,7 +272,6 @@ export default function BNCCPlanner() {
               <p className="text-xs text-muted-foreground">A IA gerará um cronograma aula a aula ({quantidadeAulas} aulas)</p>
             )}
           </div>
-          </div>
 
           <Button
             onClick={handleGenerate}
