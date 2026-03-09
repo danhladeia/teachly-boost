@@ -651,14 +651,14 @@ export default function Exams() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Provas e Correção
+          <h1 className="font-display text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <FileCheck className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Provas e Correção
           </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
+          <p className="text-muted-foreground text-[10px] sm:text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
         </div>
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex gap-1 sm:gap-2 flex-wrap">
           {questoes.length > 0 && (
             <>
               <Button size="sm" variant="outline" onClick={handlePrint} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Printer className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Imprimir</span><span className="sm:hidden">Imp.</span></Button>
