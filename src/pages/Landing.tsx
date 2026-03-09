@@ -48,9 +48,9 @@ const features = [
   {
     icon: Gamepad2,
     title: "Fábrica de Jogos Pedagógicos",
-    desc: "17+ jogos educativos prontos para imprimir em A4: caça-palavras, cruzadinha, criptograma, sudoku, labirinto, anagrama, forca, jogo da velha, pixel art, sequência lógica e muito mais. Com níveis de dificuldade e gabarito automático.",
-    tag: "17+ jogos",
-    highlights: ["Caça-palavras", "Cruzadinha", "Sudoku", "Labirinto"]
+    desc: "Diversos jogos educativos prontos para imprimir em A4 com níveis de dificuldade e gabarito automático. Ideal para fixação de conteúdo de forma lúdica e engajadora.",
+    tag: "Jogos",
+    highlights: ["Imprimíveis A4", "Gabarito automático", "Níveis de dificuldade"]
   },
   {
     icon: GitBranch,
