@@ -203,6 +203,12 @@ export default function OMRScanner() {
   };
 
   const addFiles = useCallback((files: FileList | File[]) => {
+    if (!preloadedGabarito || preloadedGabarito.length === 0) {
+      toast.error("Carregue o gabarito antes de enviar as fotos");
+      setStep("select-gabarito");
+      return;
+    }
+
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (imageFiles.length === 0) { toast.error("Selecione imagens JPG ou PNG"); return; }
 
@@ -222,7 +228,7 @@ export default function OMRScanner() {
 
     setSheets(prev => [...prev, ...newSheets]);
     toast.success(`${imageFiles.length} imagem(ns) adicionada(s)`);
-  }, []);
+  }, [preloadedGabarito]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
