@@ -332,6 +332,11 @@ export default function OMRScanner() {
     setSheets([]);
     setCurrentIdx(0);
     setProgress(0);
+    setPreloadedGabarito(null);
+    setPreloadedProvaInfo(null);
+    setSelectedProvaId("");
+    setSelectedVersaoId("");
+    setStep("select-gabarito");
   };
 
   const current = sheets[currentIdx];
