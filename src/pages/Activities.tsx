@@ -55,6 +55,9 @@ export default function Activities() {
   const [professor, setProfessor] = useState("");
   const [turma, setTurma] = useState("");
   const [autoNumber, setAutoNumber] = useState(true);
+  const [showLines, setShowLines] = useState(true);
+  const [showAluno, setShowAluno] = useState(false);
+  const [showData, setShowData] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedDocs, setSavedDocs] = useState<any[]>([]);
   const [tab, setTab] = useState("ia");
