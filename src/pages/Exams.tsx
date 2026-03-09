@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import { generateVersionMap, getNextVersionLabel, type MapaQuestaoItem } from "@
 import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
 import CameraScanner from "@/components/exams/CameraScanner";
+import TimbreSelector from "@/components/TimbreSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 
