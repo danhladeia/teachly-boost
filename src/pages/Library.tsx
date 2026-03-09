@@ -238,7 +238,7 @@ export default function LibraryPage() {
                         variant="ghost"
                         className="h-8 w-8"
                         title="Abrir no editor"
-                        onClick={() => navigate(cfg.route)}
+                        onClick={() => navigate(cfg.route, { state: { loadDocId: doc.id, source: doc.source } })}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>

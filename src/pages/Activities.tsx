@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export const emptyBlock = (type: BlockType): Block => ({
 });
 
 export default function Activities() {
+  const location = useLocation();
   const [blocks, setBlocks] = useState<Block[]>([emptyBlock("title")]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiNivel, setAiNivel] = useState("");
@@ -65,12 +67,51 @@ export default function Activities() {
   const [textoImportado, setTextoImportado] = useState("");
   const [importFileName, setImportFileName] = useState("");
   const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const [currentDocId, setCurrentDocId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSavedDocs();
     loadProfile();
   }, []);
+
+  // Load document from Library navigation
+  useEffect(() => {
+    const state = location.state as { loadDocId?: string; source?: string } | null;
+    if (state?.loadDocId && state?.source === "documentos") {
+      loadDocumentById(state.loadDocId);
+      // Clear state to avoid reloading on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const loadDocumentById = async (docId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("documentos_salvos")
+        .select("*")
+        .eq("id", docId)
+        .single();
+      if (error) throw error;
+      if (data?.conteudo) {
+        const content = data.conteudo as any;
+        if (content.blocks) setBlocks(content.blocks);
+        if (content.settings) {
+          setShowHeader(content.settings.showHeader ?? true);
+          setEscola(content.settings.escola || "");
+          setProfessor(content.settings.professor || "");
+          setTurma(content.settings.turma || "");
+          setAutoNumber(content.settings.autoNumber ?? true);
+        }
+        setCurrentDocId(docId);
+        setTab("manual");
+        toast.success(`Documento "${data.titulo}" carregado!`);
+      }
+    } catch (err) {
+      console.error("Error loading document:", err);
+      toast.error("Erro ao carregar documento");
+    }
+  };
 
   // Auto-enable ENEM mode when Ensino Médio is selected
   useEffect(() => {

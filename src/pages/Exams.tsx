@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,7 @@ const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "",
 
 export default function Exams() {
   const { user } = useAuth();
+  const location = useLocation();
   const [titulo, setTitulo] = useState("");
   const [temas, setTemas] = useState("");
   const [nivel, setNivel] = useState("");
@@ -112,6 +114,63 @@ export default function Exams() {
     loadSavedActivities();
     loadSavedPlans();
   }, [user]);
+
+  // Load exam from Library navigation
+  useEffect(() => {
+    const state = location.state as { loadDocId?: string; source?: string } | null;
+    if (state?.loadDocId && state?.source === "provas") {
+      loadProvaById(state.loadDocId);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const loadProvaById = async (provaId: string) => {
+    try {
+      const { data: prova, error } = await supabase
+        .from("provas")
+        .select("*")
+        .eq("id", provaId)
+        .single();
+      if (error) throw error;
+
+      setCurrentProvaId(provaId);
+      setTitulo(prova.titulo || "");
+      setTemas(prova.temas || "");
+      setNivel(prova.nivel || "");
+      setSerie(prova.serie || "");
+      setEscola(prova.escola || "");
+      setProfessor(prova.professor || "");
+      setTurma(prova.turma || "");
+      setTipoQuestoes(prova.tipo_questoes || "mista");
+
+      // Load questions
+      const { data: questoesData } = await supabase
+        .from("questoes")
+        .select("*")
+        .eq("prova_id", provaId)
+        .order("ordem");
+
+      if (questoesData) {
+        setQuestoes(questoesData.map((q: any) => ({
+          id: genId(),
+          dbId: q.id,
+          type: q.tipo as "mc" | "open",
+          content: q.conteudo,
+          alternatives: (q.alternativas as string[]) || [],
+          correctIndex: q.resposta_correta || 0,
+          lines: q.linhas || 4,
+          pontos: q.pontos || 1,
+          imageUrl: q.imagem_url,
+        })));
+      }
+
+      setMainTab("criar");
+      toast.success(`Prova "${prova.titulo}" carregada!`);
+    } catch (err) {
+      console.error("Error loading prova:", err);
+      toast.error("Erro ao carregar prova");
+    }
+  };
 
   const loadSavedPlans = async () => {
     if (!user) return;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { BookOpen, Sparkles, Loader2, RefreshCw, Pencil } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const modeloDescricoes: Record<string, { titulo: string; desc: string }> = {
 };
 
 export default function BNCCPlanner() {
+  const location = useLocation();
   const [nivel, setNivel] = useState("");
   const [serie, setSerie] = useState("");
   const [disciplina, setDisciplina] = useState("");
@@ -65,6 +67,7 @@ export default function BNCCPlanner() {
   const [turma, setTurma] = useState("");
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const [escola, setEscola] = useState("");
+  const [currentDocId, setCurrentDocId] = useState<string | null>(null);
 
   const disciplinaFinal = disciplina === "Itinerário Formativo/EMTI" ? disciplinaCustom : disciplina;
   const nivelLabel = niveis.find(n => n.value === nivel)?.label || nivel;
@@ -72,6 +75,41 @@ export default function BNCCPlanner() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Load document from Library navigation
+  useEffect(() => {
+    const state = location.state as { loadDocId?: string; source?: string } | null;
+    if (state?.loadDocId && state?.source === "documentos") {
+      loadDocumentById(state.loadDocId);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const loadDocumentById = async (docId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("documentos_salvos")
+        .select("*")
+        .eq("id", docId)
+        .single();
+      if (error) throw error;
+      if (data?.conteudo) {
+        const content = data.conteudo as any;
+        setPlano(content);
+        setCurrentDocId(docId);
+        if (data.disciplina) setDisciplina(data.disciplina);
+        if (data.nivel) {
+          const nivelMatch = niveis.find(n => n.label.includes(data.nivel || ""));
+          if (nivelMatch) setNivel(nivelMatch.value);
+        }
+        if (content.modelo) setModelo(content.modelo);
+        toast.success(`Plano "${data.titulo}" carregado!`);
+      }
+    } catch (err) {
+      console.error("Error loading document:", err);
+      toast.error("Erro ao carregar plano");
+    }
+  };
 
   const loadProfile = async () => {
     try {
