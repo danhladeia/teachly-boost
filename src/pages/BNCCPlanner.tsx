@@ -247,13 +247,15 @@ export default function BNCCPlanner() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Conteúdo / Tema da Aula</Label>
-              <Input
-                placeholder='Ex: "Sistema Solar", "Frações", "Revolução Francesa"'
-                value={conteudo}
-                onChange={(e) => setConteudo(e.target.value)}
+          <div className="space-y-2">
+            <Label>Conteúdo, tema e instruções</Label>
+            <Textarea
+              placeholder='Ex: "Sistema Solar - Quero um plano que aborde os planetas, órbitas e inclua atividade prática com maquete"'
+              value={conteudo}
+              onChange={(e) => setConteudo(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
               />
             </div>
             <div className="space-y-2">
