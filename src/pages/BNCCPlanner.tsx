@@ -62,7 +62,7 @@ export default function BNCCPlanner() {
   const [professor, setProfessor] = useState("");
   const [turma, setTurma] = useState("");
 
-  const disciplinaFinal = disciplina === "Novo Ensino Médio" ? disciplinaCustom : disciplina;
+  const disciplinaFinal = disciplina === "Itinerário Formativo/EMTI" ? disciplinaCustom : disciplina;
   const nivelLabel = niveis.find(n => n.value === nivel)?.label || nivel;
 
   useEffect(() => {
