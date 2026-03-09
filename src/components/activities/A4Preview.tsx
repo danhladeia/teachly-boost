@@ -8,6 +8,8 @@ interface A4PreviewProps {
   autoNumber: boolean;
   professor?: string;
   turma?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
 }
 
 function renderKaTeX(text: string): string {
@@ -38,7 +40,7 @@ const PAGE_STYLE: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma }: A4PreviewProps) {
+export default function A4Preview({ blocks, showHeader, escola, autoNumber, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,9 +65,25 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
         className="bg-white text-black shadow-lg"
         style={PAGE_STYLE}
       >
-        {showHeader && escola && (
-          <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
-            {escola}
+        {/* Timbre banner image */}
+        {showHeader && bannerUrl && (
+          <div style={{ textAlign: "center", marginBottom: "4mm" }}>
+            <img
+              src={bannerUrl}
+              alt="Timbre da escola"
+              style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }}
+              crossOrigin="anonymous"
+            />
+          </div>
+        )}
+
+        {/* Logo + school name */}
+        {showHeader && (escola || logoUrl) && (
+          <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm" }}>
+            {logoUrl && !bannerUrl && (
+              <img src={logoUrl} alt="" style={{ maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />
+            )}
+            {escola && <span>{escola}</span>}
           </div>
         )}
 
@@ -202,7 +220,6 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
               const num = autoNumber ? questionCounter : "";
               rendered.push(
                 <div key={block.id} style={{ marginBottom: "8mm", pageBreakInside: "avoid" }}>
-                  {/* ENEM Texto Base */}
                   {block.textoBase && (
                     <div style={{
                       border: "1px solid #cbd5e1",
@@ -221,17 +238,14 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
                       )}
                     </div>
                   )}
-                  {/* Question image */}
                   {block.questionImageUrl && (
                     <div style={{ marginBottom: "3mm", textAlign: "center" }}>
                       <img src={block.questionImageUrl} alt="" style={{ maxWidth: "70%", maxHeight: "60mm", objectFit: "contain", borderRadius: "2mm", border: "1px solid #e2e8f0" }} />
                     </div>
                   )}
-                  {/* Enunciado/Comando */}
                   <p style={{ fontWeight: 600, marginBottom: "3mm", textAlign: "justify" }}>
                     <span dangerouslySetInnerHTML={{ __html: `${num ? `<strong>QUESTÃO ${num}</strong> — ` : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
                   </p>
-                  {/* 5 alternatives A-E */}
                   {block.alternatives?.map((alt, ai) => (
                     <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1.5mm", lineHeight: 1.5 }}>
                       <span style={{ fontWeight: 700, marginRight: "2mm" }}>({String.fromCharCode(65 + ai)})</span>
