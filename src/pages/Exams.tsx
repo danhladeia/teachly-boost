@@ -98,7 +98,64 @@ export default function Exams() {
       if (data?.nome) setProfessor(data.nome);
     })();
     loadSavedProvas();
+    loadSavedActivities();
   }, [user]);
+
+  const loadSavedActivities = async () => {
+    if (!user) return;
+    setLoadingActivities(true);
+    try {
+      const { data } = await supabase
+        .from("documentos_salvos")
+        .select("id, titulo, disciplina, nivel, created_at, conteudo")
+        .eq("tipo", "atividade")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setSavedActivities(data || []);
+    } catch {} finally { setLoadingActivities(false); }
+  };
+
+  const importActivityAsQuestions = (activity: any) => {
+    const conteudo = activity.conteudo as any;
+    const blocks = conteudo?.blocks || [];
+    
+    const newQuestions: ExamQuestion[] = [];
+    
+    blocks.forEach((block: any) => {
+      if (block.type === "question-open") {
+        newQuestions.push({
+          id: genId(),
+          type: "open",
+          content: block.content || "",
+          alternatives: [],
+          correctIndex: -1,
+          lines: block.lines || 4,
+          pontos: 1,
+          imageUrl: block.imageUrl,
+        });
+      } else if (block.type === "question-mc") {
+        newQuestions.push({
+          id: genId(),
+          type: "mc",
+          content: block.content || "",
+          alternatives: block.alternatives || ["", "", "", ""],
+          correctIndex: block.correctIndex ?? 0,
+          lines: 0,
+          pontos: 1,
+          imageUrl: block.imageUrl,
+        });
+      }
+    });
+
+    if (newQuestions.length === 0) {
+      toast.error("Nenhuma questão encontrada nesta atividade");
+      return;
+    }
+
+    setQuestoes(prev => [...prev, ...newQuestions]);
+    setShowActivityPicker(false);
+    toast.success(`${newQuestions.length} questões importadas da atividade`);
+  };
 
   const loadSavedProvas = async () => {
     if (!user) return;
