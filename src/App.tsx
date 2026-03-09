@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CreditsProvider } from "@/hooks/useCredits";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Register from "./pages/Register";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
@@ -41,6 +43,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/esqueci-senha" element={<ForgotPassword />} />
+    <Route path="/redefinir-senha" element={<ResetPassword />} />
     <Route path="/register" element={<Register />} />
     <Route path="/termos" element={<Terms />} />
     <Route path="/privacidade" element={<Privacy />} />
