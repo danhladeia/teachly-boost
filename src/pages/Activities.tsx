@@ -419,7 +419,7 @@ export default function Activities() {
       const titulo = blocks.find(b => b.type === "title")?.content || "Atividade sem título";
       const { error } = await supabase.from("documentos_salvos").insert({
         user_id: user.id, tipo: "atividade", titulo,
-        conteudo: { blocks, settings: { autoNumber, showHeader, escola, professor, turma } } as any,
+        conteudo: { blocks, settings: { autoNumber, showLines, showAluno, showData, showHeader, escola, professor, turma } } as any,
       });
       if (error) throw error;
       toast.success("Atividade salva na biblioteca!");
