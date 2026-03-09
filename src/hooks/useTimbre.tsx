@@ -6,6 +6,7 @@ export interface TimbreData {
   id?: string;
   escola: string;
   logoUrl: string;
+  showNomeEscola: boolean;
   showProfessor: boolean;
   showDisciplina: boolean;
   showSerie: boolean;
