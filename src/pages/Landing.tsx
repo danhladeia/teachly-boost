@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   BookOpen, Brain, Gamepad2, Presentation, FileCheck, GitBranch,
-  Stamp, Clock, Sparkles, CheckCircle2, ArrowRight, ChevronDown,
-  Zap, Shield, Users, Star, Crown, Rocket } from
+  Clock, Sparkles, CheckCircle2, ArrowRight, ChevronDown,
+  Zap, Star, Crown, Rocket } from
 "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -113,55 +113,62 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
-      <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
+      <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg" aria-label="Navegação principal">
         <div className="container flex h-20 items-center justify-between">
           <div className="flex items-center gap-3 md:hidden">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">Entrar</Button>
+            <Link to="/login" aria-label="Entrar na plataforma GoPedagoX">
+              <Button variant="ghost" size="sm" className="min-h-[44px] min-w-[44px]">Entrar</Button>
             </Link>
           </div>
           <div className="absolute left-1/2 -translate-x-1/2">
-            <Link to="/">
-              <img src={logoHeader} alt="GoPedagoX" className="h-5 sm:h-7 w-auto" />
+            <Link to="/" aria-label="GoPedagoX — Página inicial">
+              <img
+                src={logoHeader}
+                alt="GoPedagoX — Plataforma de IA para Professores"
+                className="h-5 sm:h-7 w-auto"
+                width="180"
+                height="28"
+                fetchPriority="high"
+              />
             </Link>
           </div>
           <div className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
-            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Planos</a>
-            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Planos e Preços</a>
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Perguntas Frequentes</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="hidden md:block">
-              <Button variant="ghost" size="sm">Entrar</Button>
+            <Link to="/login" className="hidden md:block" aria-label="Entrar na plataforma GoPedagoX">
+              <Button variant="ghost" size="sm" className="min-h-[44px] min-w-[44px]">Entrar</Button>
             </Link>
-            <Link to="/register">
-              <Button size="sm" className="gradient-primary border-0 text-primary-foreground hover:opacity-90">Criar conta</Button>
+            <Link to="/register" aria-label="Criar conta gratuita no GoPedagoX">
+              <Button size="sm" className="gradient-primary border-0 text-primary-foreground hover:opacity-90 min-h-[44px]">Criar conta</Button>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden pt-16">
+      <section className="relative overflow-hidden pt-16" aria-label="Apresentação do GoPedagoX">
         <div className="gradient-hero">
           <div className="container relative z-10 flex flex-col items-center py-24 text-center md:py-32 lg:py-40">
             <motion.div initial="hidden" animate="visible" variants={stagger}>
               <motion.h1 variants={fadeUp} className="mx-auto max-w-4xl font-display text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-                Seu planejamento pedagógico em{" "}
+                Seu planejamento pedagógico com IA em{" "}
                 <span className="bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">1 clique</span>
               </motion.h1>
               <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-2xl text-lg text-primary-foreground/70 md:text-xl">
-                Plano BNCC • Atividades A4 • Slides • Jogos pedagógicos • Correção por foto.
-                Tudo o que você precisa para planejar aulas incríveis.
+                Plano de aula BNCC • Atividades A4 • Slides educativos • Jogos pedagógicos • Correção de provas por foto.
+                Tudo o que você precisa para planejar aulas incríveis com inteligência artificial.
               </motion.p>
               <motion.div variants={fadeUp} className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-                <Link to="/register">
-                  <Button size="lg" className="gradient-primary border-0 text-primary-foreground px-8 text-base hover:opacity-90 shadow-elevated">
-                    Começar grátis <ArrowRight className="ml-2 h-5 w-5" />
+                <Link to="/register" aria-label="Criar conta gratuita e começar a usar o GoPedagoX">
+                  <Button size="lg" className="gradient-primary border-0 text-primary-foreground px-8 text-base hover:opacity-90 shadow-elevated min-h-[44px]">
+                    Começar grátis <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                   </Button>
                 </Link>
-                <a href="#features">
-                  <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground bg-transparent hover:bg-primary-foreground/10 px-8 text-base">
+                <a href="#features" aria-label="Ver todos os recursos do GoPedagoX">
+                  <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground bg-transparent hover:bg-primary-foreground/10 px-8 text-base min-h-[44px]">
                     Ver recursos
                   </Button>
                 </a>
@@ -175,57 +182,57 @@ export default function Landing() {
       </section>
 
       {/* Pain Points */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-background" aria-label="Comparação de tempo com e sem GoPedagoX">
         <div className="container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
-            <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Quanto tempo você gasta planejando?</motion.h2>
-            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Compare o antes e depois do GoPedagoX</motion.p>
+            <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Quanto tempo você gasta planejando aulas?</motion.h2>
+            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Compare o antes e depois do GoPedagoX na rotina do professor</motion.p>
           </motion.div>
           <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8">
               <div className="flex items-center gap-3 mb-6">
-                <Clock className="h-8 w-8 text-destructive" />
+                <Clock className="h-8 w-8 text-destructive" aria-hidden="true" />
                 <h3 className="font-display text-xl font-bold text-destructive">Sem GoPedagoX</h3>
               </div>
               <ul className="space-y-3 text-muted-foreground">
                 {["4h para um plano de aula", "2h formatando atividades", "1h buscando habilidades BNCC", "Jogos? Só comprando pronto", "Correção manual: noite toda"].map((t) =>
-                  <li key={t} className="flex items-start gap-2"><span className="text-destructive mt-1">✕</span>{t}</li>
+                  <li key={t} className="flex items-start gap-2"><span className="text-destructive mt-1" aria-hidden="true">✕</span>{t}</li>
                 )}
               </ul>
-              <p className="mt-6 font-display text-2xl font-bold text-destructive">~10h/semana</p>
+              <p className="mt-6 font-display text-2xl font-bold text-destructive" aria-label="Tempo gasto sem GoPedagoX: aproximadamente 10 horas por semana">~10h/semana</p>
             </motion.div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-2xl border border-primary/20 bg-primary/5 p-8">
               <div className="flex items-center gap-3 mb-6">
-                <Sparkles className="h-8 w-8 text-primary" />
+                <Sparkles className="h-8 w-8 text-primary" aria-hidden="true" />
                 <h3 className="font-display text-xl font-bold text-primary">Com GoPedagoX</h3>
               </div>
               <ul className="space-y-3 text-muted-foreground">
                 {["Plano BNCC em 2 minutos", "Atividades auto-formatadas", "Habilidades sugeridas por IA", "17+ jogos prontos para imprimir", "Correção por foto em segundos"].map((t) =>
-                  <li key={t} className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />{t}</li>
+                  <li key={t} className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" aria-hidden="true" />{t}</li>
                 )}
               </ul>
-              <p className="mt-6 font-display text-2xl font-bold text-primary">~1h/semana</p>
+              <p className="mt-6 font-display text-2xl font-bold text-primary" aria-label="Tempo gasto com GoPedagoX: aproximadamente 1 hora por semana">~1h/semana</p>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 bg-secondary/50">
+      <section id="features" className="py-20 bg-secondary/50" aria-label="Módulos e recursos do GoPedagoX">
         <div className="container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
-            <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Tudo em uma plataforma</motion.h2>
-            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">7 módulos integrados para o professor completo</motion.p>
+            <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Todos os recursos em uma plataforma pedagógica</motion.h2>
+            <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">6 módulos integrados com inteligência artificial para o professor completo</motion.p>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) =>
-              <motion.div key={f.title} variants={fadeUp} className="group relative rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-all hover:-translate-y-1">
+              <motion.article key={f.title} variants={fadeUp} className="group relative rounded-2xl border bg-card p-6 shadow-card hover:shadow-elevated transition-all hover:-translate-y-1">
                 {f.tag && (
-                  <span className="absolute top-4 right-4 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  <span className="absolute top-4 right-4 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary" aria-label={`Tipo: ${f.tag}`}>
                     {f.tag}
                   </span>
                 )}
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:gradient-primary group-hover:text-primary-foreground transition-all">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:gradient-primary group-hover:text-primary-foreground transition-all" aria-hidden="true">
                   <f.icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-lg font-bold">{f.title}</h3>
@@ -237,82 +244,94 @@ export default function Landing() {
                     </span>
                   ))}
                 </div>
-              </motion.div>
+              </motion.article>
             )}
           </motion.div>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 bg-background">
+      <section id="pricing" className="py-20 bg-background" aria-label="Planos e preços do GoPedagoX">
         <div className="container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
-            <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos para cada necessidade</motion.h2>
+            <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos e preços para cada necessidade</motion.h2>
             <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Comece grátis, evolua quando precisar</motion.p>
             <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-6 py-3 shadow-lg animate-pulse">
-              <Sparkles className="h-5 w-5 text-destructive" />
+              <Sparkles className="h-5 w-5 text-destructive" aria-hidden="true" />
               <span className="text-sm font-bold text-destructive">⏰ TEMPO LIMITADO: use o cupom <span className="rounded bg-destructive px-2 py-0.5 text-destructive-foreground font-extrabold">GOPEDAGOX</span> e ganhe 25% OFF em qualquer plano!</span>
             </motion.div>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) =>
-              <motion.div key={plan.name} variants={fadeUp} className={`relative rounded-2xl border p-6 bg-card shadow-card ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
+              <motion.article key={plan.name} variants={fadeUp} className={`relative rounded-2xl border p-6 bg-card shadow-card ${plan.popular ? "border-primary ring-2 ring-primary/20" : ""}`}>
                 {plan.popular &&
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
                     MAIS POPULAR
                   </div>
                 }
                 {plan.originalPrice &&
-                  <div className="absolute top-3 right-3 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+                  <div className="absolute top-3 right-3 rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive" aria-label="25% de desconto">
                     -25%
                   </div>
                 }
                 <div className="mb-4 flex justify-center">
-                  <img src={plan.logo} alt={plan.name} className="h-16 w-auto object-contain" />
+                  <img
+                    src={plan.logo}
+                    alt={`Plano ${plan.name} do GoPedagoX`}
+                    className="h-16 w-auto object-contain"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                  />
                 </div>
                 <h3 className="font-display text-lg font-bold text-center">{plan.name}</h3>
                 <div className="mt-2 text-center">
                   {plan.originalPrice &&
-                    <p className="text-sm text-muted-foreground line-through">{plan.originalPrice}</p>
+                    <p className="text-sm text-muted-foreground line-through" aria-label={`Preço original: ${plan.originalPrice}`}>{plan.originalPrice}</p>
                   }
                   <div className="flex items-baseline gap-1 justify-center">
                     <span className="font-display text-3xl font-extrabold">{plan.price}</span>
                     <span className="text-sm text-muted-foreground">{plan.period}</span>
                   </div>
                 </div>
-                <ul className="mt-6 space-y-2.5">
+                <ul className="mt-6 space-y-2.5" aria-label={`Recursos do plano ${plan.name}`}>
                   {plan.features.map((f) =>
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />
                       <span className="text-muted-foreground">{f}</span>
                     </li>
                   )}
                 </ul>
-                <Link to="/register" className="mt-6 block">
-                  <Button className={`w-full ${plan.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`} variant={plan.popular ? "default" : "outline"}>
+                <Link to="/register" className="mt-6 block" aria-label={`${plan.cta} — Plano ${plan.name}`}>
+                  <Button className={`w-full min-h-[44px] ${plan.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`} variant={plan.popular ? "default" : "outline"}>
                     {plan.cta}
                   </Button>
                 </Link>
-              </motion.div>
+              </motion.article>
             )}
           </motion.div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-20 bg-secondary/50">
+      <section id="faq" className="py-20 bg-secondary/50" aria-label="Perguntas frequentes sobre o GoPedagoX">
         <div className="container max-w-3xl">
           <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center font-display text-3xl font-bold md:text-4xl mb-12">
-            Perguntas frequentes
+            Perguntas frequentes sobre o GoPedagoX
           </motion.h2>
-          <div className="space-y-3">
+          <div className="space-y-3" role="list">
             {faqs.map((faq, i) =>
-              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-xl border bg-card overflow-hidden">
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="flex w-full items-center justify-between p-5 text-left font-medium hover:bg-secondary/50 transition-colors">
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="rounded-xl border bg-card overflow-hidden" role="listitem">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="flex w-full items-center justify-between p-5 text-left font-medium hover:bg-secondary/50 transition-colors min-h-[44px]"
+                  aria-expanded={openFaq === i}
+                  aria-controls={`faq-answer-${i}`}
+                >
                   {faq.q}
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform shrink-0 ml-2 ${openFaq === i ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform shrink-0 ml-2 ${openFaq === i ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>
-                {openFaq === i && <div className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">{faq.a}</div>}
+                {openFaq === i && <div id={`faq-answer-${i}`} className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed" role="region">{faq.a}</div>}
               </motion.div>
             )}
           </div>
@@ -320,17 +339,24 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-card py-12">
+      <footer className="border-t bg-card py-12" role="contentinfo">
         <div className="container">
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
             <div className="flex items-center gap-2">
-              <img src={logoGoPedagoX} alt="GoPedagoX" className="h-10 w-auto" />
+              <img
+                src={logoGoPedagoX}
+                alt="GoPedagoX — Automação pedagógica com inteligência artificial"
+                className="h-10 w-auto"
+                width="40"
+                height="40"
+                loading="lazy"
+              />
             </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link to="/termos" className="hover:text-foreground transition-colors">Termos de Uso</Link>
-              <Link to="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
-              <a href="mailto:contato@gopedagox.com" className="hover:text-foreground transition-colors">Contato</a>
-            </div>
+            <nav className="flex gap-6 text-sm text-muted-foreground" aria-label="Links do rodapé">
+              <Link to="/termos" className="hover:text-foreground transition-colors min-h-[44px] flex items-center">Termos de Uso</Link>
+              <Link to="/privacidade" className="hover:text-foreground transition-colors min-h-[44px] flex items-center">Política de Privacidade</Link>
+              <a href="mailto:contato@gopedagox.com" className="hover:text-foreground transition-colors min-h-[44px] flex items-center">Contato por e-mail</a>
+            </nav>
             <p className="text-sm text-muted-foreground">© 2026 GoPedagoX. Todos os direitos reservados.</p>
           </div>
         </div>
