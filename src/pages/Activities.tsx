@@ -401,20 +401,14 @@ export default function Activities() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" /> Editor de Atividades A4
-          </h1>
-          <p className="text-muted-foreground text-sm">Diagramador automático para impressão</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
-          <Button size="sm" variant="outline" onClick={() => exportToPdf("atividade-print-area", "atividade")}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
-          <Button size="sm" variant="outline" onClick={handleExportDocx}><FileDown className="mr-1 h-4 w-4" /> DOCX</Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}><Save className="mr-1 h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}</Button>
-        </div>
-      </div>
+      <EditorTopBar
+        title="Criador de Atividades A4"
+        onPrint={handlePrint}
+        onPdf={() => exportToPdf("atividade-print-area", "atividade")}
+        onDocx={handleExportDocx}
+        onSave={handleSave}
+        saving={saving}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         {/* LEFT PANEL */}
