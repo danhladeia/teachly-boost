@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import OMRResultView from "./OMRResultView";
 
 interface DetectedAnswer {
   questao: number;
@@ -118,22 +119,79 @@ export default function CameraScanner() {
     if (!selectedProvaId) { toast.error("Selecione uma prova"); return; }
     setLoadingGabarito(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Faça login primeiro");
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const resp = await fetch(`https://${projectId}.supabase.co/functions/v1/process-omr`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ prova_id: selectedProvaId, versao_id: selectedVersaoId === "original" ? null : selectedVersaoId || null }),
-      });
-      const result = await resp.json();
-      if (!result.success) throw new Error(result.error);
-      if (!result.gabarito?.length) { toast.error("Nenhuma questão de múltipla escolha encontrada"); return; }
-      setGabarito(result.gabarito);
-      setProvaInfo(result.prova_info);
+      // Busca gabarito diretamente do banco (sem passar pela edge function de OCR)
+      const { data: prova, error: provaErr } = await supabase
+        .from("provas")
+        .select("id, titulo")
+        .eq("id", selectedProvaId)
+        .single();
+
+      if (provaErr || !prova) throw new Error("Prova não encontrada");
+
+      let gabaritoData: { q: number; correct: number; pontos: number }[] = [];
+      let provaInfoData: { titulo: string; prova_id: string; versao_id: string | null; versao_label: string };
+
+      if (selectedVersaoId && selectedVersaoId !== "original") {
+        const [{ data: versao }, { data: questoes }] = await Promise.all([
+          supabase.from("versoes_prova").select("*").eq("id", selectedVersaoId).eq("prova_id", selectedProvaId).single(),
+          supabase.from("questoes").select("id, pontos").eq("prova_id", selectedProvaId).order("ordem"),
+        ]);
+
+        if (!versao) throw new Error("Versão não encontrada");
+
+        const pontosMap: Record<string, number> = {};
+        (questoes || []).forEach((q: any) => { pontosMap[q.id] = q.pontos ?? 1; });
+
+        const mapa = versao.mapa_questoes as any[];
+        const mcItems = mapa
+          .filter((item: any) => item.resposta_correta_nova !== null && item.resposta_correta_nova !== undefined)
+          .sort((a: any, b: any) => a.nova_ordem - b.nova_ordem);
+
+        gabaritoData = mcItems.map((item: any, idx: number) => ({
+          q: idx + 1,
+          correct: item.resposta_correta_nova,
+          pontos: pontosMap[item.questao_id] ?? 1,
+        }));
+
+        provaInfoData = {
+          titulo: `${prova.titulo} — Versão ${versao.versao_label}`,
+          prova_id: prova.id,
+          versao_id: versao.id,
+          versao_label: versao.versao_label,
+        };
+      } else {
+        const { data: questoes, error: qErr } = await supabase
+          .from("questoes")
+          .select("ordem, tipo, resposta_correta, pontos")
+          .eq("prova_id", selectedProvaId)
+          .order("ordem");
+
+        if (qErr) throw new Error("Erro ao buscar questões");
+
+        const mcQuestoes = (questoes || []).filter((q: any) => q.tipo === "mc" && q.resposta_correta !== null);
+        gabaritoData = mcQuestoes.map((q: any, idx: number) => ({
+          q: idx + 1,
+          correct: q.resposta_correta,
+          pontos: q.pontos ?? 1,
+        }));
+
+        provaInfoData = {
+          titulo: prova.titulo,
+          prova_id: prova.id,
+          versao_id: null,
+          versao_label: "Original",
+        };
+      }
+
+      if (gabaritoData.length === 0) {
+        toast.error("Nenhuma questão de múltipla escolha encontrada");
+        return;
+      }
+
+      setGabarito(gabaritoData);
+      setProvaInfo(provaInfoData);
       setCorrectionResult(null);
-      toast.success(`Gabarito carregado: ${result.gabarito.length} questões`);
-      // Advance to camera step
+      toast.success(`Gabarito carregado: ${gabaritoData.length} questões`);
       setStep("camera");
     } catch (err: any) {
       toast.error(err.message || "Erro ao buscar gabarito");
@@ -456,61 +514,17 @@ export default function CameraScanner() {
               </div>
             </div>
 
-            {/* Instruction - compact */}
-            <div className="rounded-md bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 px-2 py-1.5">
-              <p className="text-[10px] sm:text-[11px] text-amber-800 dark:text-amber-300">
-                Revise abaixo. <span className="text-amber-500 font-bold">Amarelo</span> = duvidosa. Toque para corrigir.
-              </p>
+            {/* OMR Column Layout */}
+            <div className="overflow-x-auto">
+              <OMRResultView
+                gabarito={gabarito || []}
+                respostas={respostas}
+                manualOverrides={manualOverrides}
+                onOverrideUpdate={updateOverride}
+              />
             </div>
 
-            {/* Answer grid - responsive columns */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-1">
-              {(gabarito || respostas).map((item) => {
-                const qNum = "q" in item ? item.q : item.questao;
-                const detected = respostas.find(r => r.questao === qNum);
-                const finalAlt = manualOverrides[qNum] ?? detected?.alternativa;
-                const isManual = qNum in manualOverrides;
-                const isLow = detected?.confianca === "low";
-                const isNone = detected?.confianca === "none" || detected?.alternativa === null;
-
-                return (
-                  <div key={qNum} className={`flex items-center gap-0.5 sm:gap-1 rounded p-0.5 sm:p-1 ${
-                    isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 ring-1 ring-amber-300" :
-                    isNone && !isManual ? "bg-red-50 dark:bg-red-900/10 ring-1 ring-red-300" : ""
-                  }`}>
-                    <span className="text-[10px] sm:text-xs font-mono w-4 sm:w-5 text-right font-bold shrink-0">{qNum}.</span>
-                    <div className="flex gap-0.5">
-                      {[0, 1, 2, 3].map(alt => (
-                        <button
-                          key={alt}
-                          onClick={() => updateOverride(qNum, alt)}
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full text-[10px] sm:text-[11px] font-bold border-2 transition-all ${
-                            finalAlt === alt
-                              ? isManual
-                                ? "border-amber-500 bg-amber-500 text-white"
-                                : isLow
-                                  ? "border-amber-400 bg-amber-400 text-white"
-                                  : "border-primary bg-primary text-primary-foreground"
-                              : "border-border hover:border-muted-foreground"
-                          }`}
-                        >
-                          {altLabels[alt]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Legend - single line */}
-            <div className="flex items-center gap-2 text-[8px] sm:text-[9px] text-muted-foreground">
-              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary inline-block" /> OK</span>
-              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400 inline-block" /> Duvidosa</span>
-              <span className="flex items-center gap-0.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-500 inline-block" /> Manual</span>
-            </div>
-
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2 border-t">
               <Button variant="outline" onClick={retakePhoto} size="sm" className="flex-1 h-9 sm:h-10 text-xs sm:text-sm">
                 <RotateCcw className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Nova Foto
               </Button>

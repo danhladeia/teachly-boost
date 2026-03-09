@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import OMRResultView from "./OMRResultView";
 
 interface DetectedAnswer {
   questao: number;
@@ -673,61 +674,18 @@ export default function OMRScanner() {
                   </div>
                 </div>
 
-                {/* Right: Answers validation */}
-                <div className="space-y-3 min-w-0">
-                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">
-                    Respostas detectadas <span className="text-primary">(clique para corrigir)</span>
-                  </h4>
+                {/* Right: OMR Results in column format */}
+                <div className="space-y-4 min-w-0">
+                  <OMRResultView
+                    gabarito={current.gabarito || []}
+                    respostas={current.respostas}
+                    manualOverrides={current.manualOverrides}
+                    correctionDetails={current.correctionResult?.details}
+                    onOverrideUpdate={(questao, alt) => updateManualOverride(currentIdx, questao, alt)}
+                    showCorrection={!!current.correctionResult}
+                  />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
-                    {(current.gabarito || current.respostas).map((item, idx) => {
-                      const qNum = "q" in item ? item.q : item.questao;
-                      const detected = current.respostas.find(r => r.questao === qNum);
-                      const finalAlt = current.manualOverrides[qNum] ?? detected?.alternativa;
-                      const isManual = qNum in current.manualOverrides;
-                      const isLow = detected?.confianca === "low";
-                      const gabItem = current.gabarito?.find(g => g.q === qNum);
-                      const corrDetail = current.correctionResult?.details.find(d => d.q === qNum);
-
-                      return (
-                        <div key={qNum} className={`flex items-center gap-1 ${isLow && !isManual ? "bg-amber-50 dark:bg-amber-900/10 rounded p-0.5" : ""}`}>
-                          <span className="text-xs font-mono w-6 text-right font-semibold">{qNum}.</span>
-                          <div className="flex gap-0.5">
-                            {[0, 1, 2, 3].map(alt => (
-                              <button
-                                key={alt}
-                                onClick={() => updateManualOverride(currentIdx, qNum, alt)}
-                                className={`w-7 h-7 rounded-full text-[10px] font-bold border-2 transition-all ${
-                                  finalAlt === alt
-                                    ? isManual
-                                      ? "border-amber-500 bg-amber-500 text-white"
-                                      : isLow
-                                        ? "border-amber-400 bg-amber-400 text-white animate-pulse"
-                                        : "border-primary bg-primary text-primary-foreground"
-                                    : "border-border hover:border-muted-foreground"
-                                }`}
-                              >
-                                {altLabels[alt]}
-                              </button>
-                            ))}
-                          </div>
-                          {corrDetail && (
-                            corrDetail.isCorrect
-                              ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                              : <XCircle className="h-4 w-4 text-red-500 shrink-0" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Alta confiança</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Baixa confiança</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Correção manual</span>
-                  </div>
-
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-2 border-t">
                     <Button
                       onClick={() => correctSheet(currentIdx)}
                       size="lg"
