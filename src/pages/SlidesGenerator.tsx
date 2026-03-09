@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useCredits } from "@/hooks/useCredits";
 import SlideConfigPanel from "@/components/slides/SlideConfigPanel";
 import SlideEditor from "@/components/slides/SlideEditor";
+import EditorTopBar from "@/components/EditorTopBar";
 import type { Slide, SlideTemplate, SlideDensity } from "@/components/slides/types";
 import { estilosImagem } from "@/components/slides/types";
 
