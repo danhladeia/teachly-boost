@@ -100,7 +100,7 @@ export default function Exams() {
   // File import state  
   const [textoImportadoProva, setTextoImportadoProva] = useState("");
   const [importFileNameProva, setImportFileNameProva] = useState("");
-  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load profile data
