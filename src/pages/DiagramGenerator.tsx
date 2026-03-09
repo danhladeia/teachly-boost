@@ -186,6 +186,11 @@ export default function DiagramGenerator() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <TimbreSelector
+                onSelect={setSelectedTimbre}
+                selectedId={selectedTimbre?.id || undefined}
+              />
+
               <div>
                 <Label className="text-xs">Descreva o diagrama</Label>
                 <Textarea
@@ -217,11 +222,6 @@ export default function DiagramGenerator() {
                   </Select>
                 </div>
               </div>
-
-              <TimbreSelector
-                onSelect={setSelectedTimbre}
-                selectedId={selectedTimbre?.id || undefined}
-              />
 
               <Button className="w-full" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
