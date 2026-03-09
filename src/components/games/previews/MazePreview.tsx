@@ -11,13 +11,12 @@ interface Props {
 export default function MazePreview({ data, config }: Props) {
   const maxWidth = data.mazeSize === "small" ? 260 : data.mazeSize === "large" ? 500 : 400;
   const cellSize = Math.min(Math.floor(maxWidth / data.size), Math.floor(560 / data.size));
-  const hasQuestions = data.questions.length > 0;
 
   return (
     <GameA4Shell
       header={config.header}
       title={`Labirinto${data.tema ? `: ${data.tema}` : ""}`}
-      subtitle={hasQuestions ? "Resolva as perguntas nos checkpoints para avançar!" : "Encontre o caminho da entrada à saída!"}
+      subtitle="Encontre o caminho da entrada à saída!"
       colorMode={config.colorMode}
     >
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm", overflow: "hidden" }}>
