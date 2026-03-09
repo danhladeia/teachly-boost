@@ -106,6 +106,9 @@ export default function Activities() {
           setProfessor(content.settings.professor || "");
           setTurma(content.settings.turma || "");
           setAutoNumber(content.settings.autoNumber ?? true);
+          setShowLines(content.settings.showLines ?? true);
+          setShowAluno(content.settings.showAluno ?? false);
+          setShowData(content.settings.showData ?? false);
         }
         setCurrentDocId(docId);
         setTab("manual");
