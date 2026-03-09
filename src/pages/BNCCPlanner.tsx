@@ -172,7 +172,7 @@ export default function BNCCPlanner() {
     }
   };
 
-  const escolaFinal = selectedTimbre?.escola || escola;
+  const escolaFinal = selectedTimbre ? (selectedTimbre.showNomeEscola ? selectedTimbre.escola : "") : escola;
   const logoUrl = selectedTimbre?.logoUrl;
   const bannerUrl = selectedTimbre?.bannerUrl;
 
