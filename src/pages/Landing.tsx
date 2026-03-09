@@ -249,9 +249,9 @@ export default function Landing() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
             <motion.h2 variants={fadeUp} className="font-display text-3xl font-bold md:text-4xl">Planos para cada necessidade</motion.h2>
             <motion.p variants={fadeUp} className="mt-3 text-muted-foreground text-lg">Comece grátis, evolua quando precisar</motion.p>
-            <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">🔥 Por tempo limitado: use o cupom <span className="font-bold">GOPEDAGOX</span> e ganhe 25% OFF!</span>
+            <motion.div variants={fadeUp} className="mt-4 inline-flex items-center gap-2 rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-6 py-3 shadow-lg animate-pulse">
+              <Sparkles className="h-5 w-5 text-destructive" />
+              <span className="text-sm font-bold text-destructive">⏰ TEMPO LIMITADO: use o cupom <span className="rounded bg-destructive px-2 py-0.5 text-destructive-foreground font-extrabold">GOPEDAGOX</span> e ganhe 25% OFF em qualquer plano!</span>
             </motion.div>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
