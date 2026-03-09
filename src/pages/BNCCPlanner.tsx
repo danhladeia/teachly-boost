@@ -34,9 +34,9 @@ const disciplinasPorNivel: Record<string, string[]> = {
     "Arte", "Educação Física", "Língua Inglesa", "Ensino Religioso",
   ],
   ensino_medio: [
-    "Língua Portuguesa", "Matemática", "Linguagens e suas Tecnologias",
-    "Ciências da Natureza e suas Tecnologias", "Ciências Humanas e Sociais Aplicadas",
-    "Arte", "Educação Física", "Língua Inglesa", "Novo Ensino Médio",
+    "Português", "Inglês", "Artes", "Ed. Física", "Matemática",
+    "Biologia", "Física", "Química", "História", "Geografia", 
+    "Sociologia", "Filosofia", "Itinerário Formativo/EMTI",
   ],
 };
 
