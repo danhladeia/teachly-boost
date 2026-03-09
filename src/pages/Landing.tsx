@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  BookOpen, Brain, Gamepad2, Presentation, FileCheck,
+  BookOpen, Brain, Gamepad2, Presentation, FileCheck, GitBranch,
   Stamp, Clock, Sparkles, CheckCircle2, ArrowRight, ChevronDown,
   Zap, Shield, Users, Star, Crown, Rocket } from
 "lucide-react";
