@@ -465,11 +465,11 @@ export default function OMRScanner() {
               )}
 
               {current && current.status === "done" && (
-                <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+                <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
                   {/* Left: Original image */}
-                  <div className="space-y-3">
+                  <div className="space-y-3 min-w-0">
                     <div className="rounded-lg overflow-hidden border">
-                      <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[500px] bg-muted" />
+                      <img src={current.previewUrl} alt="Gabarito original" className="w-full object-contain max-h-[300px] sm:max-h-[500px] bg-muted" />
                     </div>
                     <div className="space-y-1 text-xs">
                       {current.prova_info && (
