@@ -72,7 +72,6 @@ const plans = [
     cta: "Assinar Ultra",
   },
 ];
-];
 
 export default function Pricing() {
   const [coupon, setCoupon] = useState("");
