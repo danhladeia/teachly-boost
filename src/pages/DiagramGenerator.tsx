@@ -86,7 +86,11 @@ export default function DiagramGenerator() {
     try {
       const id = "mermaid-" + Date.now();
       const { svg } = await mermaid.render(id, code);
-      setSvgOutput(svg);
+      // Force SVG to fill available width
+      const scaledSvg = svg
+        .replace(/width="[^"]*"/, 'width="100%"')
+        .replace(/style="[^"]*max-width:[^;"]*;?/g, (m) => m.replace(/max-width:[^;"]*/g, "max-width:100%"));
+      setSvgOutput(scaledSvg);
     } catch (err) {
       console.error("Mermaid render error:", err);
       setSvgOutput(`<p style="color:red;padding:16px;">Erro na sintaxe Mermaid. Ajuste o código e tente novamente.</p>`);
