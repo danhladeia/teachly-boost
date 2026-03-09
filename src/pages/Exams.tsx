@@ -685,7 +685,7 @@ export default function Exams() {
         <TabsContent value="criar">
           <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
             {/* LEFT - Config */}
-            <div className="space-y-4 pr-1">
+            <div className="space-y-4 overflow-x-hidden">
               {/* TIMBRE - Primeiro */}
               <Card className="shadow-card">
                 <CardContent className="pt-4 space-y-3">
