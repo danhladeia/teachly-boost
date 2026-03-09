@@ -330,7 +330,7 @@ export default function BNCCPlanner() {
       {/* Plano gerado */}
       {plano && !plano.raw && (
         <>
-          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} escola={escolaFinal} logoUrl={logoUrl} />
+          <PlanoPreview plano={plano} modelo={modelo} professor={professor} turma={turma} serie={serie} escola={escolaFinal} logoUrl={logoUrl} bannerUrl={bannerUrl} />
 
           {/* Refinamento */}
           <Card className="shadow-card">
