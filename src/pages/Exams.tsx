@@ -84,6 +84,11 @@ export default function Exams() {
   const [shuffling, setShuffling] = useState(false);
   const [loadingProvas, setLoadingProvas] = useState(false);
 
+  // Import activities state
+  const [savedActivities, setSavedActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [showActivityPicker, setShowActivityPicker] = useState(false);
+
   // Load profile data
   useEffect(() => {
     if (!user) return;
