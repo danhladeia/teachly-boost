@@ -293,7 +293,7 @@ export async function exportAtividadeToDocx(
             spacing: { after: 50 },
           }));
         });
-      } else {
+      } else if (includeLines) {
         // Open question lines
         for (let i = 0; i < (block.lines || 4); i++) {
           children.push(new Paragraph({ children: [new TextRun({ text: "________________________________________", size: 22, font: "Arial", color: "999999" })], spacing: { after: 50 } }));
