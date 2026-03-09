@@ -216,6 +216,9 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, prof
 
   const renderedBlocks = buildRendered();
 
+  // Stable key for pagination dependency — avoids infinite re-renders
+  const blocksKey = blocks.map(b => `${b.id}:${b.type}:${(b.content || "").length}:${(b.alternatives || []).length}:${b.lines || 0}:${b.imageUrl || ""}:${b.questionImageUrl || ""}`).join("|");
+
   // After rendering in the hidden measure container, paginate
   useEffect(() => {
     const timer = setTimeout(() => {
