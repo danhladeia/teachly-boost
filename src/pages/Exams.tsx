@@ -634,9 +634,21 @@ export default function Exams() {
                     <Input placeholder="Prova de Ciências" value={titulo} onChange={e => setTitulo(e.target.value)} className="h-8 text-xs" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px]">Temas / Conteúdos</Label>
-                    <Textarea placeholder="Ex: Sistema Solar, Frações..." value={temas} onChange={e => setTemas(e.target.value)} className="min-h-[60px] text-xs" />
+                    <Label className="text-[10px]">Tema e instruções</Label>
+                    <Textarea placeholder="Ex: Sistema Solar - Gere questões sobre planetas, órbitas e gravidade..." value={temas} onChange={e => setTemas(e.target.value)} className="min-h-[60px] text-xs" />
                   </div>
+
+                  {/* Imported text preview */}
+                  {textoImportadoProva && (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-semibold flex items-center gap-1"><FileUp className="h-3 w-3" /> Texto importado{importFileNameProva ? `: ${importFileNameProva}` : ""}</Label>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setTextoImportadoProva(""); setImportFileNameProva(""); }}>✕</Button>
+                      </div>
+                      <Textarea value={textoImportadoProva} onChange={e => setTextoImportadoProva(e.target.value)} className="min-h-[60px] text-[10px] bg-background" />
+                      <p className="text-[9px] text-muted-foreground">A IA usará este texto como base para gerar as questões.</p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-[10px]">Nível</Label>
