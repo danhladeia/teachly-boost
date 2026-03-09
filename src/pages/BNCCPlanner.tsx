@@ -247,30 +247,30 @@ export default function BNCCPlanner() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Conteúdo / Tema da Aula</Label>
-              <Input
-                placeholder='Ex: "Sistema Solar", "Frações", "Revolução Francesa"'
-                value={conteudo}
-                onChange={(e) => setConteudo(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Quantidade de Aulas</Label>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={quantidadeAulas === 0 ? "" : quantidadeAulas}
-                onChange={(e) => setQuantidadeAulas(e.target.value === "" ? 0 : Math.max(1, Math.min(20, parseInt(e.target.value))))}
-                onBlur={() => { if (quantidadeAulas === 0) setQuantidadeAulas(1); }}
-                placeholder="1"
-              />
-              {quantidadeAulas > 1 && (
-                <p className="text-xs text-muted-foreground">A IA gerará um cronograma aula a aula ({quantidadeAulas} aulas)</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label>Conteúdo, tema e instruções</Label>
+            <Textarea
+              placeholder='Ex: "Sistema Solar - Quero um plano que aborde os planetas, órbitas e inclua atividade prática com maquete"'
+              value={conteudo}
+              onChange={(e) => setConteudo(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Quantidade de Aulas</Label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={quantidadeAulas === 0 ? "" : quantidadeAulas}
+              onChange={(e) => setQuantidadeAulas(e.target.value === "" ? 0 : Math.max(1, Math.min(20, parseInt(e.target.value))))}
+              onBlur={() => { if (quantidadeAulas === 0) setQuantidadeAulas(1); }}
+              placeholder="1"
+            />
+            {quantidadeAulas > 1 && (
+              <p className="text-xs text-muted-foreground">A IA gerará um cronograma aula a aula ({quantidadeAulas} aulas)</p>
+            )}
           </div>
 
           <Button
