@@ -8,9 +8,9 @@ const corsHeaders = {
 };
 
 const PLAN_MAP: Record<string, { plan_type: string; credits: number; logos_limit: number }> = {
-  "prod_U6n8quHrrPOmYK": { plan_type: "pro", credits: 15, logos_limit: 1 },
-  "prod_U6n9jH2bYUkyA4": { plan_type: "master", credits: 50, logos_limit: 3 },
-  "prod_U6nANb09m2BmIv": { plan_type: "ultra", credits: 9999, logos_limit: 9999 },
+  "prod_U7ABxtNA7eX4Jb": { plan_type: "pro", credits: 15, logos_limit: 1 },
+  "prod_U7ABuFnbvi0lll": { plan_type: "master", credits: 50, logos_limit: 3 },
+  "prod_U7ABCsrepi9iSt": { plan_type: "ultra", credits: 9999, logos_limit: 9999 },
 };
 
 serve(async (req) => {
