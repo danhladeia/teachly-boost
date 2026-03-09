@@ -561,7 +561,7 @@ export default function OMRScanner() {
                             <Button
                               size="sm"
                               className="w-full h-7 text-xs"
-                              onClick={fetchManualGabarito}
+                              onClick={fetchGabaritoAndAdvance}
                               disabled={!selectedProvaId || loadingGabarito}
                             >
                               {loadingGabarito ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Search className="mr-1 h-3 w-3" />}
