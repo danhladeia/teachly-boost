@@ -16,6 +16,7 @@ import Activities from "./pages/Activities";
 import SlidesGenerator from "./pages/SlidesGenerator";
 import GameFactory from "./pages/GameFactory";
 import Exams from "./pages/Exams";
+import DiagramGenerator from "./pages/DiagramGenerator";
 import Pricing from "./pages/Pricing";
 import Branding from "./pages/Branding";
 import AppSettings from "./pages/AppSettings";
@@ -53,6 +54,7 @@ const AppRoutes = () => (
       <Route path="slides" element={<SlidesGenerator />} />
       <Route path="jogos" element={<GameFactory />} />
       <Route path="provas" element={<Exams />} />
+      <Route path="diagramas" element={<DiagramGenerator />} />
       <Route path="notas" element={<Notepad />} />
       <Route path="suporte" element={<Support />} />
       <Route path="planos" element={<Pricing />} />

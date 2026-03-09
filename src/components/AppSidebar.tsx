@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BookOpen, FileText, Presentation, Gamepad2,
-  FileCheck, Stamp, Settings, LogOut, CreditCard, StickyNote, MessageSquare, Library
+  FileCheck, Stamp, Settings, LogOut, CreditCard, StickyNote, MessageSquare, Library, GitBranch
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,7 @@ const items = [
   { title: "Atividades A4", url: "/app/atividades", icon: FileText },
   { title: "Gerador de Slides", url: "/app/slides", icon: Presentation },
   { title: "Fábrica de Jogos", url: "/app/jogos", icon: Gamepad2 },
+  { title: "Gerador de Diagramas", url: "/app/diagramas", icon: GitBranch },
   { title: "Provas e Correção", url: "/app/provas", icon: FileCheck },
   { title: "Bloco de Notas", url: "/app/notas", icon: StickyNote },
   { title: "Suporte", url: "/app/suporte", icon: MessageSquare },
