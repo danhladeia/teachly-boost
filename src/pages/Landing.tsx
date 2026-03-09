@@ -200,7 +200,7 @@ export default function Landing() {
                 <h3 className="font-display text-xl font-bold text-primary">Com GoPedagoX</h3>
               </div>
               <ul className="space-y-3 text-muted-foreground">
-                {["Plano BNCC em 2 minutos", "Atividades auto-formatadas", "Habilidades sugeridas por IA", "20 jogos prontos para imprimir", "Correção por foto em segundos"].map((t) =>
+                {["Plano BNCC em 2 minutos", "Atividades auto-formatadas", "Habilidades sugeridas por IA", "17+ jogos prontos para imprimir", "Correção por foto em segundos"].map((t) =>
                   <li key={t} className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />{t}</li>
                 )}
               </ul>
