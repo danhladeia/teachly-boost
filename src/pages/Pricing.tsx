@@ -68,7 +68,7 @@ const plans = [
     priceDisplay: "R$ 89,90",
     period: "/mês",
     popular: false,
-    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte via WhatsApp"],
+    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
     cta: "Assinar Ultra",
   },
 ];

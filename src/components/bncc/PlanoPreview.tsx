@@ -86,8 +86,8 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
         </CardContent>
       </Card>
 
-      <Card className="shadow-card overflow-auto">
-        <div id="plano-print-area" className="bg-white text-black mx-auto" style={{ width: "210mm", minHeight: "297mm", padding: "15mm 15mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "break-word" }}>
+      <Card className="shadow-card overflow-x-auto">
+        <div id="plano-print-area" className="bg-white text-black mx-auto" style={{ width: "210mm", padding: "15mm 15mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "break-word" }}>
           {/* Timbre banner image */}
           {showHeader && bannerUrl && (
             <div style={{ textAlign: "center", marginBottom: "4mm" }}>
