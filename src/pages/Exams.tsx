@@ -725,6 +725,61 @@ export default function Exams() {
                     <Label className="text-[10px]">Título da prova</Label>
                     <Input placeholder="Prova de Ciências" value={titulo} onChange={e => setTitulo(e.target.value)} className="h-8 text-xs" />
                   </div>
+
+                  {/* Import options */}
+                  <div className="space-y-1.5 rounded-lg border border-dashed border-muted-foreground/30 p-2">
+                    <Label className="text-[10px] font-semibold">📥 Importar conteúdo</Label>
+                    
+                    {/* File import */}
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-primary/30 px-2 py-1.5 hover:bg-primary/5 transition-colors text-xs">
+                      <Upload className="h-3.5 w-3.5 text-primary" />
+                      <span>Importar PDF, DOCX ou TXT</span>
+                      <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt,.md" className="hidden" onChange={handleFileImportProva} />
+                    </label>
+
+                    {/* Activity import */}
+                    <div className="relative">
+                      <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => { setShowActivityPicker(!showActivityPicker); setShowPlanPicker(false); }}>
+                        <FileText className="mr-1 h-3.5 w-3.5" /> Importar Atividade Salva
+                      </Button>
+                      {showActivityPicker && (
+                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {savedActivities.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-muted-foreground">Nenhuma atividade salva</div>
+                          ) : (
+                            savedActivities.map((a) => (
+                              <button key={a.id} onClick={() => handleImportActivityViaAI(a)} className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0">
+                                <p className="font-medium truncate">{a.titulo}</p>
+                                <p className="text-muted-foreground text-[10px]">{a.disciplina || "Sem disciplina"} • {new Date(a.created_at).toLocaleDateString("pt-BR")}</p>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Plan import */}
+                    <div className="relative">
+                      <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => { setShowPlanPicker(!showPlanPicker); setShowActivityPicker(false); }}>
+                        <BookOpen className="mr-1 h-3.5 w-3.5" /> Importar Plano de Aula
+                      </Button>
+                      {showPlanPicker && (
+                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {savedPlans.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-muted-foreground">Nenhum plano salvo</div>
+                          ) : (
+                            savedPlans.map((p) => (
+                              <button key={p.id} onClick={() => handleImportPlanAsContext(p)} className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0">
+                                <p className="font-medium truncate">{p.titulo}</p>
+                                <p className="text-muted-foreground text-[10px]">{p.disciplina || "Sem disciplina"} • {new Date(p.created_at).toLocaleDateString("pt-BR")}</p>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-1">
                     <Label className="text-[10px]">Tema e instruções</Label>
                     <Textarea placeholder="Ex: Sistema Solar - Gere questões sobre planetas, órbitas e gravidade..." value={temas} onChange={e => setTemas(e.target.value)} className="min-h-[60px] text-xs" />
@@ -785,59 +840,6 @@ export default function Exams() {
                   <Button onClick={handleAiGenerate} disabled={loading} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
                     {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-1 h-4 w-4" /> Gerar Questões</>}
                   </Button>
-                  {/* Import options */}
-                  <div className="space-y-1.5 rounded-lg border border-dashed border-muted-foreground/30 p-2">
-                    <Label className="text-[10px] font-semibold">📥 Importar conteúdo</Label>
-                    
-                    {/* File import */}
-                    <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-primary/30 px-2 py-1.5 hover:bg-primary/5 transition-colors text-xs">
-                      <Upload className="h-3.5 w-3.5 text-primary" />
-                      <span>Importar PDF, DOCX ou TXT</span>
-                      <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt,.md" className="hidden" onChange={handleFileImportProva} />
-                    </label>
-
-                    {/* Activity import */}
-                    <div className="relative">
-                      <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => { setShowActivityPicker(!showActivityPicker); setShowPlanPicker(false); }}>
-                        <FileText className="mr-1 h-3.5 w-3.5" /> Importar Atividade Salva
-                      </Button>
-                      {showActivityPicker && (
-                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                          {savedActivities.length === 0 ? (
-                            <div className="p-3 text-center text-xs text-muted-foreground">Nenhuma atividade salva</div>
-                          ) : (
-                            savedActivities.map((a) => (
-                              <button key={a.id} onClick={() => handleImportActivityViaAI(a)} className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0">
-                                <p className="font-medium truncate">{a.titulo}</p>
-                                <p className="text-muted-foreground text-[10px]">{a.disciplina || "Sem disciplina"} • {new Date(a.created_at).toLocaleDateString("pt-BR")}</p>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Plan import */}
-                    <div className="relative">
-                      <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => { setShowPlanPicker(!showPlanPicker); setShowActivityPicker(false); }}>
-                        <BookOpen className="mr-1 h-3.5 w-3.5" /> Importar Plano de Aula
-                      </Button>
-                      {showPlanPicker && (
-                        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                          {savedPlans.length === 0 ? (
-                            <div className="p-3 text-center text-xs text-muted-foreground">Nenhum plano salvo</div>
-                          ) : (
-                            savedPlans.map((p) => (
-                              <button key={p.id} onClick={() => handleImportPlanAsContext(p)} className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-xs border-b last:border-0">
-                                <p className="font-medium truncate">{p.titulo}</p>
-                                <p className="text-muted-foreground text-[10px]">{p.disciplina || "Sem disciplina"} • {new Date(p.created_at).toLocaleDateString("pt-BR")}</p>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
