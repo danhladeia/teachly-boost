@@ -166,37 +166,99 @@ export default function DiagramGenerator() {
     }
   };
 
-  // ── Export: PNG ──
+  // ── Export: PNG (fit to A4) ──
   const handleDownloadPng = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) return;
-    const blob = await svgToPngBlob(svgEl);
+    const isLandscape = orientation === "landscape";
+    const blob = await svgToPngBlob(svgEl, 2, { isLandscape });
     if (!blob) { toast.error("Erro ao exportar PNG"); return; }
     saveAs(blob, "diagrama.png");
   };
 
-  // ── Export: PDF (A4 portrait or landscape) ──
+  // ── Export: PDF (A4 portrait or landscape, diagram scaled to fit) ──
   const handleExportPdf = async () => {
-    const el = printRef.current;
-    if (!el) return;
-    const html2pdf = (await import("html2pdf.js")).default;
-    const origW = el.style.width;
-    const origMinH = el.style.minHeight;
-    const origShadow = el.style.boxShadow;
+    const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
+    if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
+    
     const isLandscape = orientation === "landscape";
-    el.style.width = isLandscape ? "267mm" : "180mm";
-    el.style.minHeight = "auto";
-    el.style.boxShadow = "none";
+    // Get PNG blob scaled to fit A4
+    const pngBlob = await svgToPngBlob(svgEl, 3, { isLandscape });
+    if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    
+    // Create a temporary container with proper A4 layout
+    const tempDiv = document.createElement("div");
+    tempDiv.style.width = isLandscape ? "267mm" : "180mm";
+    tempDiv.style.padding = "0";
+    tempDiv.style.background = "#fff";
+    tempDiv.style.fontFamily = "'Inter', 'Arial', sans-serif";
+    
+    // Add branding if present
+    if (bannerUrl || logoUrl || escolaFinal) {
+      const headerDiv = document.createElement("div");
+      headerDiv.style.marginBottom = "12px";
+      headerDiv.style.paddingBottom = "8px";
+      headerDiv.style.borderBottom = "1px solid #e5e7eb";
+      
+      if (bannerUrl) {
+        const bannerImg = document.createElement("img");
+        bannerImg.src = bannerUrl;
+        bannerImg.style.width = "100%";
+        bannerImg.style.maxHeight = "80px";
+        bannerImg.style.objectFit = "contain";
+        bannerImg.crossOrigin = "anonymous";
+        headerDiv.appendChild(bannerImg);
+      } else {
+        headerDiv.style.display = "flex";
+        headerDiv.style.alignItems = "center";
+        headerDiv.style.gap = "12px";
+        if (logoUrl) {
+          const logoImg = document.createElement("img");
+          logoImg.src = logoUrl;
+          logoImg.style.height = "36px";
+          logoImg.style.width = "36px";
+          logoImg.style.objectFit = "contain";
+          logoImg.crossOrigin = "anonymous";
+          headerDiv.appendChild(logoImg);
+        }
+        if (escolaFinal) {
+          const escolaSpan = document.createElement("span");
+          escolaSpan.textContent = escolaFinal;
+          escolaSpan.style.fontWeight = "600";
+          escolaSpan.style.fontSize = "13px";
+          headerDiv.appendChild(escolaSpan);
+        }
+      }
+      tempDiv.appendChild(headerDiv);
+    }
+    
+    // Add diagram image centered and scaled
+    const imgContainer = document.createElement("div");
+    imgContainer.style.display = "flex";
+    imgContainer.style.justifyContent = "center";
+    imgContainer.style.alignItems = "center";
+    
+    const diagramImg = document.createElement("img");
+    diagramImg.src = URL.createObjectURL(pngBlob);
+    diagramImg.style.maxWidth = "100%";
+    diagramImg.style.maxHeight = isLandscape ? "160mm" : "230mm";
+    diagramImg.style.objectFit = "contain";
+    imgContainer.appendChild(diagramImg);
+    tempDiv.appendChild(imgContainer);
+    
+    document.body.appendChild(tempDiv);
+    
+    const html2pdf = (await import("html2pdf.js")).default;
     await html2pdf().set({
-      margin: [15, 15, 15, 15],
+      margin: [10, 10, 10, 10],
       filename: "diagrama.pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, width: el.scrollWidth },
+      html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: isLandscape ? "landscape" : "portrait" },
-    }).from(el).save();
-    el.style.width = origW;
-    el.style.minHeight = origMinH;
-    el.style.boxShadow = origShadow;
+    }).from(tempDiv).save();
+    
+    document.body.removeChild(tempDiv);
+    URL.revokeObjectURL(diagramImg.src);
   };
 
   // ── Export: DOCX ──
