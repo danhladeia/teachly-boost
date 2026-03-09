@@ -309,9 +309,15 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         </div>
       )}
       {(professor || turma) && (
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "4mm", color: "#475569" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
           {professor && <span><strong>Professor(a):</strong> {professor}</span>}
           {turma && <span><strong>Turma:</strong> {turma}</span>}
+        </div>
+      )}
+      {(showAluno || showData) && (
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "4mm", gap: "4mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
+          {showAluno && <span><strong>Aluno(a):</strong> ________________________________________</span>}
+          {showData && <span><strong>Data:</strong> ____/____/________</span>}
         </div>
       )}
     </>
