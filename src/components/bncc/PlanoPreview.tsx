@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { FileDown, Printer, Save, Building2 } from "lucide-react";
+import { FileDown, Printer, Save } from "lucide-react";
 import { exportToPdf, exportPlanoToDocx } from "@/lib/export-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,27 +18,9 @@ interface PlanoPreviewProps {
 }
 
 export default function PlanoPreview({ plano, modelo, professor, turma, serie, escola: escolaProp, logoUrl, bannerUrl }: PlanoPreviewProps) {
-  const [showHeader, setShowHeader] = useState(!!escolaProp);
-  const [escola, setEscola] = useState(escolaProp || "");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (escolaProp) {
-      setEscola(escolaProp);
-      setShowHeader(true);
-    } else {
-      loadEscola();
-    }
-  }, [escolaProp]);
-
-  const loadEscola = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from("profiles").select("escola").eq("user_id", user.id).single();
-      if (data?.escola) { setEscola(data.escola); setShowHeader(true); }
-    } catch {}
-  };
+  const showHeader = !!(escolaProp || logoUrl || bannerUrl);
+  const escola = escolaProp || "";
 
   const handlePrint = () => {
     const el = document.getElementById("plano-print-area");
@@ -98,15 +77,6 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
     <div className="space-y-4">
       <Card className="shadow-card">
         <CardContent className="pt-4 space-y-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Switch checked={showHeader} onCheckedChange={setShowHeader} id="header-switch" />
-              <Label htmlFor="header-switch" className="text-sm flex items-center gap-1"><Building2 className="h-4 w-4" /> Cabeçalho da Escola</Label>
-            </div>
-            {showHeader && (
-              <Input placeholder="Nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="max-w-xs h-8 text-sm" />
-            )}
-          </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="mr-1 h-4 w-4" /> Imprimir</Button>
             <Button size="sm" variant="outline" onClick={handleExportPdf}><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
