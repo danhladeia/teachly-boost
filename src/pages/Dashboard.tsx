@@ -18,6 +18,7 @@ const tipoConfig: Record<string, { label: string; icon: any; color: string; rout
 
 export default function Dashboard() {
   const [docs, setDocs] = useState<any[]>([]);
+  const [provas, setProvas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -28,20 +29,41 @@ export default function Dashboard() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("documentos_salvos")
-        .select("id, titulo, tipo, modelo, disciplina, nivel, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (data) setDocs(data);
+      const [{ data: savedDocs }, { data: provasData }] = await Promise.all([
+        supabase.from("documentos_salvos")
+          .select("id, titulo, tipo, modelo, disciplina, nivel, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase.from("provas")
+          .select("id, titulo, temas, nivel, serie, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(100),
+      ]);
+      if (savedDocs) setDocs(savedDocs);
+      if (provasData) {
+        setProvas(provasData.map((p: any) => ({
+          id: p.id, titulo: p.titulo, tipo: "prova",
+          disciplina: p.temas, nivel: p.nivel, created_at: p.created_at, source: "provas",
+        })));
+      }
     } catch {} finally { setLoading(false); }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (item: any) => {
     try {
-      const { error } = await supabase.from("documentos_salvos").delete().eq("id", id);
-      if (error) throw error;
-      setDocs(prev => prev.filter(d => d.id !== id));
+      if (item.source === "provas") {
+        await supabase.from("questoes").delete().eq("prova_id", item.id);
+        await supabase.from("versoes_prova").delete().eq("prova_id", item.id);
+        const { error } = await supabase.from("provas").delete().eq("id", item.id);
+        if (error) throw error;
+        setProvas(prev => prev.filter(d => d.id !== item.id));
+      } else {
+        const { error } = await supabase.from("documentos_salvos").delete().eq("id", item.id);
+        if (error) throw error;
+        setDocs(prev => prev.filter(d => d.id !== item.id));
+      }
       toast.success("Documento excluído");
     } catch { toast.error("Erro ao excluir"); }
   };
@@ -51,8 +73,9 @@ export default function Dashboard() {
     atividade: docs.filter(d => d.tipo === "atividade").length,
     jogo: docs.filter(d => d.tipo === "jogo").length,
     slide: docs.filter(d => d.tipo === "slide").length,
-    prova: docs.filter(d => d.tipo === "prova").length,
+    prova: provas.length,
   };
+  const totalCount = docs.length + provas.length;
 
   const stats = [
     { key: "plano", label: "Planos criados", value: String(counts.plano), icon: BookOpen, color: "text-primary" },
@@ -60,10 +83,14 @@ export default function Dashboard() {
     { key: "jogo", label: "Jogos criados", value: String(counts.jogo), icon: Gamepad2, color: "text-plan-pratico" },
     { key: "slide", label: "Slides gerados", value: String(counts.slide), icon: Presentation, color: "text-plan-mestre" },
     { key: "prova", label: "Provas criadas", value: String(counts.prova), icon: FileCheck, color: "text-destructive" },
-    { key: "total", label: "Total de documentos", value: String(docs.length), icon: TrendingUp, color: "text-primary" },
+    { key: "total", label: "Total de documentos", value: String(totalCount), icon: TrendingUp, color: "text-primary" },
   ];
 
-  const filteredDocs = filterType ? docs.filter(d => d.tipo === filterType) : docs;
+  // Merge docs + provas for the list view
+  const allDocs = [...docs, ...provas].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  const filteredDocs = filterType ? allDocs.filter(d => d.tipo === filterType) : allDocs;
 
   const handleStatClick = (key: string) => {
     if (key === "total") {
@@ -131,7 +158,7 @@ export default function Dashboard() {
                 const cfg = tipoConfig[doc.tipo] || tipoConfig.plano;
                 const Icon = cfg.icon;
                 return (
-                  <div key={doc.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:bg-muted/30 transition-colors">
+                  <div key={`${doc.source || "doc"}-${doc.id}`} className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon className={`h-5 w-5 shrink-0 ${cfg.color}`} />
                       <div className="min-w-0">
@@ -144,10 +171,10 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigate(cfg.route)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigate(cfg.route, { state: { loadDocId: doc.id, source: doc.source || "documentos" } })}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(doc.id)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(doc)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
