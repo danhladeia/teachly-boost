@@ -20,7 +20,7 @@ const plans = [
     planType: "starter",
     name: "Starter",
     image: planStarter,
-    priceId: null,
+    paymentLink: null,
     priceOriginal: null,
     priceDiscount: null,
     priceDisplay: "R$ 0,00",
@@ -34,7 +34,7 @@ const plans = [
     planType: "pro",
     name: "Pro",
     image: planPro,
-    priceId: "price_1T8vqu7gJSrf8FzwOA4Tbdyn",
+    paymentLink: "https://buy.stripe.com/cNicMZcNEbA17zI57M9sk01",
     priceOriginal: "R$ 24,90",
     priceDiscount: "R$ 18,67",
     priceDisplay: "R$ 24,90",
@@ -48,7 +48,7 @@ const plans = [
     planType: "master",
     name: "Master",
     image: planMaster,
-    priceId: "price_1T8vqu7gJSrf8FzwOFOe2tVn",
+    paymentLink: "https://buy.stripe.com/eVq28lcNEavXbPY0Rw9sk03",
     priceOriginal: "R$ 44,90",
     priceDiscount: "R$ 33,67",
     priceDisplay: "R$ 44,90",
@@ -62,7 +62,7 @@ const plans = [
     planType: "ultra",
     name: "Ultra",
     image: planUltra,
-    priceId: "price_1T8vqv7gJSrf8Fzw7e54z38X",
+    paymentLink: "https://buy.stripe.com/7sY9AN29047zbPY57M9sk00",
     priceOriginal: "R$ 89,90",
     priceDiscount: "R$ 67,42",
     priceDisplay: "R$ 89,90",
@@ -76,7 +76,7 @@ const plans = [
 export default function Pricing() {
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
   const { plan } = useCredits();
 
@@ -103,24 +103,15 @@ export default function Pricing() {
     }
   };
 
-  const handleCheckout = async (priceId: string) => {
-    setCheckingOut(priceId);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          priceId,
-          couponId: couponApplied ? STRIPE_COUPON_ID : undefined,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+  const handleCheckout = (paymentLink: string) => {
+    // Append prefilled_email if user is logged in
+    const url = new URL(paymentLink);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) {
+        url.searchParams.set("prefilled_email", data.user.email);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao iniciar checkout");
-    } finally {
-      setCheckingOut(null);
-    }
+      window.open(url.toString(), "_blank");
+    });
   };
 
   const handleManageSubscription = async () => {
@@ -232,14 +223,14 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                {p.priceId ? (
+                {p.paymentLink ? (
                   <Button
                     className={`w-full ${p.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`}
                     variant={p.popular ? "default" : "outline"}
-                    disabled={isCurrent || checkingOut === p.priceId}
-                    onClick={() => handleCheckout(p.priceId!)}
+                    disabled={isCurrent}
+                    onClick={() => handleCheckout(p.paymentLink!)}
                   >
-                    {isCurrent ? "Plano Atual" : checkingOut === p.priceId ? "Redirecionando..." : p.cta}
+                    {isCurrent ? "Plano Atual" : p.cta}
                   </Button>
                 ) : (
                   <Button variant="outline" className="w-full" disabled>
