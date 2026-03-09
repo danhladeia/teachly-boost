@@ -2,3 +2,33 @@ project_id = "ofqlukwmwrvywgpeogqb"
 
 [functions.generate-diagram]
 verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.generate-atividade]
+verify_jwt = false
+
+[functions.generate-game]
+verify_jwt = false
+
+[functions.generate-image]
+verify_jwt = false
+
+[functions.generate-plano]
+verify_jwt = false
+
+[functions.generate-prova]
+verify_jwt = false
+
+[functions.generate-slides]
+verify_jwt = false
+
+[functions.process-omr]
+verify_jwt = false
