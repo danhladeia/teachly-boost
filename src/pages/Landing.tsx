@@ -48,9 +48,16 @@ const features = [
   {
     icon: Gamepad2,
     title: "Fábrica de Jogos Pedagógicos",
-    desc: "5 jogos educativos prontos para imprimir em A4: caça-palavras, palavras cruzadas, criptograma, sudoku e labirinto. Com níveis de dificuldade, gabarito automático e modos de cor.",
-    tag: "5 jogos",
-    highlights: ["Caça-palavras", "Cruzadas", "Sudoku"]
+    desc: "17+ jogos educativos prontos para imprimir em A4: caça-palavras, cruzadinha, criptograma, sudoku, labirinto, anagrama, forca, jogo da velha, pixel art, sequência lógica e muito mais. Com níveis de dificuldade e gabarito automático.",
+    tag: "17+ jogos",
+    highlights: ["Caça-palavras", "Cruzadinha", "Sudoku", "Labirinto"]
+  },
+  {
+    icon: GitBranch,
+    title: "Gerador de Diagramas",
+    desc: "Crie fluxogramas, mapas mentais, diagramas de sequência e muito mais com IA. Visualize conceitos complexos de forma clara e exporte em PDF, DOCX ou PPTX com escala automática para folha A4.",
+    tag: "IA",
+    highlights: ["Fluxogramas", "Mapas mentais", "Export PDF/DOCX"]
   },
   {
     icon: Brain,
