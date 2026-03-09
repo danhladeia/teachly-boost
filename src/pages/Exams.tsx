@@ -90,6 +90,16 @@ export default function Exams() {
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [showActivityPicker, setShowActivityPicker] = useState(false);
 
+  // Import plans state
+  const [savedPlans, setSavedPlans] = useState<any[]>([]);
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+
+  // File import state  
+  const [textoImportadoProva, setTextoImportadoProva] = useState("");
+  const [importFileNameProva, setImportFileNameProva] = useState("");
+  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Load profile data
   useEffect(() => {
     if (!user) return;
