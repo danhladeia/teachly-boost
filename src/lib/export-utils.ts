@@ -162,9 +162,10 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
 
 export async function exportAtividadeToDocx(
   blocks: any[],
-  opts?: { escola?: string; professor?: string; turma?: string; autoNumber?: boolean; bannerUrl?: string; logoUrl?: string }
+  opts?: { escola?: string; professor?: string; turma?: string; autoNumber?: boolean; showLines?: boolean; showAluno?: boolean; showData?: boolean; bannerUrl?: string; logoUrl?: string }
 ) {
   const children: Paragraph[] = [];
+  const includeLines = opts?.showLines !== false; // default true
 
   // Banner image in DOCX header
   if (opts?.bannerUrl) {
@@ -198,7 +199,16 @@ export async function exportAtividadeToDocx(
     const parts: string[] = [];
     if (opts.professor) parts.push(`Professor(a): ${opts.professor}`);
     if (opts.turma) parts.push(`Turma: ${opts.turma}`);
-    children.push(new Paragraph({ children: [new TextRun({ text: parts.join("   |   "), size: 20, font: "Arial" })], spacing: { after: 200 } }));
+    children.push(new Paragraph({ children: [new TextRun({ text: parts.join("   |   "), size: 20, font: "Arial" })], spacing: { after: 100 } }));
+  }
+
+  // Aluno and Data fields
+  if (opts?.showAluno || opts?.showData) {
+    const parts: TextRun[] = [];
+    if (opts.showAluno) parts.push(new TextRun({ text: "Aluno(a): ________________________________________", size: 20, font: "Arial" }));
+    if (opts.showAluno && opts.showData) parts.push(new TextRun({ text: "     ", size: 20, font: "Arial" }));
+    if (opts.showData) parts.push(new TextRun({ text: "Data: ____/____/________", size: 20, font: "Arial" }));
+    children.push(new Paragraph({ children: parts, spacing: { after: 200 } }));
   }
 
   let qNum = 0;
