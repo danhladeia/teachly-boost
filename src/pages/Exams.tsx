@@ -18,6 +18,7 @@ import OMRAnswerSheet from "@/components/exams/OMRAnswerSheet";
 import OMRScanner from "@/components/exams/OMRScanner";
 import CameraScanner from "@/components/exams/CameraScanner";
 import TimbreSelector from "@/components/TimbreSelector";
+import type { TimbreData } from "@/hooks/useTimbre";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 
