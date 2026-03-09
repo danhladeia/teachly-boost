@@ -65,7 +65,7 @@ export async function exportToPdf(elementId: string, filename: string) {
       margin: [15, 15, 15, 15], // top, left, bottom, right in mm
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, windowWidth: element.scrollWidth },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["css", "legacy"], avoid: [".question"] },
     })
@@ -82,8 +82,24 @@ export async function exportToPdf(elementId: string, filename: string) {
   element.style.gap = origGap;
 }
 
-export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string }) {
+export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string; bannerUrl?: string }) {
   const children: Paragraph[] = [];
+
+  // Banner or logo image
+  if (cabecalho?.logoUrl) {
+    const imgData = await fetchImageAsBuffer(cabecalho.logoUrl);
+    if (imgData) {
+      const isBanner = imgData.width > imgData.height * 2;
+      const maxW = isBanner ? 600 : 200;
+      const maxH = isBanner ? 120 : 80;
+      const { width, height } = fitImage(imgData.width, imgData.height, maxW, maxH);
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({ data: imgData.buffer, transformation: { width, height }, type: "png" })],
+        spacing: { after: 200 },
+      }));
+    }
+  }
 
   if (cabecalho?.escola) {
     children.push(
