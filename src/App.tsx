@@ -16,6 +16,7 @@ import Activities from "./pages/Activities";
 import SlidesGenerator from "./pages/SlidesGenerator";
 import GameFactory from "./pages/GameFactory";
 import Exams from "./pages/Exams";
+import DiagramGenerator from "./pages/DiagramGenerator";
 import Pricing from "./pages/Pricing";
 import Branding from "./pages/Branding";
 import AppSettings from "./pages/AppSettings";
