@@ -228,20 +228,43 @@ export default function Branding() {
             {/* Preview */}
             <div className="space-y-2">
               <Label>Preview do cabeçalho</Label>
-              <div className="rounded-lg border bg-white p-4">
-                <div className="flex items-center justify-center gap-4 border-b-2 border-black pb-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                  {editing.logoUrl && <img src={editing.logoUrl} alt="Logo" className="h-10 object-contain" crossOrigin="anonymous" />}
-                  {editing.showNomeEscola && editing.escola && <span className="font-bold text-lg text-black">{editing.escola}</span>}
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2 flex-wrap gap-1">
-                  {editing.showProfessor && <span>Professor(a): ________________</span>}
-                  {editing.showDisciplina && <span>Disciplina: ________________</span>}
-                  {editing.showSerie && <span>Série: ________</span>}
-                </div>
-                {(editing.showAluno || editing.showData) && (
-                  <div className="flex justify-between text-xs text-gray-500 mt-1 flex-wrap gap-1">
-                    {editing.showAluno && <span>Aluno(a): ________________________________</span>}
-                    {editing.showData && <span>Data: ____/____/________</span>}
+              <div className="rounded-lg border bg-white overflow-hidden">
+                {editing.bannerUrl ? (
+                  /* Banner mode */
+                  <div>
+                    <img src={editing.bannerUrl} alt="Banner" className="w-full h-20 object-cover" crossOrigin="anonymous" />
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <div className="flex justify-between text-xs text-gray-500 flex-wrap gap-1">
+                        {editing.showProfessor && <span>Professor(a): ________________</span>}
+                        {editing.showDisciplina && <span>Disciplina: ________________</span>}
+                        {editing.showSerie && <span>Série: ________</span>}
+                      </div>
+                      {(editing.showAluno || editing.showData) && (
+                        <div className="flex justify-between text-xs text-gray-500 mt-1 flex-wrap gap-1">
+                          {editing.showAluno && <span>Aluno(a): ________________________________</span>}
+                          {editing.showData && <span>Data: ____/____/________</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Logo mode */
+                  <div className="p-4">
+                    <div className="flex items-center justify-center gap-4 border-b-2 border-black pb-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                      {editing.logoUrl && <img src={editing.logoUrl} alt="Logo" className="h-10 object-contain" crossOrigin="anonymous" />}
+                      {editing.showNomeEscola && editing.escola && <span className="font-bold text-lg text-black">{editing.escola}</span>}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-2 flex-wrap gap-1">
+                      {editing.showProfessor && <span>Professor(a): ________________</span>}
+                      {editing.showDisciplina && <span>Disciplina: ________________</span>}
+                      {editing.showSerie && <span>Série: ________</span>}
+                    </div>
+                    {(editing.showAluno || editing.showData) && (
+                      <div className="flex justify-between text-xs text-gray-500 mt-1 flex-wrap gap-1">
+                        {editing.showAluno && <span>Aluno(a): ________________________________</span>}
+                        {editing.showData && <span>Data: ____/____/________</span>}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
