@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Loader2, Plus, Clock, CheckCircle2, AlertCircle, Phone } from "lucide-react";
+import { MessageSquare, Send, Loader2, Plus, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 import { toast } from "sonner";
-
-const WHATSAPP_URL = "https://wa.me/5500000000000?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20GoPedagoX%20Ultra";
 
 interface Ticket {
   id: string;
@@ -32,6 +30,13 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   open: { label: "Aberto", color: "bg-yellow-100 text-yellow-800", icon: Clock },
   in_progress: { label: "Em andamento", color: "bg-blue-100 text-blue-800", icon: AlertCircle },
   resolved: { label: "Resolvido", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+};
+
+const priorityLabels: Record<string, { label: string; color: string }> = {
+  urgent: { label: "Urgente (Ultra)", color: "bg-destructive/10 text-destructive" },
+  high: { label: "Alta (Master)", color: "bg-orange-100 text-orange-800" },
+  normal: { label: "Normal (Pro)", color: "bg-blue-100 text-blue-800" },
+  low: { label: "Padrão (Starter)", color: "bg-muted text-muted-foreground" },
 };
 
 export default function Support() {
@@ -119,7 +124,8 @@ export default function Support() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
-  const isUltra = plan.planType === "ultra";
+  const currentPriority = plan.planType === "ultra" ? "urgent" : plan.planType === "master" ? "high" : plan.planType === "pro" ? "normal" : "low";
+  const prioInfo = priorityLabels[currentPriority];
 
   return (
     <div className="space-y-4">
@@ -127,28 +133,19 @@ export default function Support() {
         <h1 className="font-display text-2xl font-bold flex items-center gap-2">
           <MessageSquare className="h-6 w-6 text-primary" /> Suporte
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm">Entre em contato com a equipe GoPedagoX</p>
+        <p className="text-muted-foreground mt-1 text-sm">Entre em contato com a equipe GoPedagoX via ticket</p>
       </div>
 
-      {/* WhatsApp banner for Ultra */}
-      {isUltra && (
-        <Card className="border-green-500/30 bg-green-50 dark:bg-green-950/20">
-          <CardContent className="flex items-center justify-between gap-4 p-4">
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-green-600 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-green-800 dark:text-green-300">Suporte Ultra via WhatsApp</p>
-                <p className="text-xs text-green-600 dark:text-green-400">Atendimento prioritário direto pelo WhatsApp</p>
-              </div>
-            </div>
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white border-0">
-                <Phone className="h-4 w-4 mr-1" /> Abrir WhatsApp
-              </Button>
-            </a>
-          </CardContent>
-        </Card>
-      )}
+      {/* Priority info banner */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex items-center gap-3 p-4">
+          <MessageSquare className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Sua prioridade de atendimento: <Badge variant="secondary" className={`ml-1 ${prioInfo.color}`}>{prioInfo.label}</Badge></p>
+            <p className="text-xs text-muted-foreground mt-0.5">Tickets são atendidos por ordem de prioridade do plano. Faça upgrade para ter atendimento mais rápido.</p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
         {/* Ticket list */}
@@ -243,19 +240,6 @@ export default function Support() {
           </Card>
         )}
       </div>
-
-      {/* Floating WhatsApp button for Ultra */}
-      {isUltra && (
-        <a
-          href={WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 transition-colors"
-          title="Suporte WhatsApp Ultra"
-        >
-          <Phone className="h-6 w-6" />
-        </a>
-      )}
     </div>
   );
 }
