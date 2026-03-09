@@ -75,6 +75,13 @@ export default function OMRScanner() {
   const [selectedVersaoId, setSelectedVersaoId] = useState<string>("");
   const [loadingGabarito, setLoadingGabarito] = useState(false);
 
+  // Safety guard: never allow upload/results without a preloaded gabarito
+  useEffect(() => {
+    if (step !== "select-gabarito" && (!preloadedGabarito || preloadedGabarito.length === 0)) {
+      setStep("select-gabarito");
+    }
+  }, [step, preloadedGabarito]);
+
   // Load user's provas on mount
   useEffect(() => {
     if (!user) return;
