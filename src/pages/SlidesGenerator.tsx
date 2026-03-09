@@ -106,12 +106,29 @@ export default function SlidesGenerator() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <Presentation className="h-6 w-6 text-primary" /> Gerador de Slides
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">Apresentações pedagógicas com imagens IA, exportação PPTX e modo handout</p>
-      </div>
+      {slides.length > 0 && (
+        <EditorTopBar
+          title="Gerador de Slides"
+          leading={
+            <button
+              onClick={() => setSlides([])}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </button>
+          }
+        />
+      )}
+      
+      {slides.length === 0 && (
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <Presentation className="h-6 w-6 text-primary" /> Gerador de Slides
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">Apresentações pedagógicas com imagens IA, exportação PPTX e modo handout</p>
+        </div>
+      )}
 
       {/* Development banner */}
       <div className="flex items-center gap-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 px-4 py-3">
