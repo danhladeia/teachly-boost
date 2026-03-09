@@ -36,8 +36,17 @@ export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
   if (!element) return;
 
+  // Save original styles to restore later
+  const origPadding = element.style.padding;
+  const origWidth = element.style.width;
+  const origMinHeight = element.style.minHeight;
+
+  // Remove element padding — html2pdf will apply its own margins
+  element.style.padding = "0";
+  element.style.width = "180mm"; // A4 (210mm) minus 15mm margins each side
+  element.style.minHeight = "auto";
+
   // For paginated previews: temporarily flatten pages for html2pdf
-  // Remove page-level padding/height so html2pdf handles margins per page
   const pageChildren = element.querySelectorAll<HTMLElement>('[style*="height"]');
   const savedStyles: { el: HTMLElement; padding: string; height: string; overflow: string; boxShadow: string }[] = [];
   
@@ -65,21 +74,24 @@ export async function exportToPdf(elementId: string, filename: string) {
       margin: [15, 15, 15, 15], // top, left, bottom, right in mm
       filename: `${filename}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, windowWidth: element.scrollWidth },
+      html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["css", "legacy"], avoid: [".question"] },
     })
     .from(element)
     .save();
 
-  // Restore
+  // Restore all styles
+  element.style.padding = origPadding;
+  element.style.width = origWidth;
+  element.style.minHeight = origMinHeight;
+  element.style.gap = origGap;
   savedStyles.forEach(s => {
     s.el.style.padding = s.padding;
     s.el.style.height = s.height;
     s.el.style.overflow = s.overflow;
     s.el.style.boxShadow = s.boxShadow;
   });
-  element.style.gap = origGap;
 }
 
 export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: string; logoUrl?: string; bannerUrl?: string }) {
