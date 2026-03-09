@@ -16,6 +16,7 @@ const PAGE_STYLE: React.CSSProperties = {
   overflow: "hidden",
   pageBreakAfter: "always",
   pageBreakInside: "avoid",
+  maxWidth: "100vw",
 };
 
 interface Props {
