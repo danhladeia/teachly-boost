@@ -150,7 +150,7 @@ export async function exportPlanoToDocx(plano: any, cabecalho?: { escola?: strin
     sections: [{
       properties: {
         page: {
-          margin: { top: 1134, bottom: 1134, left: 850, right: 850 }, // 20mm top/bottom, 15mm left/right in twips
+          margin: { top: 850, bottom: 850, left: 850, right: 850 }, // 15mm all sides in twips
         },
       },
       children,
