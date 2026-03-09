@@ -344,21 +344,93 @@ export default function OMRScanner() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 overflow-x-hidden">
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="font-display text-lg flex items-center gap-2">
-            <Upload className="h-5 w-5 text-primary" />
-            Correção de Provas por Foto
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Upload Area */}
-          {sheets.every(s => s.status === "pending" || sheets.length === 0) && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Envie fotos das <strong>folhas de respostas</strong> preenchidas pelos alunos. A inteligência artificial detecta o QR Code, identifica a versão da prova e lê as respostas marcadas automaticamente.
-              </p>
+      {/* Step indicator */}
+      <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-medium">
+        {[
+          { key: "select-gabarito", label: "Gabarito" },
+          { key: "upload", label: "Fotos" },
+          { key: "results", label: "Resultados" },
+        ].map((s, i) => (
+          <div key={s.key} className="flex items-center gap-0.5 sm:gap-1 flex-1 justify-center">
+            {i > 0 && <div className="w-3 sm:w-6 h-px bg-border shrink-0" />}
+            <span className={`px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap ${step === s.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              {i + 1}. {s.label}
+            </span>
+          </div>
+        ))}
+      </div>
 
+      {/* STEP 1: Select Gabarito */}
+      {step === "select-gabarito" && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+              <Search className="h-4 w-4 text-primary" />
+              Selecione a Prova
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Carregue o gabarito antes de enviar as fotos dos alunos.
+            </p>
+            <div className="space-y-2">
+              <Select value={selectedProvaId} onValueChange={setSelectedProvaId}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Selecione a prova..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {provasList.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.titulo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {versoesList.length > 0 && (
+                <Select value={selectedVersaoId} onValueChange={setSelectedVersaoId}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Original (sem embaralhamento)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="original">Original</SelectItem>
+                    {versoesList.map(v => (
+                      <SelectItem key={v.id} value={v.id}>Versão {v.versao_label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button
+                onClick={fetchGabaritoAndAdvance}
+                disabled={!selectedProvaId || loadingGabarito}
+                className="w-full gradient-primary border-0 text-primary-foreground"
+              >
+                {loadingGabarito ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                Carregar Gabarito
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* STEP 2: Upload Photos */}
+      {step === "upload" && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-sm sm:text-base flex items-center gap-2">
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Enviar Fotos
+              {preloadedProvaInfo && (
+                <Badge variant="secondary" className="text-[9px] sm:text-[10px] ml-auto font-normal truncate max-w-[180px]">
+                  {preloadedProvaInfo.titulo}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Gabarito carregado com <strong>{preloadedGabarito?.length || 0} questões</strong>. Agora envie as fotos das folhas de respostas.
+            </p>
+
+            {/* Upload area */}
+            {sheets.every(s => s.status === "pending" || sheets.length === 0) && !processing && (
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -384,34 +456,33 @@ export default function OMRScanner() {
                   </div>
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-          {/* Thumbnails & Process Button */}
-          {sheets.length > 0 && !processing && sheets.some(s => s.status === "pending") && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold">{sheets.length} gabarito(s) para processar</h4>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={reset}><Trash2 className="mr-1 h-3 w-3" /> Limpar</Button>
-                  <Button size="sm" onClick={processAllSheets} className="gradient-primary border-0 text-primary-foreground">
-                    <Upload className="mr-1 h-4 w-4" /> Processar Todos
-                  </Button>
+            {/* Thumbnails & Process Button */}
+            {sheets.length > 0 && !processing && sheets.some(s => s.status === "pending") && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">{sheets.length} gabarito(s) para processar</h4>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { sheets.forEach(s => URL.revokeObjectURL(s.previewUrl)); setSheets([]); }}><Trash2 className="mr-1 h-3 w-3" /> Limpar</Button>
+                    <Button size="sm" onClick={processAllSheets} className="gradient-primary border-0 text-primary-foreground">
+                      <Upload className="mr-1 h-4 w-4" /> Processar Todos
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {sheets.map((s, i) => (
+                    <div key={i} className="relative group">
+                      <img src={s.previewUrl} alt={`Gabarito ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
+                      <button
+                        onClick={() => removeSheet(i)}
+                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >✕</button>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                {sheets.map((s, i) => (
-                  <div key={i} className="relative group">
-                    <img src={s.previewUrl} alt={`Gabarito ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
-                    <button
-                      onClick={() => removeSheet(i)}
-                      className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >✕</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Processing Progress */}
           {processing && (
