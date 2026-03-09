@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Sparkles, Loader2, Download, RefreshCw, Image, Code } from "lucide-react";
+import { Sparkles, Loader2, Download, RefreshCw, Image, Code, FileText, Presentation } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { saveAs } from "file-saver";
+import { Document, Packer, Paragraph, ImageRun, AlignmentType } from "docx";
 import EditorTopBar from "@/components/EditorTopBar";
 import TimbreSelector from "@/components/TimbreSelector";
 import type { TimbreData } from "@/hooks/useTimbre";
@@ -36,11 +38,39 @@ const estilos = [
   { value: "pb", label: "P&B (para colorir)" },
 ];
 
+type Orientation = "portrait" | "landscape";
+
+/** Convert SVG element to PNG blob at given scale */
+async function svgToPngBlob(svgEl: SVGSVGElement, scale = 2): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const bbox = svgEl.getBoundingClientRect();
+    const canvas = document.createElement("canvas");
+    canvas.width = bbox.width * scale;
+    canvas.height = bbox.height * scale;
+    const ctx = canvas.getContext("2d")!;
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, bbox.width, bbox.height);
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((b) => resolve(b), "image/png");
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 export default function DiagramGenerator() {
   const { canUseAI, deductCredit } = useCredits();
   const [prompt, setPrompt] = useState("");
   const [tipo, setTipo] = useState("fluxograma");
   const [estilo, setEstilo] = useState("clean");
+  const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [mermaidCode, setMermaidCode] = useState("");
   const [svgOutput, setSvgOutput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,6 +79,7 @@ export default function DiagramGenerator() {
   const [showCode, setShowCode] = useState(false);
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const renderMermaid = useCallback(async (code: string) => {
     if (!code.trim()) { setSvgOutput(""); return; }
@@ -69,12 +100,10 @@ export default function DiagramGenerator() {
   const handleGenerate = async () => {
     if (!prompt.trim()) { toast.error("Descreva o diagrama"); return; }
     if (!canUseAI) { toast.error("Sem créditos disponíveis"); return; }
-
     setLoading(true);
     try {
       const ok = await deductCredit();
       if (!ok) { toast.error("Erro ao deduzir crédito"); return; }
-
       const { data, error } = await supabase.functions.invoke("generate-diagram", {
         body: { prompt, tipo, estilo },
       });
@@ -92,12 +121,10 @@ export default function DiagramGenerator() {
   const handleAjuste = async () => {
     if (!ajuste.trim()) { toast.error("Descreva o ajuste"); return; }
     if (!canUseAI) { toast.error("Sem créditos disponíveis"); return; }
-
     setAjusteLoading(true);
     try {
       const ok = await deductCredit();
       if (!ok) { toast.error("Erro ao deduzir crédito"); return; }
-
       const { data, error } = await supabase.functions.invoke("generate-diagram", {
         body: { codigoAtual: mermaidCode, ajuste },
       });
@@ -113,40 +140,107 @@ export default function DiagramGenerator() {
     }
   };
 
+  // ── Export: PNG ──
   const handleDownloadPng = async () => {
-    if (!svgOutput) return;
-    try {
-      const svgEl = diagramRef.current?.querySelector("svg");
-      if (!svgEl) return;
-      const canvas = document.createElement("canvas");
-      const bbox = svgEl.getBoundingClientRect();
-      const scale = 2;
-      canvas.width = bbox.width * scale;
-      canvas.height = bbox.height * scale;
-      const ctx = canvas.getContext("2d")!;
-      ctx.scale(scale, scale);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, bbox.width, bbox.height);
+    const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
+    if (!svgEl) return;
+    const blob = await svgToPngBlob(svgEl);
+    if (!blob) { toast.error("Erro ao exportar PNG"); return; }
+    saveAs(blob, "diagrama.png");
+  };
 
-      const svgData = new XMLSerializer().serializeToString(svgEl);
-      const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const img = new window.Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((b) => {
-          if (!b) return;
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(b);
-          a.download = "diagrama.png";
-          a.click();
-        });
-      };
-      img.src = url;
-    } catch {
-      toast.error("Erro ao exportar imagem");
+  // ── Export: PDF (A4 portrait or landscape) ──
+  const handleExportPdf = async () => {
+    const el = printRef.current;
+    if (!el) return;
+    const html2pdf = (await import("html2pdf.js")).default;
+    const origW = el.style.width;
+    const origMinH = el.style.minHeight;
+    const origShadow = el.style.boxShadow;
+    const isLandscape = orientation === "landscape";
+    el.style.width = isLandscape ? "267mm" : "180mm";
+    el.style.minHeight = "auto";
+    el.style.boxShadow = "none";
+    await html2pdf().set({
+      margin: [15, 15, 15, 15],
+      filename: "diagrama.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, width: el.scrollWidth },
+      jsPDF: { unit: "mm", format: "a4", orientation: isLandscape ? "landscape" : "portrait" },
+    }).from(el).save();
+    el.style.width = origW;
+    el.style.minHeight = origMinH;
+    el.style.boxShadow = origShadow;
+  };
+
+  // ── Export: DOCX ──
+  const handleExportDocx = async () => {
+    const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
+    if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
+    const blob = await svgToPngBlob(svgEl, 3);
+    if (!blob) { toast.error("Erro ao gerar imagem"); return; }
+    const buffer = await blob.arrayBuffer();
+    const bbox = svgEl.getBoundingClientRect();
+    const isLandscape = orientation === "landscape";
+    const maxW = isLandscape ? 800 : 550;
+    const maxH = isLandscape ? 500 : 700;
+    let w = bbox.width, h = bbox.height;
+    if (w > maxW) { h = h * (maxW / w); w = maxW; }
+    if (h > maxH) { w = w * (maxH / h); h = maxH; }
+    const children: Paragraph[] = [];
+    if (escolaFinal) {
+      const { TextRun } = await import("docx");
+      children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: escolaFinal, bold: true, size: 28, font: "Arial" })], spacing: { after: 200 } }));
     }
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new ImageRun({ data: buffer, transformation: { width: Math.round(w), height: Math.round(h) }, type: "png" })],
+    }));
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: {
+            margin: { top: 850, bottom: 850, left: 850, right: 850 },
+            size: isLandscape ? { orientation: "landscape" } : undefined,
+          },
+        },
+        children,
+      }],
+    });
+    const docBlob = await Packer.toBlob(doc);
+    saveAs(docBlob, "diagrama.docx");
+  };
+
+  // ── Export: PPTX ──
+  const handleExportPptx = async () => {
+    const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
+    if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
+    const pngBlob = await svgToPngBlob(svgEl, 3);
+    if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    const base64 = await new Promise<string>((res) => {
+      const reader = new FileReader();
+      reader.onloadend = () => res((reader.result as string).split(",")[1]);
+      reader.readAsDataURL(pngBlob);
+    });
+    const pptxgenjs = (await import("pptxgenjs")).default;
+    const pres = new pptxgenjs();
+    const isLandscape = orientation === "landscape";
+    if (!isLandscape) pres.defineLayout({ name: "A4V", width: 7.5, height: 10 });
+    const slide = pres.addSlide();
+    if (escolaFinal) {
+      slide.addText(escolaFinal, { x: 0.5, y: 0.3, w: isLandscape ? 9 : 6.5, h: 0.5, fontSize: 14, bold: true, align: "center" });
+    }
+    const bbox = svgEl.getBoundingClientRect();
+    const aspect = bbox.width / bbox.height;
+    const slideW = isLandscape ? 8 : 6;
+    const slideH = isLandscape ? 5 : 7;
+    let imgW = slideW, imgH = slideW / aspect;
+    if (imgH > slideH) { imgH = slideH; imgW = slideH * aspect; }
+    const xOff = isLandscape ? (10 - imgW) / 2 : (7.5 - imgW) / 2;
+    const yOff = escolaFinal ? 1 : (isLandscape ? (7.5 - imgH) / 2 : (10 - imgH) / 2);
+    slide.addImage({ data: `image/png;base64,${base64}`, x: xOff, y: yOff, w: imgW, h: imgH });
+    const buf = await pres.write({ outputType: "arraybuffer" });
+    saveAs(new Blob([buf as ArrayBuffer]), "diagrama.pptx");
   };
 
   const logoUrl = selectedTimbre?.logoUrl;
@@ -155,10 +249,23 @@ export default function DiagramGenerator() {
     ? (selectedTimbre.showNomeEscola ? selectedTimbre.escola : "")
     : "";
 
+  const isLandscape = orientation === "landscape";
+  const previewStyle: React.CSSProperties = {
+    width: isLandscape ? "297mm" : "210mm",
+    minHeight: isLandscape ? "210mm" : "297mm",
+    padding: "15mm",
+    fontFamily: "'Inter', 'Arial', sans-serif",
+    fontSize: "11pt",
+    lineHeight: 1.6,
+  };
+
   return (
     <div className="flex flex-col h-full">
       <EditorTopBar
         title="Gerador de Diagramas"
+        onPdf={mermaidCode ? handleExportPdf : undefined}
+        onDocx={mermaidCode ? handleExportDocx : undefined}
+        onPptx={mermaidCode ? handleExportPptx : undefined}
         actions={[
           mermaidCode ? (
             <Button key="code" variant="ghost" size="sm" onClick={() => setShowCode(!showCode)}>
@@ -223,6 +330,17 @@ export default function DiagramGenerator() {
                 </div>
               </div>
 
+              <div>
+                <Label className="text-xs">Orientação da folha</Label>
+                <Select value={orientation} onValueChange={(v) => setOrientation(v as Orientation)}>
+                  <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="portrait">Vertical (Retrato)</SelectItem>
+                    <SelectItem value="landscape">Horizontal (Paisagem)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Button className="w-full" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                 Gerar Diagrama via IA
@@ -271,8 +389,12 @@ export default function DiagramGenerator() {
         </div>
 
         {/* Right Panel — Diagram Preview */}
-        <div className="flex-1 flex items-start justify-center">
-          <div className="bg-background border rounded-lg shadow-sm w-full max-w-[800px] min-h-[400px] p-6">
+        <div className="flex-1 flex items-start justify-center overflow-auto">
+          <div
+            ref={printRef}
+            className="bg-background border rounded-lg shadow-sm"
+            style={previewStyle}
+          >
             {/* Header / Branding */}
             {(bannerUrl || logoUrl || escolaFinal) && (
               <div className="mb-4 pb-3 border-b border-border">
@@ -288,7 +410,7 @@ export default function DiagramGenerator() {
             )}
 
             {svgOutput ? (
-              <div ref={diagramRef} className="w-full overflow-auto" dangerouslySetInnerHTML={{ __html: svgOutput }} />
+              <div ref={diagramRef} className="w-full overflow-auto flex items-center justify-center" dangerouslySetInnerHTML={{ __html: svgOutput }} />
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
                 <Image className="h-12 w-12 mb-3 opacity-30" />
