@@ -84,6 +84,7 @@ export function useTimbre() {
       user_id: user.id,
       nome_escola: data.escola,
       logo_url: data.logoUrl || null,
+      show_nome_escola: data.showNomeEscola,
       show_professor: data.showProfessor,
       show_disciplina: data.showDisciplina,
       show_serie: data.showSerie,

@@ -195,7 +195,7 @@ export default function Branding() {
               <div className="rounded-lg border bg-white p-4">
                 <div className="flex items-center justify-center gap-4 border-b-2 border-black pb-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
                   {editing.logoUrl && <img src={editing.logoUrl} alt="Logo" className="h-10 object-contain" crossOrigin="anonymous" />}
-                  {editing.escola && <span className="font-bold text-lg text-black">{editing.escola}</span>}
+                  {editing.showNomeEscola && editing.escola && <span className="font-bold text-lg text-black">{editing.escola}</span>}
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-2 flex-wrap gap-1">
                   {editing.showProfessor && <span>Professor(a): ________________</span>}
