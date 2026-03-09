@@ -47,6 +47,7 @@ export function useTimbre() {
         id: t.id,
         escola: t.nome_escola || "",
         logoUrl: t.logo_url || "",
+        bannerUrl: t.banner_url || "",
         showNomeEscola: t.show_nome_escola ?? true,
         showProfessor: t.show_professor ?? true,
         showDisciplina: t.show_disciplina ?? true,
