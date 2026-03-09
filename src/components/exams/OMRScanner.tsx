@@ -222,16 +222,19 @@ export default function OMRScanner() {
         const result = await resp.json();
         if (!result.success) throw new Error(result.error || "Erro no processamento");
 
-        setSheets(prev => prev.map((s, idx) => idx === i ? {
-          ...s,
-          status: "done",
+        const processed: ProcessedSheet = {
+          ...sheets[i],
+          status: "done" as const,
           respostas: result.respostas || [],
           nome_aluno: result.nome_aluno,
           qr_detected: result.qr_detected,
           gabarito: result.gabarito,
           prova_info: result.prova_info,
           imagem_url: result.imagem_url,
-        } : s));
+        };
+        // Apply preloaded gabarito if QR didn't detect one
+        const withGabarito = applyPreloadedGabarito(processed);
+        setSheets(prev => prev.map((s, idx) => idx === i ? withGabarito : s));
       } catch (err: any) {
         setSheets(prev => prev.map((s, idx) => idx === i ? { ...s, status: "error", errorMsg: err.message } : s));
       }
