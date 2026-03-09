@@ -132,15 +132,11 @@ export default function SlidesGenerator() {
         </div>
       )}
 
-      {/* Development banner */}
-      <div className="flex items-center gap-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 px-4 py-3">
-        <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
-        <div>
-          <p className="font-semibold text-yellow-800 text-sm">⚠️ Sistema de Slides em Desenvolvimento</p>
-          <p className="text-yellow-700 text-xs mt-0.5">
-            Recomenda-se gerar os slides e editá-los no <strong>PowerPoint</strong> ou <strong>Google Slides</strong> para melhor personalização.
-          </p>
-        </div>
+      {/* Recommendation banner */}
+      <div className="flex items-center gap-3 rounded-lg border border-muted-foreground/20 bg-muted/50 px-4 py-2.5">
+        <p className="text-muted-foreground text-xs">
+          💡 Recomenda-se gerar os slides e editá-los no <strong>PowerPoint</strong> ou <strong>Google Slides</strong> para melhor personalização.
+        </p>
       </div>
 
       {slides.length === 0 ? (
