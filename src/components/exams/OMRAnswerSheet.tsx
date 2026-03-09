@@ -88,9 +88,9 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
       </div>
 
       {/* Student fields */}
-      <div style={{ display: "flex", gap: "8mm", fontSize: "9pt", marginBottom: "4mm", borderBottom: "1px solid #cbd5e1", paddingBottom: "3mm" }}>
-        <span style={{ flex: 1 }}>Nome: _____________________________________________</span>
-        <span>Turma: {turma || "___________"}</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2mm 8mm", fontSize: "9pt", marginBottom: "4mm", borderBottom: "1px solid #cbd5e1", paddingBottom: "3mm" }}>
+        <span style={{ flex: "1 1 auto", minWidth: "0" }}>Nome: _________________________________</span>
+        <span>Turma: {turma || "________"}</span>
         <span>Data: ___/___/___</span>
       </div>
 
