@@ -434,7 +434,8 @@ export default function Activities() {
   const handleExportDocx = () => {
     exportAtividadeToDocx(blocks, {
       escola: showHeader ? escola : undefined,
-      professor, turma, autoNumber,
+      professor, turma, autoNumber, showLines,
+      showAluno, showData,
       bannerUrl: showHeader ? selectedTimbre?.bannerUrl : undefined,
       logoUrl: showHeader ? selectedTimbre?.logoUrl : undefined,
     });
