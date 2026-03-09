@@ -103,24 +103,15 @@ export default function Pricing() {
     }
   };
 
-  const handleCheckout = async (priceId: string) => {
-    setCheckingOut(priceId);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          priceId,
-          couponId: couponApplied ? STRIPE_COUPON_ID : undefined,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+  const handleCheckout = (paymentLink: string) => {
+    // Append prefilled_email if user is logged in
+    const url = new URL(paymentLink);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) {
+        url.searchParams.set("prefilled_email", data.user.email);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao iniciar checkout");
-    } finally {
-      setCheckingOut(null);
-    }
+      window.open(url.toString(), "_blank");
+    });
   };
 
   const handleManageSubscription = async () => {
