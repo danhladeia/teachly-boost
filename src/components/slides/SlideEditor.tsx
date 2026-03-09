@@ -31,7 +31,7 @@ interface Props {
 
 export default function SlideEditor({
   slides, setSlides, template, setTemplate, onReset,
-  generatingImages, imageProgress, imageTotal,
+  generatingImages, imageProgress, imageTotal, onPrint, onPptx
 }: Props) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
