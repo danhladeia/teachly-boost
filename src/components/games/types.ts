@@ -138,6 +138,7 @@ export const etapaConfig: Record<EtapaEscolar, { label: string; icon: string; de
 export const defaultHeader: GameHeader = {
   showHeader: false,
   logoUrl: "",
+  bannerUrl: "",
   escola: "",
   professor: "",
   disciplina: "",
