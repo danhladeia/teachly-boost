@@ -396,7 +396,7 @@ export default function Activities() {
     pw.document.write(`<html><head><title>Atividade</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
-      @page { size: A4; margin: 15mm; }
+      @page { size: A4; margin: 20mm 15mm; }
       .question { page-break-inside: avoid; }
     </style></head><body>`);
     pw.document.write(el.innerHTML);

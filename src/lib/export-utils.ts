@@ -166,7 +166,7 @@ export async function exportAtividadeToDocx(
     sections: [{
       properties: {
         page: {
-          margin: { top: 567, bottom: 567, left: 567, right: 567 },
+          margin: { top: 756, bottom: 756, left: 567, right: 567 },
         },
       },
       children,

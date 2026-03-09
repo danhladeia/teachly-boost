@@ -949,7 +949,7 @@ export default function Exams() {
                 <div
                   id="prova-print-area"
                   className="bg-white text-black shadow-lg w-full max-w-[210mm]"
-                  style={{ minHeight: "297mm", padding: "15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  style={{ minHeight: "297mm", padding: "20mm 15mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {/* School header */}
                   {showHeader && escola && (
