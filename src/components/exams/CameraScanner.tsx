@@ -63,6 +63,13 @@ export default function CameraScanner() {
   const [selectedVersaoId, setSelectedVersaoId] = useState("");
   const [loadingGabarito, setLoadingGabarito] = useState(false);
 
+  // Safety guard: never allow camera/validation without a loaded gabarito
+  useEffect(() => {
+    if (step !== "select-gabarito" && (!gabarito || gabarito.length === 0)) {
+      setStep("select-gabarito");
+    }
+  }, [step, gabarito]);
+
   useEffect(() => {
     if (!user) return;
     (async () => {

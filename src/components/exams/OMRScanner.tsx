@@ -75,6 +75,13 @@ export default function OMRScanner() {
   const [selectedVersaoId, setSelectedVersaoId] = useState<string>("");
   const [loadingGabarito, setLoadingGabarito] = useState(false);
 
+  // Safety guard: never allow upload/results without a preloaded gabarito
+  useEffect(() => {
+    if (step !== "select-gabarito" && (!preloadedGabarito || preloadedGabarito.length === 0)) {
+      setStep("select-gabarito");
+    }
+  }, [step, preloadedGabarito]);
+
   // Load user's provas on mount
   useEffect(() => {
     if (!user) return;
@@ -196,6 +203,12 @@ export default function OMRScanner() {
   };
 
   const addFiles = useCallback((files: FileList | File[]) => {
+    if (!preloadedGabarito || preloadedGabarito.length === 0) {
+      toast.error("Carregue o gabarito antes de enviar as fotos");
+      setStep("select-gabarito");
+      return;
+    }
+
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (imageFiles.length === 0) { toast.error("Selecione imagens JPG ou PNG"); return; }
 
@@ -215,7 +228,7 @@ export default function OMRScanner() {
 
     setSheets(prev => [...prev, ...newSheets]);
     toast.success(`${imageFiles.length} imagem(ns) adicionada(s)`);
-  }, []);
+  }, [preloadedGabarito]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -237,6 +250,11 @@ export default function OMRScanner() {
   };
 
   const processAllSheets = async () => {
+    if (!preloadedGabarito || preloadedGabarito.length === 0) {
+      toast.error("Carregue o gabarito antes de processar as fotos");
+      setStep("select-gabarito");
+      return;
+    }
     if (sheets.length === 0) return;
     setProcessing(true);
     setProgress(0);
