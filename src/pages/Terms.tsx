@@ -38,7 +38,7 @@ export default function Terms() {
               <li><strong>Master (R$ 44,90/mês):</strong> 50 créditos renováveis mensalmente, até 3 timbres escolares, suporte prioritário.</li>
               <li><strong>Ultra (R$ 89,90/mês):</strong> Créditos ilimitados, timbres ilimitados, suporte via WhatsApp.</li>
             </ul>
-            <p>Cada ação de geração por IA (plano de aula, jogo, slides, correção de prova) consome 1 crédito. Os créditos dos planos pagos são renovados a cada ciclo mensal de faturamento. O cupom <strong>GOPEDAGOX</strong> concede 25% de desconto sobre os valores dos planos pagos.</p>
+            <p>Cada ação de geração por IA (plano de aula, jogo, slides, correção de prova) consome 1 crédito. Os créditos dos planos pagos são renovados a cada ciclo mensal de faturamento.</p>
           </section>
 
           <section>
