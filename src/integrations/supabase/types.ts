@@ -130,6 +130,7 @@ export type Database = {
           nome: string | null
           plan_type: string
           plano: string
+          stripe_customer_id: string | null
           subscription_status: string
           updated_at: string
           user_id: string
@@ -147,6 +148,7 @@ export type Database = {
           nome?: string | null
           plan_type?: string
           plano?: string
+          stripe_customer_id?: string | null
           subscription_status?: string
           updated_at?: string
           user_id: string
@@ -164,6 +166,7 @@ export type Database = {
           nome?: string | null
           plan_type?: string
           plano?: string
+          stripe_customer_id?: string | null
           subscription_status?: string
           updated_at?: string
           user_id?: string

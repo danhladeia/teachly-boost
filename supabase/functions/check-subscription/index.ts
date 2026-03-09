@@ -93,6 +93,7 @@ serve(async (req) => {
         credits_remaining: planInfo.credits,
         logos_limit: planInfo.logos_limit,
         subscription_status: "active",
+        stripe_customer_id: customerId,
       })
       .eq("user_id", user.id);
 
