@@ -261,20 +261,29 @@ export default function DiagramGenerator() {
     URL.revokeObjectURL(diagramImg.src);
   };
 
-  // ── Export: DOCX ──
+  // ── Export: DOCX (scaled to fit A4) ──
   const handleExportDocx = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
-    const blob = await svgToPngBlob(svgEl, 3);
+    const isLandscape = orientation === "landscape";
+    const blob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!blob) { toast.error("Erro ao gerar imagem"); return; }
     const buffer = await blob.arrayBuffer();
-    const bbox = svgEl.getBoundingClientRect();
-    const isLandscape = orientation === "landscape";
-    const maxW = isLandscape ? 800 : 550;
-    const maxH = isLandscape ? 500 : 700;
-    let w = bbox.width, h = bbox.height;
+    
+    // DOCX dimensions: A4 is 595x842 points, margins ~50pt each side
+    // Max content area: ~495x742 (portrait) or ~742x495 (landscape)
+    const maxW = isLandscape ? 680 : 480;
+    const maxH = isLandscape ? 420 : 680;
+    
+    // Get the scaled image dimensions from the blob
+    const imgBitmap = await createImageBitmap(blob);
+    let w = imgBitmap.width / 3; // Divide by scale factor used in svgToPngBlob
+    let h = imgBitmap.height / 3;
+    
+    // Further constrain to DOCX max dimensions
     if (w > maxW) { h = h * (maxW / w); w = maxW; }
     if (h > maxH) { w = w * (maxH / h); h = maxH; }
+    
     const children: Paragraph[] = [];
     if (escolaFinal) {
       const { TextRun } = await import("docx");
@@ -288,7 +297,7 @@ export default function DiagramGenerator() {
       sections: [{
         properties: {
           page: {
-            margin: { top: 850, bottom: 850, left: 850, right: 850 },
+            margin: { top: 720, bottom: 720, left: 720, right: 720 }, // ~1cm margins
             size: isLandscape ? { orientation: "landscape" } : undefined,
           },
         },
