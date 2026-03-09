@@ -117,8 +117,11 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
 
       <Card className="shadow-card overflow-auto">
         <div id="plano-print-area" className="bg-white text-black p-[15mm] mx-auto" style={{ width: "210mm", minHeight: "297mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}>
-          {showHeader && escola && (
-            <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "6mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>{escola}</div>
+          {showHeader && (escola || logoUrl) && (
+            <div style={{ textAlign: "center", marginBottom: "6mm", borderBottom: "2px solid #2563eb", paddingBottom: "3mm" }}>
+              {logoUrl && <img src={logoUrl} alt="" style={{ maxHeight: "50px", margin: "0 auto 3mm" }} crossOrigin="anonymous" />}
+              {escola && <div style={{ fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>{escola}</div>}
+            </div>
           )}
 
           <h1 style={{ textAlign: "center", fontSize: "16pt", fontWeight: 700, borderBottom: "2px solid #2563eb", paddingBottom: "4mm", marginBottom: "6mm", fontFamily: "'Montserrat', sans-serif" }}>
