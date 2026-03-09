@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BookOpen, FileText, Presentation, Gamepad2,
-  FileCheck, Stamp, Settings, LogOut, CreditCard, StickyNote, MessageSquare
+  FileCheck, Stamp, Settings, LogOut, CreditCard, StickyNote, MessageSquare, Library
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ import {
 
 const items = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
+  { title: "Biblioteca", url: "/app/biblioteca", icon: Library },
   { title: "Planejador BNCC", url: "/app/bncc", icon: BookOpen },
   { title: "Atividades A4", url: "/app/atividades", icon: FileText },
   { title: "Gerador de Slides", url: "/app/slides", icon: Presentation },

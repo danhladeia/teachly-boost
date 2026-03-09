@@ -47,6 +47,7 @@ const AppRoutes = () => (
     <Route path="/admin" element={<AdminDashboard />} />
     <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
+      <Route path="biblioteca" element={<LibraryPage />} />
       <Route path="bncc" element={<BNCCPlanner />} />
       <Route path="atividades" element={<Activities />} />
       <Route path="slides" element={<SlidesGenerator />} />
