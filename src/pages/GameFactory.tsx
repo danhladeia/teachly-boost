@@ -534,14 +534,21 @@ export default function GameFactory() {
               {/* Tema */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Tema <Tip text="O tema será usado pela IA ou como título" /></Label>
-                <Input placeholder="Ex: Hardware, Sistema Solar..." value={tema} onChange={e => setTema(e.target.value)} className="h-8 text-xs" />
+                <Input placeholder="Ex: Adjetivos, Frações, Sistema Solar..." value={tema} onChange={e => setTema(e.target.value)} className="h-8 text-xs" />
+                <p className="text-[9px] text-muted-foreground">
+                  Português: <span className="font-medium">Substantivos, Verbos, Pontuação</span> · 
+                  Matemática: <span className="font-medium">Frações, Geometria, Álgebra</span>
+                </p>
               </div>
 
               {/* Words */}
               {showWordsField && (
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Palavras-chave (vírgula)</Label>
-                  <Textarea placeholder="CPU, RAM, SSD, PLACA" value={palavras} onChange={e => setPalavras(e.target.value)} className="min-h-[50px] text-xs" />
+                  <Textarea placeholder="SUJEITO, VERBO, PREDICADO ou FRAÇÃO, NUMERADOR, DENOMINADOR" value={palavras} onChange={e => setPalavras(e.target.value)} className="min-h-[50px] text-xs" />
+                  <p className="text-[9px] text-muted-foreground">
+                    Ex: SUBSTANTIVO, ADJETIVO, VERBO ou SOMA, SUBTRAÇÃO, MULTIPLICAÇÃO
+                  </p>
                 </div>
               )}
 
