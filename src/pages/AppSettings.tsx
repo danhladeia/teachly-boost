@@ -23,7 +23,7 @@ const planMeta: Record<string, { label: string; image: string; color: string }> 
 
 export default function AppSettings() {
   const { user } = useAuth();
-  const { plan, refreshPlan } = useCredits();
+  const { plan, refreshPlan, planLimits } = useCredits();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [escola, setEscola] = useState("");
@@ -66,6 +66,7 @@ export default function AppSettings() {
 
   const meta = planMeta[plan.planType] || planMeta.starter;
   const hasPaidPlan = plan.planType !== "starter";
+  const isUnlimited = plan.planType === "ultra";
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -101,14 +102,17 @@ export default function AppSettings() {
               <h3 className={`font-display text-xl font-bold ${meta.color}`}>{meta.label}</h3>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 <Badge variant="secondary" className="text-xs">
-                  {plan.planType === "ultra" ? "Créditos Ilimitados" : `${plan.creditsRemaining} créditos restantes`}
+                  {isUnlimited ? "Créditos Ilimitados" : `Criação: ${plan.creditsGeneral} / ${planLimits.maxGeneral}`}
+                </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {isUnlimited ? "Correções Ilimitadas" : `Correções: ${plan.creditsExams} / ${planLimits.maxExams}`}
                 </Badge>
                 <Badge variant={plan.subscriptionStatus === "active" ? "default" : "destructive"} className="text-xs">
                   {plan.subscriptionStatus === "active" ? "Ativo" : plan.subscriptionStatus}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Logos: {plan.planType === "ultra" ? "Ilimitados" : `até ${plan.logosLimit}`}
+                Logos: {isUnlimited ? "Ilimitados" : `até ${plan.logosLimit}`}
               </p>
             </div>
           </div>
