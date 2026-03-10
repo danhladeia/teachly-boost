@@ -121,6 +121,8 @@ export type Database = {
           created_at: string
           creditos_correcao: number
           creditos_ia: number
+          credits_exams: number
+          credits_general: number
           credits_remaining: number
           email: string | null
           escola: string | null
@@ -139,6 +141,8 @@ export type Database = {
           created_at?: string
           creditos_correcao?: number
           creditos_ia?: number
+          credits_exams?: number
+          credits_general?: number
           credits_remaining?: number
           email?: string | null
           escola?: string | null
@@ -157,6 +161,8 @@ export type Database = {
           created_at?: string
           creditos_correcao?: number
           creditos_ia?: number
+          credits_exams?: number
+          credits_general?: number
           credits_remaining?: number
           email?: string | null
           escola?: string | null
