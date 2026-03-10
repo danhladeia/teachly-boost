@@ -4,23 +4,42 @@ import { useAuth } from "./useAuth";
 
 interface PlanInfo {
   planType: string;
-  creditsRemaining: number;
+  creditsGeneral: number;
+  creditsExams: number;
+  creditsRemaining: number; // kept for backward compat
   logosLimit: number;
   subscriptionStatus: string;
 }
+
+interface PlanLimits {
+  maxGeneral: number;
+  maxExams: number;
+}
+
+const PLAN_LIMITS: Record<string, PlanLimits> = {
+  starter: { maxGeneral: 10, maxExams: 10 },
+  pro: { maxGeneral: 30, maxExams: 50 },
+  master: { maxGeneral: 60, maxExams: 80 },
+  ultra: { maxGeneral: Infinity, maxExams: Infinity },
+};
 
 interface CreditsContextType {
   plan: PlanInfo;
   loading: boolean;
   canUseAI: boolean;
+  canCorrectExam: (count?: number) => boolean;
   canUploadLogo: (currentLogosCount: number) => boolean;
   deductCredit: () => Promise<boolean>;
+  deductExamCredits: (count: number) => Promise<boolean>;
   refreshPlan: () => Promise<void>;
+  planLimits: PlanLimits;
 }
 
 const defaultPlan: PlanInfo = {
   planType: "starter",
-  creditsRemaining: 5,
+  creditsGeneral: 10,
+  creditsExams: 10,
+  creditsRemaining: 10,
   logosLimit: 0,
   subscriptionStatus: "active",
 };
@@ -35,21 +54,20 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   const fetchPlan = useCallback(async () => {
     if (!user) { setLoading(false); return; }
     
-    // Sync subscription status from Stripe
     try {
       await supabase.functions.invoke("check-subscription");
-    } catch (e) {
-      // Silently fail - will use local profile data
-    }
+    } catch (e) {}
 
     const { data } = await supabase
       .from("profiles")
-      .select("plan_type, credits_remaining, logos_limit, subscription_status")
+      .select("plan_type, credits_remaining, credits_general, credits_exams, logos_limit, subscription_status")
       .eq("user_id", user.id)
       .maybeSingle();
     if (data) {
       setPlan({
         planType: (data as any).plan_type || "starter",
+        creditsGeneral: (data as any).credits_general ?? 10,
+        creditsExams: (data as any).credits_exams ?? 10,
         creditsRemaining: (data as any).credits_remaining ?? 5,
         logosLimit: (data as any).logos_limit ?? 0,
         subscriptionStatus: (data as any).subscription_status || "active",
@@ -60,7 +78,13 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { fetchPlan(); }, [fetchPlan]);
 
-  const canUseAI = plan.planType === "ultra" || plan.creditsRemaining > 0;
+  const planLimits = PLAN_LIMITS[plan.planType] || PLAN_LIMITS.starter;
+  const canUseAI = plan.planType === "ultra" || plan.creditsGeneral > 0;
+
+  const canCorrectExam = (count: number = 1) => {
+    if (plan.planType === "ultra") return true;
+    return plan.creditsExams >= count;
+  };
 
   const canUploadLogo = (currentLogosCount: number) => {
     if (plan.planType === "ultra") return true;
@@ -70,21 +94,37 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   const deductCredit = async (): Promise<boolean> => {
     if (!user) return false;
     if (plan.planType === "ultra") return true;
-    if (plan.creditsRemaining <= 0) return false;
+    if (plan.creditsGeneral <= 0) return false;
 
-    const newCredits = plan.creditsRemaining - 1;
+    const newCredits = plan.creditsGeneral - 1;
     const { error } = await supabase
       .from("profiles")
-      .update({ credits_remaining: newCredits } as any)
+      .update({ credits_general: newCredits, credits_remaining: newCredits } as any)
       .eq("user_id", user.id);
 
     if (error) return false;
-    setPlan(prev => ({ ...prev, creditsRemaining: newCredits }));
+    setPlan(prev => ({ ...prev, creditsGeneral: newCredits, creditsRemaining: newCredits }));
+    return true;
+  };
+
+  const deductExamCredits = async (count: number): Promise<boolean> => {
+    if (!user) return false;
+    if (plan.planType === "ultra") return true;
+    if (plan.creditsExams < count) return false;
+
+    const newCredits = plan.creditsExams - count;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ credits_exams: newCredits } as any)
+      .eq("user_id", user.id);
+
+    if (error) return false;
+    setPlan(prev => ({ ...prev, creditsExams: newCredits }));
     return true;
   };
 
   return (
-    <CreditsContext.Provider value={{ plan, loading, canUseAI, canUploadLogo, deductCredit, refreshPlan: fetchPlan }}>
+    <CreditsContext.Provider value={{ plan, loading, canUseAI, canCorrectExam, canUploadLogo, deductCredit, deductExamCredits, refreshPlan: fetchPlan, planLimits }}>
       {children}
     </CreditsContext.Provider>
   );

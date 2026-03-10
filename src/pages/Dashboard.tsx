@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Settings, CreditCard, MessageSquare } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Sun, Moon, Sunset } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import CreditsDisplay from "@/components/CreditsDisplay";
 
 const tipoConfig: Record<string, { label: string; icon: any; color: string; route: string }> = {
@@ -27,27 +28,45 @@ const tools = [
   { title: "Timbres", icon: Stamp, route: "/app/timbres", color: "text-accent-foreground", bg: "bg-accent" },
 ];
 
+function getGreeting(): { text: string; Icon: typeof Sun } {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return { text: "Bom dia", Icon: Sun };
+  if (h >= 12 && h < 18) return { text: "Boa tarde", Icon: Sunset };
+  return { text: "Boa noite", Icon: Moon };
+}
+
 export default function Dashboard() {
   const [docs, setDocs] = useState<any[]>([]);
   const [provas, setProvas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  useEffect(() => { loadDocs(); }, []);
+  useEffect(() => {
+    loadDocs();
+    loadUserName();
+  }, [user]);
+
+  const loadUserName = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("profiles").select("nome").eq("user_id", user.id).maybeSingle();
+    if (data?.nome) setUserName(data.nome.split(" ")[0]);
+  };
 
   const loadDocs = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) return;
       const [{ data: savedDocs }, { data: provasData }] = await Promise.all([
         supabase.from("documentos_salvos")
           .select("id, titulo, tipo, modelo, disciplina, nivel, created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", u.id)
           .order("created_at", { ascending: false })
           .limit(200),
         supabase.from("provas")
           .select("id, titulo, temas, nivel, serie, created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", u.id)
           .order("created_at", { ascending: false })
           .limit(100),
       ]);
@@ -87,18 +106,22 @@ export default function Dashboard() {
   };
   const totalCount = docs.length + provas.length;
 
-  // Last 3 docs
   const allDocs = [...docs, ...provas].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   const recentDocs = allDocs.slice(0, 3);
 
+  const { text: greetingText, Icon: GreetingIcon } = getGreeting();
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Header with greeting */}
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold">Dashboard</h1>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <GreetingIcon className="h-6 w-6 text-primary" />
+            {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
+          </h1>
           <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
         </div>
         <CreditsDisplay />
@@ -177,7 +200,7 @@ export default function Dashboard() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{doc.titulo}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <Badge variant="secondary" className="text-[10px]">{cfg.label}</Badge>
                           {doc.disciplina && <span className="text-[10px] text-muted-foreground">{doc.disciplina}</span>}
                           <span className="text-[10px] text-muted-foreground">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>

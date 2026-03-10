@@ -12,63 +12,36 @@ import planPro from "@/assets/plan-pro.png";
 import planMaster from "@/assets/plan-master.png";
 import planUltra from "@/assets/plan-ultra.png";
 
-const STRIPE_COUPON_ID = "promo_1T8wfd7gJSrf8FzwdQboSbV2";
-
 const plans = [
   {
-    id: "starter",
-    planType: "starter",
-    name: "Starter",
-    image: planStarter,
-    paymentLink: null,
-    priceOriginal: null,
-    priceDiscount: null,
-    priceDisplay: "R$ 0,00",
-    period: "",
-    popular: false,
-    features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    id: "starter", planType: "starter", name: "Starter", image: planStarter,
+    paymentLink: null, priceOriginal: null, priceDiscount: null, priceDisplay: "R$ 0,00",
+    period: "", popular: false,
+    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
     cta: "Plano Atual",
   },
   {
-    id: "pro",
-    planType: "pro",
-    name: "Pro",
-    image: planPro,
+    id: "pro", planType: "pro", name: "Pro", image: planPro,
     paymentLink: "https://buy.stripe.com/cNicMZcNEbA17zI57M9sk01",
-    priceOriginal: "R$ 24,90",
-    priceDiscount: "R$ 18,67",
-    priceDisplay: "R$ 24,90",
-    period: "/mês",
-    popular: false,
-    features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    priceOriginal: "R$ 24,90", priceDiscount: "R$ 18,67", priceDisplay: "R$ 24,90",
+    period: "/mês", popular: false,
+    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
     cta: "Assinar Pro",
   },
   {
-    id: "master",
-    planType: "master",
-    name: "Master",
-    image: planMaster,
+    id: "master", planType: "master", name: "Master", image: planMaster,
     paymentLink: "https://buy.stripe.com/eVq28lcNEavXbPY0Rw9sk03",
-    priceOriginal: "R$ 44,90",
-    priceDiscount: "R$ 33,67",
-    priceDisplay: "R$ 44,90",
-    period: "/mês",
-    popular: true,
-    features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    priceOriginal: "R$ 44,90", priceDiscount: "R$ 33,67", priceDisplay: "R$ 44,90",
+    period: "/mês", popular: true,
+    features: ["60 créditos/mês", "80 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master",
   },
   {
-    id: "ultra",
-    planType: "ultra",
-    name: "Ultra",
-    image: planUltra,
+    id: "ultra", planType: "ultra", name: "Ultra", image: planUltra,
     paymentLink: "https://buy.stripe.com/7sY9AN29047zbPY57M9sk00",
-    priceOriginal: "R$ 89,90",
-    priceDiscount: "R$ 67,42",
-    priceDisplay: "R$ 89,90",
-    period: "/mês",
-    popular: false,
-    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
+    priceOriginal: "R$ 89,90", priceDiscount: "R$ 67,42", priceDisplay: "R$ 89,90",
+    period: "/mês", popular: false,
+    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
     cta: "Assinar Ultra",
   },
 ];
@@ -76,16 +49,13 @@ const plans = [
 export default function Pricing() {
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const [checkingOut, setCheckingOut] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
   const { plan } = useCredits();
 
-  // Check for success/cancel query params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "true") {
       toast.success("Assinatura realizada com sucesso! 🎉");
-      // Trigger subscription check
       supabase.functions.invoke("check-subscription");
     }
     if (params.get("canceled") === "true") {
@@ -104,12 +74,9 @@ export default function Pricing() {
   };
 
   const handleCheckout = (paymentLink: string) => {
-    // Append prefilled_email if user is logged in
     const url = new URL(paymentLink);
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email) {
-        url.searchParams.set("prefilled_email", data.user.email);
-      }
+      if (data.user?.email) url.searchParams.set("prefilled_email", data.user.email);
       window.open(url.toString(), "_blank");
     });
   };
@@ -119,14 +86,10 @@ export default function Pricing() {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
+      if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
       toast.error(err.message || "Erro ao abrir portal");
-    } finally {
-      setManagingPortal(false);
-    }
+    } finally { setManagingPortal(false); }
   };
 
   const isCurrentPlan = (planType: string) => plan.planType === planType;
@@ -139,7 +102,6 @@ export default function Pricing() {
         <p className="text-muted-foreground mt-1">Evolua quando precisar, cancele quando quiser</p>
       </div>
 
-      {/* Manage subscription button for paid users */}
       {hasPaidPlan && (
         <div className="text-center">
           <Button variant="outline" onClick={handleManageSubscription} disabled={managingPortal}>
@@ -154,19 +116,13 @@ export default function Pricing() {
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-10"
-              placeholder="Possui um cupom?"
-              value={coupon}
-              onChange={e => setCoupon(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && applyCoupon()}
-            />
+            <Input className="pl-10" placeholder="Possui um cupom?" value={coupon} onChange={e => setCoupon(e.target.value)} onKeyDown={e => e.key === "Enter" && applyCoupon()} />
           </div>
           <Button variant="outline" onClick={applyCoupon}>Aplicar</Button>
         </div>
         {couponApplied && (
           <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! Você economizou 25% (oferta por tempo limitado)
+            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! Insira o cupom <strong>GOPEDAGOX</strong> no checkout para garantir 25% OFF.
           </p>
         )}
       </div>
@@ -176,19 +132,12 @@ export default function Pricing() {
         {plans.map((p) => {
           const isCurrent = isCurrentPlan(p.planType);
           return (
-            <Card
-              key={p.id}
-              className={`relative shadow-card ${p.popular ? "border-primary ring-2 ring-primary/20" : ""} ${isCurrent ? "ring-2 ring-green-500/30 border-green-500" : ""}`}
-            >
+            <Card key={p.id} className={`relative shadow-card ${p.popular ? "border-primary ring-2 ring-primary/20" : ""} ${isCurrent ? "ring-2 ring-green-500/30 border-green-500" : ""}`}>
               {p.popular && !isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
-                  MAIS POPULAR
-                </div>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-semibold text-primary-foreground">MAIS POPULAR</div>
               )}
               {isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-4 py-1 text-xs font-semibold text-white">
-                  SEU PLANO
-                </div>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-4 py-1 text-xs font-semibold text-white">SEU PLANO</div>
               )}
               <CardHeader className="text-center pb-2">
                 <img src={p.image} alt={`Plano ${p.name}`} className="mx-auto h-28 w-auto mb-2" />
