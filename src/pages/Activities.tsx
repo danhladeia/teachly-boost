@@ -792,7 +792,7 @@ export default function Activities() {
         </div>
 
         {/* RIGHT PANEL - A4 Preview */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-hidden min-w-0">
           <A4Preview blocks={blocks} showHeader={showHeader} escola={escola} autoNumber={autoNumber} showLines={showLines} showAluno={showAluno} showData={showData} professor={professor} turma={turma} logoUrl={selectedTimbre?.logoUrl} bannerUrl={selectedTimbre?.bannerUrl} />
         </div>
       </div>
