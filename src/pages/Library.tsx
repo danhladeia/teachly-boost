@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { setCache, getCache } from "@/lib/cache-utils";
 
 const tipoConfig: Record<string, { label: string; icon: any; color: string; route: string; bgColor: string }> = {
   plano: { label: "Plano de Aula", icon: BookOpen, color: "text-primary", bgColor: "bg-primary/10", route: "/app/bncc" },
