@@ -114,7 +114,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: true,
       plan_type: planInfo.plan_type,
-      credits: planInfo.credits,
+      credits_general: planInfo.credits_general,
+      credits_exams: planInfo.credits_exams,
       logos_limit: planInfo.logos_limit,
       subscription_end: subscriptionEnd,
       product_id: productId,
