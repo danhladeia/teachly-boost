@@ -15,41 +15,54 @@ import planUltra from "@/assets/plan-ultra.png";
 const plans = [
   {
     id: "starter", planType: "starter", name: "Starter", image: planStarter,
-    paymentLink: null, priceOriginal: null, priceDiscount: null, priceDisplay: "R$ 0,00",
-    period: "", popular: false,
+    priceMonthly: 0, priceAnnualTotal: 0,
+    priceIdMonthly: null as string | null,
+    priceIdAnnual: null as string | null,
+    popular: false,
     features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    description: null as string | null,
     cta: "Plano Atual",
   },
   {
     id: "pro", planType: "pro", name: "Pro", image: planPro,
-    paymentLink: "https://buy.stripe.com/cNicMZcNEbA17zI57M9sk01",
-    priceOriginal: "R$ 24,90", priceDiscount: "R$ 18,67", priceDisplay: "R$ 24,90",
-    period: "/mês", popular: false,
+    priceMonthly: 19.90, priceAnnualTotal: 199.00,
+    priceIdMonthly: "price_1T9bxA7gJSrf8FzwfHJNY2qj",
+    priceIdAnnual: "price_1T9by97gJSrf8FzwYPxXbYnm",
+    popular: false,
     features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    description: "Ideal para o docente que busca modernizar sua prática em uma única escola. Garanta 30 criações mensais (Planos BNCC, Slides, Jogos) e corrija até 50 provas via celular com agilidade. Elimine o trabalho manual e foque no que importa: o aprendizado do seu aluno.",
     cta: "Assinar Pro",
   },
   {
     id: "master", planType: "master", name: "Master", image: planMaster,
-    paymentLink: "https://buy.stripe.com/eVq28lcNEavXbPY0Rw9sk03",
-    priceOriginal: "R$ 44,90", priceDiscount: "R$ 33,67", priceDisplay: "R$ 44,90",
-    period: "/mês", popular: true,
+    priceMonthly: 34.90, priceAnnualTotal: 349.00,
+    priceIdMonthly: "price_1T9bzb7gJSrf8Fzw71zPDGfd",
+    priceIdAnnual: "price_1T9c0C7gJSrf8FzwR3nkfF1t",
+    popular: true,
     features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    description: "Perfeito para o professor multiescolas. Gerencie até 3 timbres personalizados e conte com 60 criações e 100 correções de prova mensais. Produtividade máxima para sua rotina, sem sacrificar seus finais de semana.",
     cta: "Assinar Master",
   },
   {
     id: "ultra", planType: "ultra", name: "Ultra", image: planUltra,
-    paymentLink: "https://buy.stripe.com/7sY9AN29047zbPY57M9sk00",
-    priceOriginal: "R$ 89,90", priceDiscount: "R$ 67,42", priceDisplay: "R$ 89,90",
-    period: "/mês", popular: false,
-    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
+    priceMonthly: 69.90, priceAnnualTotal: 699.00,
+    priceIdMonthly: "price_1T9c2N7gJSrf8FzwPOhTxC3K",
+    priceIdAnnual: "price_1T9c2u7gJSrf8Fzww9xNE3rW",
+    popular: false,
+    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário via WhatsApp"],
+    description: "A solução definitiva para coordenadores ou professores com altíssimo volume de alunos. Liberdade ilimitada para criar conteúdos, corrigir provas e cadastrar quantos timbres precisar.",
     cta: "Assinar Ultra",
   },
 ];
+
+const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const discount = (v: number) => v * 0.75;
 
 export default function Pricing() {
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const { plan } = useCredits();
 
   useEffect(() => {
@@ -73,12 +86,16 @@ export default function Pricing() {
     }
   };
 
-  const handleCheckout = (paymentLink: string) => {
-    const url = new URL(paymentLink);
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email) url.searchParams.set("prefilled_email", data.user.email);
-      window.open(url.toString(), "_blank");
-    });
+  const handleCheckout = async (priceId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId, couponId: couponApplied ? "promo_1T8wfd7gJSrf8FzwdQboSbV2" : undefined },
+      });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao iniciar checkout");
+    }
   };
 
   const handleManageSubscription = async () => {
@@ -111,6 +128,23 @@ export default function Pricing() {
         </div>
       )}
 
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center gap-3">
+        <button
+          onClick={() => setBillingCycle("monthly")}
+          className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${billingCycle === "monthly" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+        >
+          Mensal
+        </button>
+        <button
+          onClick={() => setBillingCycle("annual")}
+          className={`rounded-full px-5 py-2 text-sm font-medium transition-all relative ${billingCycle === "annual" ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+        >
+          Anual
+          <span className="absolute -top-2.5 -right-3 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">-17%</span>
+        </button>
+      </div>
+
       {/* Coupon */}
       <div className="max-w-md mx-auto">
         <div className="flex gap-2">
@@ -122,7 +156,7 @@ export default function Pricing() {
         </div>
         {couponApplied && (
           <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! Insira o cupom <strong>GOPEDAGOX</strong> no checkout para garantir 25% OFF.
+            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! 25% OFF será aplicado automaticamente no checkout.
           </p>
         )}
       </div>
@@ -131,6 +165,13 @@ export default function Pricing() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {plans.map((p) => {
           const isCurrent = isCurrentPlan(p.planType);
+          const isAnnual = billingCycle === "annual";
+          const basePrice = isAnnual ? p.priceAnnualTotal : p.priceMonthly;
+          const monthlyEquivalent = isAnnual ? p.priceAnnualTotal / 12 : p.priceMonthly;
+          const finalPrice = couponApplied ? discount(basePrice) : basePrice;
+          const priceId = isAnnual ? p.priceIdAnnual : p.priceIdMonthly;
+          const isPaid = p.priceMonthly > 0;
+
           return (
             <Card key={p.id} className={`relative shadow-card ${p.popular ? "border-primary ring-2 ring-primary/20" : ""} ${isCurrent ? "ring-2 ring-green-500/30 border-green-500" : ""}`}>
               {p.popular && !isCurrent && (
@@ -144,24 +185,34 @@ export default function Pricing() {
               </CardHeader>
               <CardContent className="text-center space-y-4">
                 <div>
-                  {p.priceOriginal && couponApplied ? (
+                  {isPaid ? (
                     <>
-                      <p className="text-sm text-muted-foreground line-through">{p.priceOriginal}</p>
+                      {couponApplied && (
+                        <p className="text-sm text-muted-foreground line-through">{fmt(basePrice)}</p>
+                      )}
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className="font-display text-3xl font-extrabold text-green-600">{p.priceDiscount}</span>
-                        <span className="text-sm text-muted-foreground">{p.period}</span>
+                        <span className={`font-display text-3xl font-extrabold ${couponApplied ? "text-green-600" : ""}`}>
+                          {fmt(couponApplied ? discount(monthlyEquivalent) : monthlyEquivalent)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">/mês</span>
                       </div>
-                      <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
+                      {isAnnual && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          cobrado {fmt(finalPrice)}/ano (2 meses grátis)
+                        </p>
+                      )}
+                      {couponApplied && (
+                        <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
+                      )}
                     </>
-                  ) : p.priceOriginal ? (
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="font-display text-3xl font-extrabold">{p.priceDisplay}</span>
-                      <span className="text-sm text-muted-foreground">{p.period}</span>
-                    </div>
                   ) : (
                     <span className="font-display text-3xl font-extrabold">Grátis</span>
                   )}
                 </div>
+
+                {p.description && (
+                  <p className="text-xs text-muted-foreground leading-relaxed text-left">{p.description}</p>
+                )}
 
                 <ul className="space-y-2 text-left">
                   {p.features.map((f) => (
@@ -172,12 +223,12 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                {p.paymentLink ? (
+                {priceId ? (
                   <Button
                     className={`w-full ${p.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`}
                     variant={p.popular ? "default" : "outline"}
                     disabled={isCurrent}
-                    onClick={() => handleCheckout(p.paymentLink!)}
+                    onClick={() => handleCheckout(priceId)}
                   >
                     {isCurrent ? "Plano Atual" : p.cta}
                   </Button>
