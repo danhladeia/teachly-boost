@@ -56,11 +56,15 @@ serve(async (req) => {
     // Read current profile to check existing plan
     const { data: currentProfile } = await supabaseClient
       .from("profiles")
-      .select("plan_type, credits_general, credits_exams")
+      .select("plan_type, credits_general, credits_exams, subscription_status")
       .eq("user_id", userId)
       .maybeSingle();
 
     const currentPlanType = currentProfile?.plan_type || "starter";
+    const currentSubStatus = currentProfile?.subscription_status || "inactive";
+
+    // If admin manually set an active plan, don't override it when there's no Stripe subscription
+    const isAdminManaged = currentPlanType !== "starter" && currentSubStatus === "active";
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -69,17 +73,17 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
 
     if (customers.data.length === 0) {
-      // No Stripe customer — downgrade to starter if not already
-      if (currentPlanType !== "starter") {
+      // No Stripe customer — only downgrade if NOT admin-managed
+      if (!isAdminManaged && currentPlanType !== "starter") {
         await supabaseClient
           .from("profiles")
           .update(STARTER_DEFAULTS)
           .eq("user_id", userId);
       }
       return new Response(JSON.stringify({
-        subscribed: false,
-        plan_type: "starter",
-        credits: 5,
+        subscribed: isAdminManaged,
+        plan_type: isAdminManaged ? currentPlanType : "starter",
+        credits: isAdminManaged ? (currentProfile?.credits_general ?? 10) : 5,
         logos_limit: 0,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -94,23 +98,22 @@ serve(async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
-      // No active subscription — downgrade to starter if not already
-      if (currentPlanType !== "starter") {
+      // No active subscription — only downgrade if NOT admin-managed
+      if (!isAdminManaged && currentPlanType !== "starter") {
         await supabaseClient
           .from("profiles")
           .update({ ...STARTER_DEFAULTS, stripe_customer_id: customerId })
           .eq("user_id", userId);
-      } else {
-        // Just update stripe_customer_id and status
+      } else if (!isAdminManaged) {
         await supabaseClient
           .from("profiles")
           .update({ subscription_status: "inactive", stripe_customer_id: customerId })
           .eq("user_id", userId);
       }
       return new Response(JSON.stringify({
-        subscribed: false,
-        plan_type: "starter",
-        credits: 5,
+        subscribed: isAdminManaged,
+        plan_type: isAdminManaged ? currentPlanType : "starter",
+        credits: isAdminManaged ? (currentProfile?.credits_general ?? 10) : 5,
         logos_limit: 0,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

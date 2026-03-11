@@ -131,11 +131,11 @@ export default function AdminDashboard() {
 
   const executeUpdatePlan = async (newPlan: string) => {
     if (!selected) return;
-    const planCredits: Record<string, { credits_remaining: number; logos_limit: number }> = {
-      starter: { credits_remaining: 5, logos_limit: 0 },
-      pro: { credits_remaining: 50, logos_limit: 1 },
-      master: { credits_remaining: 150, logos_limit: 3 },
-      ultra: { credits_remaining: 9999, logos_limit: 999 },
+    const planCredits: Record<string, { credits_remaining: number; credits_general: number; credits_exams: number; logos_limit: number; subscription_status: string }> = {
+      starter: { credits_remaining: 10, credits_general: 10, credits_exams: 10, logos_limit: 0, subscription_status: "inactive" },
+      pro: { credits_remaining: 30, credits_general: 30, credits_exams: 50, logos_limit: 1, subscription_status: "active" },
+      master: { credits_remaining: 60, credits_general: 60, credits_exams: 100, logos_limit: 3, subscription_status: "active" },
+      ultra: { credits_remaining: 9999, credits_general: 9999, credits_exams: 9999, logos_limit: 9999, subscription_status: "active" },
     };
 
     const update = { plan_type: newPlan, ...planCredits[newPlan] };
