@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Sun, Moon, Sunset, Coins, FileCheck as FileCheckIcon, FolderOpen, ArrowRight } from "lucide-react";
+import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Sun, Moon, Sunset, FolderOpen, ArrowRight } from "lucide-react";
 import CreditsIndicator from "@/components/CreditsIndicator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useCredits } from "@/hooks/useCredits";
-import { useDocumentLimits } from "@/hooks/useDocumentLimits";
+
 
 const tipoConfig: Record<string, { label: string; icon: any; color: string; route: string }> = {
   plano: { label: "Plano de Aula", icon: BookOpen, color: "text-primary", route: "/app/bncc" },
@@ -51,8 +50,7 @@ export default function Dashboard() {
   const [userName, setUserName] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { plan, planLimits } = useCredits();
-  const { docCount, docLimit, usagePercent } = useDocumentLimits();
+
 
   useEffect(() => {
     loadDocs();
@@ -115,9 +113,7 @@ export default function Dashboard() {
 
   const { text: greetingText, Icon: GreetingIcon } = getGreeting();
 
-  const isUnlimited = plan.planType === "ultra";
-  const generalPercent = isUnlimited ? 0 : planLimits.maxGeneral > 0 ? Math.min(100, ((planLimits.maxGeneral - plan.creditsGeneral) / planLimits.maxGeneral) * 100) : 0;
-  const examsPercent = isUnlimited ? 0 : planLimits.maxExams > 0 ? Math.min(100, ((planLimits.maxExams - plan.creditsExams) / planLimits.maxExams) * 100) : 0;
+
 
   return (
     <div className="space-y-6">
@@ -133,86 +129,7 @@ export default function Dashboard() {
         <CreditsIndicator />
       </div>
 
-      {/* Plan Consumption Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* General credits */}
-        <Card className="shadow-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold flex items-center gap-1.5">
-                <Coins className="h-3.5 w-3.5 text-primary" /> Créditos de Criação
-              </span>
-              {isUnlimited ? (
-                <span className="text-xs font-bold text-primary">∞ Ilimitado</span>
-              ) : (
-                <span className="text-xs font-medium">{plan.creditsGeneral} / {planLimits.maxGeneral}</span>
-              )}
-            </div>
-            {!isUnlimited && (
-              <>
-                <Progress value={100 - generalPercent} className={`h-2 [&>div]:${getBarColor(generalPercent)}`} />
-                {generalPercent >= 91 && (
-                  <Link to="/app/planos" className="text-[10px] text-destructive font-medium hover:underline mt-1 inline-block">
-                    Fazer upgrade →
-                  </Link>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Exam credits */}
-        <Card className="shadow-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold flex items-center gap-1.5">
-                <FileCheckIcon className="h-3.5 w-3.5 text-destructive" /> Correções de Prova
-              </span>
-              {isUnlimited ? (
-                <span className="text-xs font-bold text-primary">∞ Ilimitado</span>
-              ) : (
-                <span className="text-xs font-medium">{plan.creditsExams} / {planLimits.maxExams}</span>
-              )}
-            </div>
-            {!isUnlimited && (
-              <>
-                <Progress value={100 - examsPercent} className={`h-2 [&>div]:${getBarColor(examsPercent)}`} />
-                {examsPercent >= 91 && (
-                  <Link to="/app/planos" className="text-[10px] text-destructive font-medium hover:underline mt-1 inline-block">
-                    Fazer upgrade →
-                  </Link>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Document storage */}
-        <Card className="shadow-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold flex items-center gap-1.5">
-                <FolderOpen className="h-3.5 w-3.5 text-plan-pratico" /> Documentos Salvos
-              </span>
-              {isUnlimited ? (
-                <span className="text-xs font-bold text-primary">∞ Ilimitado</span>
-              ) : (
-                <span className="text-xs font-medium">{docCount} / {docLimit}</span>
-              )}
-            </div>
-            {!isUnlimited && (
-              <>
-                <Progress value={usagePercent} className={`h-2 [&>div]:${getBarColor(usagePercent)}`} />
-                {usagePercent >= 91 && (
-                  <Link to="/app/planos" className="text-[10px] text-destructive font-medium hover:underline mt-1 inline-block">
-                    Fazer upgrade →
-                  </Link>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Quick Access Tools */}
       <div>
@@ -285,12 +202,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Document counter */}
-        {!isUnlimited && (
-          <p className={`text-xs mt-2 ${usagePercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-            Documentos salvos: {docCount} / {docLimit}
-          </p>
-        )}
+
       </div>
     </div>
   );
