@@ -329,7 +329,7 @@ export default function AdminDashboard() {
                         variant={selected.plan_type === plan ? "default" : "outline"}
                         size="sm"
                         className={`text-xs ${selected.plan_type === plan ? "gradient-primary border-0 text-primary-foreground" : ""}`}
-                        onClick={() => updatePlan(plan)}
+                        onClick={() => requestUpdatePlan(plan)}
                         disabled={selected.plan_type === plan}
                       >
                         {plan.toUpperCase()}
