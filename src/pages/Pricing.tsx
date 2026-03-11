@@ -76,16 +76,6 @@ export default function Pricing() {
     }
   }, []);
 
-  const applyCoupon = () => {
-    if (coupon.trim().toUpperCase() === "GOPEDAGOX") {
-      setCouponApplied(true);
-      toast.success("Cupom aplicado! Você economizou 25% 🎉");
-    } else {
-      setCouponApplied(false);
-      toast.error("Cupom inválido");
-    }
-  };
-
   const handlePaymentLink = (link: string) => {
     const url = new URL(link);
     if (user?.email) {
