@@ -77,6 +77,20 @@ export default function Support() {
     if (data) setMessages(data);
   };
 
+  const uploadAttachments = async (ticketId: string): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of attachments) {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${user!.id}/${ticketId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("support-attachments").upload(path, file, { contentType: file.type });
+      if (!error) {
+        const { data: urlData } = supabase.storage.from("support-attachments").getPublicUrl(path);
+        urls.push(urlData.publicUrl);
+      }
+    }
+    return urls;
+  };
+
   const createTicket = async () => {
     if (!user || !newSubject.trim() || !newMessage.trim()) { toast.error("Preencha assunto e mensagem"); return; }
     setCreating(true);
@@ -94,15 +108,23 @@ export default function Support() {
       .single();
 
     if (ticket) {
+      let content = newMessage;
+      if (attachments.length > 0) {
+        const urls = await uploadAttachments((ticket as any).id);
+        if (urls.length > 0) {
+          content += "\n\n📎 Anexos:\n" + urls.map(u => u).join("\n");
+        }
+      }
       await (supabase.from("support_messages" as any) as any).insert({
         ticket_id: (ticket as any).id,
         sender_type: "user",
         sender_id: user.id,
-        content: newMessage,
+        content,
       });
       toast.success("Ticket criado!");
       setNewSubject("");
       setNewMessage("");
+      setAttachments([]);
       setShowNew(false);
       await loadTickets();
       setSelected(ticket as any);
@@ -113,13 +135,21 @@ export default function Support() {
   const sendMessage = async () => {
     if (!user || !selected || !newMessage.trim()) return;
     setSending(true);
+    let content = newMessage;
+    if (attachments.length > 0) {
+      const urls = await uploadAttachments(selected.id);
+      if (urls.length > 0) {
+        content += "\n\n📎 Anexos:\n" + urls.map(u => u).join("\n");
+      }
+    }
     await (supabase.from("support_messages" as any) as any).insert({
       ticket_id: selected.id,
       sender_type: "user",
       sender_id: user.id,
-      content: newMessage,
+      content,
     });
     setNewMessage("");
+    setAttachments([]);
     await loadMessages(selected.id);
     setSending(false);
   };
