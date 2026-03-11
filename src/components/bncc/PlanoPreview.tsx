@@ -5,6 +5,7 @@ import { FileDown, Printer, Save } from "lucide-react";
 import { exportToPdf, exportPlanoToDocx } from "@/lib/export-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 
 interface PlanoPreviewProps {
   plano: any;
