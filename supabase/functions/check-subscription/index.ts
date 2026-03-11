@@ -102,7 +102,9 @@ serve(async (req) => {
       .from("profiles")
       .update({
         plan_type: planInfo.plan_type,
-        credits_remaining: planInfo.credits,
+        credits_general: planInfo.credits_general,
+        credits_exams: planInfo.credits_exams,
+        credits_remaining: planInfo.credits_general,
         logos_limit: planInfo.logos_limit,
         subscription_status: "active",
         stripe_customer_id: customerId,

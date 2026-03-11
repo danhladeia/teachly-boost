@@ -19,7 +19,7 @@ interface PlanLimits {
 const PLAN_LIMITS: Record<string, PlanLimits> = {
   starter: { maxGeneral: 10, maxExams: 10 },
   pro: { maxGeneral: 30, maxExams: 50 },
-  master: { maxGeneral: 60, maxExams: 80 },
+  master: { maxGeneral: 60, maxExams: 100 },
   ultra: { maxGeneral: Infinity, maxExams: Infinity },
 };
 
