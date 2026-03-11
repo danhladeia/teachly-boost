@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle, Gamepad2 } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
