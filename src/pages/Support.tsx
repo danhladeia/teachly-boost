@@ -51,7 +51,9 @@ export default function Support() {
   const [creating, setCreating] = useState(false);
   const [sending, setSending] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadTickets(); }, [user]);
   useEffect(() => { if (selected) loadMessages(selected.id); }, [selected]);
