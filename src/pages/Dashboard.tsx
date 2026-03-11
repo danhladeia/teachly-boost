@@ -122,12 +122,15 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header with greeting */}
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <GreetingIcon className="h-6 w-6 text-primary" />
-          {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <GreetingIcon className="h-6 w-6 text-primary" />
+            {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+        </div>
+        <CreditsIndicator />
       </div>
 
       {/* Plan Consumption Cards */}
