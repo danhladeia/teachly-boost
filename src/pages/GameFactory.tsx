@@ -138,6 +138,21 @@ export default function GameFactory() {
   const selectedGameDef = GAMES.find(g => g.id === selectedGame);
   const isAdvanced = editorMode === "advanced";
 
+  const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
+
+  // Sync selected timbre to header
+  const handleTimbreSelect = (t: TimbreData | null) => {
+    setSelectedTimbre(t);
+    if (t) {
+      setHeader(h => ({
+        ...h,
+        escola: t.escola || h.escola,
+        logoUrl: t.logoUrl || h.logoUrl,
+        bannerUrl: t.bannerUrl || h.bannerUrl,
+      }));
+    }
+  };
+
   // Always sync header with branding from Timbres e Branding
   useEffect(() => {
     setHeader(h => ({
