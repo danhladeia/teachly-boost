@@ -143,6 +143,9 @@ Deno.serve(async (req) => {
 
     const prompt = `Você é um sistema de correção automática de provas (OMR - Optical Mark Recognition).
 
+IMPORTANTE — ORIENTAÇÃO DA IMAGEM:
+Antes de analisar, verifique se a imagem está na orientação correta (retrato, com o cabeçalho no topo). Se a folha estiver rotacionada (de lado, de cabeça para baixo ou espelhada), mentalmente corrija a orientação antes de ler os dados. Os marcadores de alinhamento (quadrados pretos nos 4 cantos) ajudam a determinar a orientação correta: o cabeçalho com o título da prova deve estar no topo.
+
 Analise esta imagem de uma folha de respostas de prova e extraia as seguintes informações:
 
 1. **QR Code**: Se houver um QR Code visível, leia seu conteúdo. O formato esperado é um JSON como {"v":"uuid-aqui"}.
@@ -154,7 +157,7 @@ Analise esta imagem de uma folha de respostas de prova e extraia as seguintes in
    - "low": marcação dupla, rasura, ou difícil de determinar
    - "none": questão não respondida
 
-4. **Nome do aluno**: Se houver um campo "Nome" preenchido à mão, tente ler.
+4. **Nome do aluno**: O campo "NOME" contém quadros individuais onde o aluno escreve uma letra por quadro. Leia cada letra nos quadros sequencialmente para formar o nome completo.
 
 Responda APENAS com um JSON válido no formato:
 {
@@ -171,7 +174,8 @@ IMPORTANTE:
 - alternativa é um número: A=0, B=1, C=2, D=3
 - Se não conseguir determinar, use alternativa: null e confianca: "none"
 - Numere as questões sequencialmente começando em 1
-- Analise TODOS os círculos visíveis na folha`;
+- Analise TODOS os círculos visíveis na folha
+- Corrija mentalmente a orientação da imagem se necessário`;
 
     const geminiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
