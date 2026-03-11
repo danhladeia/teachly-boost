@@ -121,3 +121,43 @@
     box-shadow: var(--shadow-elevated);
   }
 }
+
+/* ====== Global Responsive Overrides ====== */
+
+/* Max container width for ultra-wide screens */
+.flex-1.flex.flex-col > .flex-1.p-3 {
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* Fluid typography */
+h1 { font-size: clamp(1.25rem, 2.5vw, 2rem); }
+h2 { font-size: clamp(1.1rem, 2vw, 1.5rem); }
+h3 { font-size: clamp(1rem, 1.8vw, 1.25rem); }
+
+/* Mobile: dialogs fill width */
+@media (max-width: 640px) {
+  [role="dialog"] > div,
+  [data-radix-popper-content-wrapper] {
+    max-width: 95vw !important;
+  }
+
+  /* Force images to stack vertically on very small screens */
+  .a4-page-scaled img[style*="float"],
+  .responsive-a4-inner img[style*="float"] {
+    float: none !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 2mm 0 !important;
+  }
+}
+
+/* Grid auto-fit for tool cards and similar grids */
+@media (max-width: 768px) {
+  .grid.grid-cols-4,
+  .grid.sm\\:grid-cols-4 {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+  }
+}
