@@ -841,55 +841,20 @@ export default function GameFactory() {
 
               {/* LABIRINTO */}
               {selectedGame === "labirinto" && (
-                <>
-                  <Section title="🏁 Configurações do Labirinto">
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Tamanho <Tip text="Tamanho visual do labirinto na página" /></Label>
-                      <Select value={mazeSize} onValueChange={setMazeSize}>
-                        <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Pequeno (¼ página)</SelectItem>
-                          <SelectItem value="medium">Médio (½ página)</SelectItem>
-                          <SelectItem value="large">Grande (página inteira)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {mode === "manual" && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px]">🔒 Incluir perguntas nos checkpoints <Tip text="Opcional — adicione perguntas que bloqueiam o caminho" /></Label>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-semibold">Perguntas ({mazeQuestions.length}/5)</Label>
-                          <Button variant="outline" size="sm" onClick={addMazeQuestion} className="h-5 text-[9px] px-2">+ Pergunta</Button>
-                        </div>
-                        {mazeQuestions.length === 0 && (
-                          <p className="text-[9px] text-muted-foreground italic">Nenhuma pergunta adicionada. O labirinto será gerado apenas com o caminho.</p>
-                        )}
-                        {mazeQuestions.map((q, qi) => (
-                          <div key={qi} className="space-y-1 border rounded p-2 bg-muted/30">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold">Checkpoint {String.fromCharCode(65 + qi)}</span>
-                              <button onClick={() => removeMazeQuestion(qi)} className="text-destructive text-[9px]">✕</button>
-                            </div>
-                            <Input placeholder="Pergunta..." value={q.question} onChange={e => updateMazeQuestion(qi, "question", e.target.value)} className="h-6 text-[9px]" />
-                            {q.alternatives.map((alt, ai) => (
-                              <div key={ai} className="flex gap-1 items-center">
-                                <button onClick={() => updateMazeQuestion(qi, "correctIndex", ai)}
-                                  className={`w-4 h-4 rounded-full border text-[7px] flex items-center justify-center shrink-0 ${q.correctIndex === ai ? "bg-primary text-primary-foreground" : "border-border"}`}>
-                                  {String.fromCharCode(65 + ai)}
-                                </button>
-                                <Input placeholder={`Alt. ${String.fromCharCode(65 + ai)}`} value={alt} onChange={e => updateMazeAlternative(qi, ai, e.target.value)} className="h-5 text-[9px] flex-1" />
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Section>
-                </>
-              )}
+                <Section title="🏁 Configurações do Labirinto">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Tamanho <Tip text="Tamanho visual do labirinto na página" /></Label>
+                    <Select value={mazeSize} onValueChange={setMazeSize}>
+                      <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="small">Pequeno (¼ página)</SelectItem>
+                        <SelectItem value="medium">Médio (½ página)</SelectItem>
+                        <SelectItem value="large">Grande (página inteira)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </Section>
+              )
 
               {/* Color Mode */}
               <Section title="🎨 Aparência">
