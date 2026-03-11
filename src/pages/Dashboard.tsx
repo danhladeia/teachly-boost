@@ -115,9 +115,7 @@ export default function Dashboard() {
 
   const { text: greetingText, Icon: GreetingIcon } = getGreeting();
 
-  const isUnlimited = plan.planType === "ultra";
-  const generalPercent = isUnlimited ? 0 : planLimits.maxGeneral > 0 ? Math.min(100, ((planLimits.maxGeneral - plan.creditsGeneral) / planLimits.maxGeneral) * 100) : 0;
-  const examsPercent = isUnlimited ? 0 : planLimits.maxExams > 0 ? Math.min(100, ((planLimits.maxExams - plan.creditsExams) / planLimits.maxExams) * 100) : 0;
+
 
   return (
     <div className="space-y-6">
