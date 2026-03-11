@@ -76,21 +76,21 @@ const plans = [
     cta: "Começar grátis"
   },
   {
-    name: "Pro", price: "R$ 24,90", originalPrice: null, period: "/mês", icon: Zap,
+    name: "Pro", price: "R$ 19,90", originalPrice: null, period: "/mês", icon: Zap,
     color: "text-primary", logo: planPro,
     features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
     cta: "Assinar Pro"
   },
   {
-    name: "Master", price: "R$ 44,90", originalPrice: null, period: "/mês", icon: Crown,
+    name: "Master", price: "R$ 34,90", originalPrice: null, period: "/mês", icon: Crown,
     color: "text-plan-pratico", popular: true, logo: planMaster,
     features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master"
   },
   {
-    name: "Ultra", price: "R$ 89,90", originalPrice: null, period: "/mês", icon: Rocket,
+    name: "Ultra", price: "R$ 69,90", originalPrice: null, period: "/mês", icon: Rocket,
     color: "text-plan-mestre", logo: planUltra,
-    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
+    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário via WhatsApp"],
     cta: "Assinar Ultra"
   }
 ];
