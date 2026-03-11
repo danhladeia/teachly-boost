@@ -84,7 +84,7 @@ const plans = [
   {
     name: "Master", price: "R$ 34,90", originalPrice: null, period: "/mês", icon: Crown,
     color: "text-plan-pratico", popular: true, logo: planMaster,
-    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário via ticket"],
     cta: "Assinar Master"
   },
   {
