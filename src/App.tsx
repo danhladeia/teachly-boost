@@ -7,6 +7,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditsProvider } from "@/hooks/useCredits";
+import { DocLimitsProvider } from "@/hooks/useDocumentLimits";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
