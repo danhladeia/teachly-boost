@@ -1058,9 +1058,27 @@ export default function Exams() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {savedProvas.map(p => (
-                  <Card key={p.id} className="shadow-card hover:shadow-md transition-shadow cursor-pointer" onClick={() => { loadProva(p.id); setMainTab("criar"); }}>
+                  <Card key={p.id} className="shadow-card hover:shadow-md transition-shadow">
                     <CardContent className="pt-4 space-y-1">
-                      <h3 className="font-semibold text-sm">{p.titulo}</h3>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors flex-1 min-w-0 truncate" onClick={() => { loadProva(p.id); setMainTab("criar"); }}>{p.titulo}</h3>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir prova" onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!confirm("Excluir esta prova e todas as suas versões?")) return;
+                          try {
+                            await supabase.from("respostas_alunos").delete().eq("prova_id", p.id);
+                            await supabase.from("versoes_prova").delete().eq("prova_id", p.id);
+                            await supabase.from("questoes").delete().eq("prova_id", p.id);
+                            const { error } = await supabase.from("provas").delete().eq("id", p.id);
+                            if (error) throw error;
+                            setSavedProvas(prev => prev.filter(x => x.id !== p.id));
+                            if (currentProvaId === p.id) handleNewExam();
+                            toast.success("Prova excluída");
+                          } catch { toast.error("Erro ao excluir"); }
+                        }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                       {p.temas && <p className="text-xs text-muted-foreground line-clamp-1">{p.temas}</p>}
                       <div className="flex items-center justify-between">
                         <Badge variant={p.status === "rascunho" ? "secondary" : "default"} className="text-[10px]">

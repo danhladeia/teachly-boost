@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Sun, Moon, Sunset, Coins, FileCheck as FileCheckIcon, FolderOpen, ArrowRight } from "lucide-react";
+import CreditsIndicator from "@/components/CreditsIndicator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -121,12 +122,15 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header with greeting */}
-      <div>
-        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-          <GreetingIcon className="h-6 w-6 text-primary" />
-          {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+            <GreetingIcon className="h-6 w-6 text-primary" />
+            {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+        </div>
+        <CreditsIndicator />
       </div>
 
       {/* Plan Consumption Cards */}
