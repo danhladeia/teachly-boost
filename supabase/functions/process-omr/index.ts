@@ -272,6 +272,16 @@ IMPORTANTE:
       }
     }
 
+    // Delete original image from storage after processing to save space
+    if (!uploadErr && fileName) {
+      try {
+        await supabase.storage.from("gabaritos").remove([fileName]);
+        console.log("Deleted processed image from storage:", fileName);
+      } catch (delErr) {
+        console.error("Failed to delete image:", delErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -280,7 +290,7 @@ IMPORTANTE:
         qr_detected: !!parsed.qr_content,
         gabarito,
         prova_info: provaInfo,
-        imagem_url: storageUrl,
+        imagem_url: null, // image deleted after processing
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -221,12 +221,12 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                {priceId ? (
+                {paymentLink ? (
                   <Button
                     className={`w-full ${p.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`}
                     variant={p.popular ? "default" : "outline"}
                     disabled={isCurrent}
-                    onClick={() => handleCheckout(priceId)}
+                    onClick={() => handlePaymentLink(paymentLink)}
                   >
                     {isCurrent ? "Plano Atual" : p.cta}
                   </Button>
