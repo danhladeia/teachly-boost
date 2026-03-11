@@ -39,7 +39,7 @@ const plans = [
     linkMonthly: "https://buy.stripe.com/5kQ6oB4h80Vnf2a6bQ9sk06",
     linkAnnual: "https://buy.stripe.com/7sYeV75lc33v6vE8jY9sk07",
     popular: true,
-    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário via ticket"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 500 documentos salvos", "Até 3 Timbres (Multiescolas)", "Suporte prioritário via ticket"],
     description: "Perfeito para o professor multiescolas. Gerencie até 3 timbres personalizados e conte com 60 criações e 100 correções de prova mensais. Produtividade máxima para sua rotina, sem sacrificar seus finais de semana.",
     cta: "Assinar Master",
   },
