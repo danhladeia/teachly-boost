@@ -87,11 +87,32 @@ export default function OMRAnswerSheet({ titulo, escola, professor, turma, numMc
         </h2>
       </div>
 
-      {/* Student fields */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "2mm 8mm", fontSize: "9pt", marginBottom: "4mm", borderBottom: "1px solid #cbd5e1", paddingBottom: "3mm" }}>
-        <span style={{ flex: "1 1 auto", minWidth: "0" }}>Nome: _________________________________</span>
-        <span>Turma: {turma || "________"}</span>
-        <span>Data: ___/___/___</span>
+      {/* Student fields with individual letter boxes */}
+      <div style={{ fontSize: "9pt", marginBottom: "4mm", borderBottom: "1px solid #cbd5e1", paddingBottom: "3mm" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: "2mm", marginBottom: "2mm" }}>
+          <span style={{ fontSize: "8pt", fontWeight: 600, whiteSpace: "nowrap" }}>NOME:</span>
+          <div style={{ display: "flex", gap: "0.5mm" }}>
+            {Array.from({ length: 25 }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: "5.5mm",
+                  height: "6.5mm",
+                  border: "1.2px solid #1e293b",
+                  borderRadius: "0.5mm",
+                  textAlign: "center",
+                  fontSize: "9pt",
+                  lineHeight: "6.5mm",
+                  fontFamily: "'Courier New', monospace",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "2mm 8mm" }}>
+          <span>Turma: {turma || "________"}</span>
+          <span>Data: ___/___/___</span>
+        </div>
       </div>
 
       <p style={{ fontSize: "7pt", color: "#64748b", marginBottom: "5mm" }}>

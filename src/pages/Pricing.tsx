@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
+import { useAuth } from "@/hooks/useAuth";
 import planStarter from "@/assets/plan-starter.png";
 import planPro from "@/assets/plan-pro.png";
 import planMaster from "@/assets/plan-master.png";
@@ -16,40 +17,40 @@ const plans = [
   {
     id: "starter", planType: "starter", name: "Starter", image: planStarter,
     priceMonthly: 0, priceAnnualTotal: 0,
-    priceIdMonthly: null as string | null,
-    priceIdAnnual: null as string | null,
+    linkMonthly: null as string | null,
+    linkAnnual: null as string | null,
     popular: false,
-    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água", "Suporte via ticket"],
     description: null as string | null,
     cta: "Plano Atual",
   },
   {
     id: "pro", planType: "pro", name: "Pro", image: planPro,
     priceMonthly: 19.90, priceAnnualTotal: 199.00,
-    priceIdMonthly: "price_1T9bxA7gJSrf8FzwfHJNY2qj",
-    priceIdAnnual: "price_1T9by97gJSrf8FzwYPxXbYnm",
+    linkMonthly: "https://buy.stripe.com/5kQ6oB3d45bD07geIm9sk08",
+    linkAnnual: "https://buy.stripe.com/5kQ28lbJA6fH07gbwa9sk09",
     popular: false,
-    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via ticket"],
     description: "Ideal para o docente que busca modernizar sua prática em uma única escola. Garanta 30 criações mensais (Planos BNCC, Slides, Jogos) e corrija até 50 provas via celular com agilidade. Elimine o trabalho manual e foque no que importa: o aprendizado do seu aluno.",
     cta: "Assinar Pro",
   },
   {
     id: "master", planType: "master", name: "Master", image: planMaster,
     priceMonthly: 34.90, priceAnnualTotal: 349.00,
-    priceIdMonthly: "price_1T9bzb7gJSrf8Fzw71zPDGfd",
-    priceIdAnnual: "price_1T9c0C7gJSrf8FzwR3nkfF1t",
+    linkMonthly: "https://buy.stripe.com/5kQ6oB4h80Vnf2a6bQ9sk06",
+    linkAnnual: "https://buy.stripe.com/7sYeV75lc33v6vE8jY9sk07",
     popular: true,
-    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário via ticket"],
     description: "Perfeito para o professor multiescolas. Gerencie até 3 timbres personalizados e conte com 60 criações e 100 correções de prova mensais. Produtividade máxima para sua rotina, sem sacrificar seus finais de semana.",
     cta: "Assinar Master",
   },
   {
     id: "ultra", planType: "ultra", name: "Ultra", image: planUltra,
     priceMonthly: 69.90, priceAnnualTotal: 699.00,
-    priceIdMonthly: "price_1T9c2N7gJSrf8FzwPOhTxC3K",
-    priceIdAnnual: "price_1T9c2u7gJSrf8Fzww9xNE3rW",
+    linkMonthly: "https://buy.stripe.com/5kQdR37tk7jL6vE2ZE9sk04",
+    linkAnnual: "https://buy.stripe.com/7sY8wJeVM0Vng6e6bQ9sk05",
     popular: false,
-    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário via WhatsApp"],
+    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário via ticket e WhatsApp"],
     description: "A solução definitiva para coordenadores ou professores com altíssimo volume de alunos. Liberdade ilimitada para criar conteúdos, corrigir provas e cadastrar quantos timbres precisar.",
     cta: "Assinar Ultra",
   },
@@ -64,6 +65,7 @@ export default function Pricing() {
   const [managingPortal, setManagingPortal] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const { plan } = useCredits();
+  const { user } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -86,16 +88,12 @@ export default function Pricing() {
     }
   };
 
-  const handleCheckout = async (priceId: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, couponId: couponApplied ? "promo_1T8wfd7gJSrf8FzwdQboSbV2" : undefined },
-      });
-      if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao iniciar checkout");
+  const handlePaymentLink = (link: string) => {
+    const url = new URL(link);
+    if (user?.email) {
+      url.searchParams.set("prefilled_email", user.email);
     }
+    window.open(url.toString(), "_blank");
   };
 
   const handleManageSubscription = async () => {
@@ -169,7 +167,7 @@ export default function Pricing() {
           const basePrice = isAnnual ? p.priceAnnualTotal : p.priceMonthly;
           const monthlyEquivalent = isAnnual ? p.priceAnnualTotal / 12 : p.priceMonthly;
           const finalPrice = couponApplied ? discount(basePrice) : basePrice;
-          const priceId = isAnnual ? p.priceIdAnnual : p.priceIdMonthly;
+          const paymentLink = isAnnual ? p.linkAnnual : p.linkMonthly;
           const isPaid = p.priceMonthly > 0;
 
           return (
@@ -223,12 +221,12 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                {priceId ? (
+                {paymentLink ? (
                   <Button
                     className={`w-full ${p.popular ? "gradient-primary border-0 text-primary-foreground hover:opacity-90" : ""}`}
                     variant={p.popular ? "default" : "outline"}
                     disabled={isCurrent}
-                    onClick={() => handleCheckout(priceId)}
+                    onClick={() => handlePaymentLink(paymentLink)}
                   >
                     {isCurrent ? "Plano Atual" : p.cta}
                   </Button>
