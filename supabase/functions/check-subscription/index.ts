@@ -13,6 +13,15 @@ const PLAN_MAP: Record<string, { plan_type: string; credits_general: number; cre
   "prod_U7rl14Z9M62oqL": { plan_type: "ultra", credits_general: 9999, credits_exams: 9999, logos_limit: 9999 },
 };
 
+const STARTER_DEFAULTS = {
+  plan_type: "starter",
+  credits_general: 10,
+  credits_exams: 10,
+  credits_remaining: 10,
+  logos_limit: 0,
+  subscription_status: "inactive",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,7 +34,6 @@ serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 
-    // Create client with user's auth header to validate token
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
@@ -39,12 +47,20 @@ serve(async (req) => {
     const userEmail = claimsData.claims.email as string;
     if (!userEmail) throw new Error("User not authenticated");
 
-    // Service role client for DB writes
     const supabaseClient = createClient(
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+
+    // Read current profile to check existing plan
+    const { data: currentProfile } = await supabaseClient
+      .from("profiles")
+      .select("plan_type, credits_general, credits_exams")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const currentPlanType = currentProfile?.plan_type || "starter";
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -53,6 +69,13 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
 
     if (customers.data.length === 0) {
+      // No Stripe customer — downgrade to starter if not already
+      if (currentPlanType !== "starter") {
+        await supabaseClient
+          .from("profiles")
+          .update(STARTER_DEFAULTS)
+          .eq("user_id", userId);
+      }
       return new Response(JSON.stringify({
         subscribed: false,
         plan_type: "starter",
@@ -71,6 +94,19 @@ serve(async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
+      // No active subscription — downgrade to starter if not already
+      if (currentPlanType !== "starter") {
+        await supabaseClient
+          .from("profiles")
+          .update({ ...STARTER_DEFAULTS, stripe_customer_id: customerId })
+          .eq("user_id", userId);
+      } else {
+        // Just update stripe_customer_id and status
+        await supabaseClient
+          .from("profiles")
+          .update({ subscription_status: "inactive", stripe_customer_id: customerId })
+          .eq("user_id", userId);
+      }
       return new Response(JSON.stringify({
         subscribed: false,
         plan_type: "starter",
@@ -97,19 +133,34 @@ serve(async (req) => {
       subscriptionEnd = null;
     }
 
-    // Sync profile
-    await supabaseClient
-      .from("profiles")
-      .update({
-        plan_type: planInfo.plan_type,
-        credits_general: planInfo.credits_general,
-        credits_exams: planInfo.credits_exams,
-        credits_remaining: planInfo.credits_general,
-        logos_limit: planInfo.logos_limit,
-        subscription_status: "active",
-        stripe_customer_id: customerId,
-      })
-      .eq("user_id", userId);
+    // Only reset credits if plan CHANGED (upgrade/downgrade)
+    const planChanged = currentPlanType !== planInfo.plan_type;
+
+    if (planChanged) {
+      // Plan changed — update everything including credits
+      await supabaseClient
+        .from("profiles")
+        .update({
+          plan_type: planInfo.plan_type,
+          credits_general: planInfo.credits_general,
+          credits_exams: planInfo.credits_exams,
+          credits_remaining: planInfo.credits_general,
+          logos_limit: planInfo.logos_limit,
+          subscription_status: "active",
+          stripe_customer_id: customerId,
+        })
+        .eq("user_id", userId);
+    } else {
+      // Same plan — only update status and customer id, preserve credits
+      await supabaseClient
+        .from("profiles")
+        .update({
+          subscription_status: "active",
+          stripe_customer_id: customerId,
+          logos_limit: planInfo.logos_limit,
+        })
+        .eq("user_id", userId);
+    }
 
     return new Response(JSON.stringify({
       subscribed: true,
