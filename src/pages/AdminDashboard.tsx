@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -43,6 +47,9 @@ export default function AdminDashboard() {
   const [creditAmount, setCreditAmount] = useState("10");
   const [creditType, setCreditType] = useState<string>("credits_remaining");
   const [stats, setStats] = useState({ total: 0, starter: 0, pro: 0, master: 0, ultra: 0 });
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({
+    open: false, title: "", description: "", onConfirm: () => {},
+  });
 
   useEffect(() => {
     checkAdmin();
@@ -77,11 +84,27 @@ export default function AdminDashboard() {
     }
   };
 
-  const giveCredits = async () => {
+  const creditTypeLabels: Record<string, string> = {
+    credits_remaining: "Créditos gerais",
+    creditos_ia: "Créditos IA",
+    creditos_correcao: "Créditos correção",
+    logos_limit: "Limite de logos",
+  };
+
+  const requestGiveCredits = () => {
     if (!selected) return;
     const amount = parseInt(creditAmount);
     if (isNaN(amount) || amount <= 0) { toast.error("Informe um valor válido"); return; }
+    setConfirmDialog({
+      open: true,
+      title: "Confirmar envio de créditos",
+      description: `Adicionar +${amount} ${creditTypeLabels[creditType] || creditType} para ${selected.nome || selected.email}?`,
+      onConfirm: () => executeGiveCredits(amount),
+    });
+  };
 
+  const executeGiveCredits = async (amount: number) => {
+    if (!selected) return;
     const currentValue = (selected as any)[creditType] as number;
     const newValue = currentValue + amount;
 
@@ -96,7 +119,17 @@ export default function AdminDashboard() {
     await loadUsers();
   };
 
-  const updatePlan = async (newPlan: string) => {
+  const requestUpdatePlan = (newPlan: string) => {
+    if (!selected) return;
+    setConfirmDialog({
+      open: true,
+      title: "Confirmar alteração de plano",
+      description: `Alterar o plano de ${selected.nome || selected.email} de ${selected.plan_type?.toUpperCase()} para ${newPlan.toUpperCase()}?`,
+      onConfirm: () => executeUpdatePlan(newPlan),
+    });
+  };
+
+  const executeUpdatePlan = async (newPlan: string) => {
     if (!selected) return;
     const planCredits: Record<string, { credits_remaining: number; logos_limit: number }> = {
       starter: { credits_remaining: 5, logos_limit: 0 },
@@ -274,7 +307,7 @@ export default function AdminDashboard() {
                       onChange={(e) => setCreditAmount(e.target.value)}
                       className="text-sm"
                     />
-                    <Button onClick={giveCredits} className="shrink-0 gradient-primary border-0 text-primary-foreground">
+                    <Button onClick={requestGiveCredits} className="shrink-0 gradient-primary border-0 text-primary-foreground">
                       <Gift className="h-4 w-4 mr-1" /> Dar
                     </Button>
                   </div>
@@ -296,7 +329,7 @@ export default function AdminDashboard() {
                         variant={selected.plan_type === plan ? "default" : "outline"}
                         size="sm"
                         className={`text-xs ${selected.plan_type === plan ? "gradient-primary border-0 text-primary-foreground" : ""}`}
-                        onClick={() => updatePlan(plan)}
+                        onClick={() => requestUpdatePlan(plan)}
                         disabled={selected.plan_type === plan}
                       >
                         {plan.toUpperCase()}
@@ -313,6 +346,22 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDialog.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })); }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
