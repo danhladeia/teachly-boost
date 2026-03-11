@@ -50,7 +50,7 @@ const GAMES = [
   { id: "cruzadinha", title: "Palavras Cruzadas", icon: Grid3X3, desc: "Grade com dicas horizontais e verticais", needsWords: true, supportsAI: true },
   { id: "criptograma", title: "Criptograma Lógico", icon: Lock, desc: "Decifre a mensagem com tabela de códigos", needsWords: false, supportsAI: true },
   { id: "sudoku", title: "Sudoku Temático", icon: Grid3X3, desc: "Puzzles 4×4 a 9×9 com números ou símbolos", needsWords: false, supportsAI: false },
-  { id: "labirinto", title: "Labirinto com Desafios", icon: MapPin, desc: "Encontre o caminho resolvendo perguntas", needsWords: false, supportsAI: true },
+  { id: "labirinto", title: "Labirinto", icon: MapPin, desc: "Encontre o caminho da entrada à saída", needsWords: false, supportsAI: false },
 ];
 
 function Tip({ text }: { text: string }) {
