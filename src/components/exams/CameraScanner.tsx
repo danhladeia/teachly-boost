@@ -261,6 +261,8 @@ export default function CameraScanner() {
         setProvaInfo(result.prova_info);
       }
 
+      // Deduct 1 exam credit for successful processing
+      await deductExamCredits(1);
       toast.success(`${(result.respostas || []).length} respostas detectadas!`);
       setStep("validate");
     } catch (err: any) {
