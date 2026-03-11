@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import { Sparkles, Loader2, Download, RefreshCw, Image, Code, FileText, Presentation } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
