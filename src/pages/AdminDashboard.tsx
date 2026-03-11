@@ -47,6 +47,9 @@ export default function AdminDashboard() {
   const [creditAmount, setCreditAmount] = useState("10");
   const [creditType, setCreditType] = useState<string>("credits_remaining");
   const [stats, setStats] = useState({ total: 0, starter: 0, pro: 0, master: 0, ultra: 0 });
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({
+    open: false, title: "", description: "", onConfirm: () => {},
+  });
 
   useEffect(() => {
     checkAdmin();
