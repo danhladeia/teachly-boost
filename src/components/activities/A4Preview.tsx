@@ -344,18 +344,71 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
     position: "relative",
   };
 
+  const [viewMode, setViewMode] = useState<"print" | "mobile">("print");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scaleFactor, setScaleFactor] = useState(1);
+
+  // Dynamic scale calculation
+  useEffect(() => {
+    const updateScale = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const containerWidth = container.clientWidth;
+      const a4WidthPx = 793.7; // 210mm in px at 96dpi
+      if (containerWidth < a4WidthPx) {
+        setScaleFactor(Math.min(1, (containerWidth - 16) / a4WidthPx));
+      } else {
+        setScaleFactor(1);
+      }
+    };
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
+  const isMobileView = viewMode === "mobile";
+
+  const mobileReadStyle: React.CSSProperties = isMobileView ? {
+    width: "100%",
+    height: "auto",
+    padding: "4mm",
+    minHeight: "unset",
+    transform: "none",
+    fontSize: "10pt",
+  } : {};
+
   return (
-    <div data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6 w-full overflow-x-hidden max-w-full">
+    <div ref={containerRef} data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
+      {/* View mode toggle */}
+      <div className="flex items-center gap-1 rounded-lg border bg-card p-0.5 self-end">
+        <button
+          onClick={() => setViewMode("print")}
+          className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${viewMode === "print" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Monitor className="h-3 w-3" /> Impressão
+        </button>
+        <button
+          onClick={() => setViewMode("mobile")}
+          className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${viewMode === "mobile" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Smartphone className="h-3 w-3" /> Leitura
+        </button>
+      </div>
+
       <style>{`
-        @media (max-width: 800px) {
-          [data-a4-container] > #atividade-print-area,
-          [data-a4-container] > .bg-white {
-            transform-origin: top center;
-            transform: scale(calc(min(1, (100vw - 32px) / 793.7)));
-          }
+        [data-a4-container] .a4-page-scaled {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          hyphens: auto;
+        }
+        [data-a4-container] .a4-page-scaled img,
+        [data-a4-container] .a4-page-scaled table {
+          max-width: 100% !important;
+          height: auto !important;
         }
       `}</style>
-      {/* Hidden measurement container - renders everything flat to measure heights */}
+
+      {/* Hidden measurement container */}
       <div
         ref={measureRef}
         style={{
@@ -372,14 +425,22 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         {blockElements}
       </div>
 
-      {/* Visible paginated output for on-screen preview */}
+      {/* Visible paginated output */}
       {pages.length > 0 ? (
-        <div id="atividade-print-area" className="flex flex-col items-center gap-6">
+        <div
+          id="atividade-print-area"
+          className="flex flex-col items-center gap-6"
+          style={!isMobileView && scaleFactor < 1 ? {
+            transform: `scale(${scaleFactor})`,
+            transformOrigin: "top center",
+            width: PAGE_WIDTH,
+          } : undefined}
+        >
           {pages.map((pageBlockIndices, pageIdx) => (
             <div
               key={pageIdx}
-              className="bg-white text-black shadow-lg"
-              style={pageStyle}
+              className="bg-white text-black shadow-lg a4-page-scaled"
+              style={{ ...pageStyle, ...mobileReadStyle }}
             >
               {pageIdx === 0 && headerJSX}
               {pageBlockIndices.map(blockIdx => blockElements[blockIdx])}
@@ -387,11 +448,19 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
           ))}
         </div>
       ) : (
-        /* Fallback: single page before measurement completes */
         <div
           id="atividade-print-area"
-          className="bg-white text-black shadow-lg"
-          style={{ ...pageStyle, minHeight: `${PAGE_HEIGHT_MM}mm`, height: "auto" }}
+          className="bg-white text-black shadow-lg a4-page-scaled"
+          style={{
+            ...pageStyle,
+            minHeight: isMobileView ? "unset" : `${PAGE_HEIGHT_MM}mm`,
+            height: "auto",
+            ...mobileReadStyle,
+            ...((!isMobileView && scaleFactor < 1) ? {
+              transform: `scale(${scaleFactor})`,
+              transformOrigin: "top center",
+            } : {}),
+          }}
         >
           {headerJSX}
           {blocks.length === 0 && (
