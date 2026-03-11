@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import { Sparkles, Loader2, Download, RefreshCw, Image, Code, FileText, Presentation } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
@@ -536,7 +537,8 @@ export default function DiagramGenerator() {
         </div>
 
         {/* Right Panel — Diagram Preview A4 */}
-        <div className="flex-1 flex items-start justify-center overflow-auto pb-4">
+        <div className="flex-1 flex items-start justify-center overflow-x-hidden pb-4 min-w-0">
+          <ResponsiveA4Wrapper>
           <div
             ref={printRef}
             className="bg-white border rounded-lg shadow-sm shrink-0"
@@ -587,6 +589,7 @@ export default function DiagramGenerator() {
               </div>
             )}
           </div>
+          </ResponsiveA4Wrapper>
         </div>
       </div>
     </div>
