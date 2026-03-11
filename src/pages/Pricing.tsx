@@ -19,7 +19,7 @@ const plans = [
     linkMonthly: null as string | null,
     linkAnnual: null as string | null,
     popular: false,
-    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água", "Suporte via ticket"],
+    features: ["10 créditos únicos", "10 correções de prova", "Até 20 documentos salvos", "Acesso a todos os módulos", "Exportação PDF", "Suporte via ticket"],
     description: null as string | null,
     cta: "Plano Atual",
   },
