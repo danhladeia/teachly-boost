@@ -536,7 +536,8 @@ export default function DiagramGenerator() {
         </div>
 
         {/* Right Panel — Diagram Preview A4 */}
-        <div className="flex-1 flex items-start justify-center overflow-auto pb-4">
+        <div className="flex-1 flex items-start justify-center overflow-x-hidden pb-4 min-w-0">
+          <ResponsiveA4Wrapper>
           <div
             ref={printRef}
             className="bg-white border rounded-lg shadow-sm shrink-0"
@@ -587,6 +588,7 @@ export default function DiagramGenerator() {
               </div>
             )}
           </div>
+          </ResponsiveA4Wrapper>
         </div>
       </div>
     </div>
