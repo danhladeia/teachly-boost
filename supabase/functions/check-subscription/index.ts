@@ -56,11 +56,15 @@ serve(async (req) => {
     // Read current profile to check existing plan
     const { data: currentProfile } = await supabaseClient
       .from("profiles")
-      .select("plan_type, credits_general, credits_exams")
+      .select("plan_type, credits_general, credits_exams, subscription_status")
       .eq("user_id", userId)
       .maybeSingle();
 
     const currentPlanType = currentProfile?.plan_type || "starter";
+    const currentSubStatus = currentProfile?.subscription_status || "inactive";
+
+    // If admin manually set an active plan, don't override it when there's no Stripe subscription
+    const isAdminManaged = currentPlanType !== "starter" && currentSubStatus === "active";
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
