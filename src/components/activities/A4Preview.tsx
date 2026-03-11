@@ -117,10 +117,13 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         if (nextBlock && nextBlock.type === "image" && nextBlock.imageUrl && nextBlock.imageFloat !== "none") {
           const size = imageSizeMap[nextBlock.imageSize || "medium"];
           const float = resolveFloat(nextBlock);
+          const floatDir = float === "right" ? "right" : "left";
+          const marginStyle = floatDir === "right" ? { marginLeft: "4mm", marginBottom: "3mm" } : { marginRight: "4mm", marginBottom: "3mm" };
           rendered.push(
-            <div key={block.id} data-block-id={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
-              <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
-              <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
+            <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
+              <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", float: floatDir, ...marginStyle }} />
+              <div style={{ textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
+              <div style={{ clear: "both" }} />
             </div>
           );
           i += 2; continue;
