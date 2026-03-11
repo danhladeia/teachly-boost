@@ -33,7 +33,7 @@ const plans = [
     paymentLink: "https://buy.stripe.com/eVq28lcNEavXbPY0Rw9sk03",
     priceOriginal: "R$ 44,90", priceDiscount: "R$ 33,67", priceDisplay: "R$ 44,90",
     period: "/mês", popular: true,
-    features: ["60 créditos/mês", "80 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master",
   },
   {

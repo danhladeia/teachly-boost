@@ -72,32 +72,32 @@ const plans = [
   {
     name: "Starter", price: "R$ 0,00", originalPrice: null, period: "", icon: Star,
     color: "text-muted-foreground", logo: planStarter,
-    features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
     cta: "Começar grátis"
   },
   {
-    name: "Pro", price: "R$ 18,67", originalPrice: "R$ 24,90", period: "/mês", icon: Zap,
+    name: "Pro", price: "R$ 24,90", originalPrice: null, period: "/mês", icon: Zap,
     color: "text-primary", logo: planPro,
-    features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
     cta: "Assinar Pro"
   },
   {
-    name: "Master", price: "R$ 33,67", originalPrice: "R$ 44,90", period: "/mês", icon: Crown,
+    name: "Master", price: "R$ 44,90", originalPrice: null, period: "/mês", icon: Crown,
     color: "text-plan-pratico", popular: true, logo: planMaster,
-    features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master"
   },
   {
-    name: "Ultra", price: "R$ 67,42", originalPrice: "R$ 89,90", period: "/mês", icon: Rocket,
+    name: "Ultra", price: "R$ 89,90", originalPrice: null, period: "/mês", icon: Rocket,
     color: "text-plan-mestre", logo: planUltra,
-    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
+    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
     cta: "Assinar Ultra"
   }
 ];
 
 const faqs = [
-  { q: "Preciso de cartão de crédito para começar?", a: "Não! O plano Starter é totalmente gratuito e não requer cartão de crédito. Você recebe 5 créditos para experimentar todos os módulos da plataforma." },
-  { q: "O que é um crédito e como funciona?", a: "Cada geração de conteúdo por IA consome 1 crédito: plano de aula, jogo pedagógico, apresentação de slides ou correção de prova. Os planos pagos (Pro, Master, Ultra) renovam os créditos automaticamente todo mês." },
+  { q: "Preciso de cartão de crédito para começar?", a: "Não! O plano Starter é totalmente gratuito e não requer cartão de crédito. Você recebe 10 créditos de criação e 10 correções de prova para experimentar todos os módulos da plataforma." },
+  { q: "O que é um crédito e como funciona?", a: "Existem dois tipos de créditos: créditos de criação (para Planos BNCC, Jogos, Slides e Diagramas) e créditos de correção (para provas OMR). Cada geração ou correção consome 1 crédito do tipo correspondente. Os planos pagos (Pro, Master, Ultra) renovam os créditos automaticamente todo mês." },
   { q: "Posso usar no celular e no computador?", a: "Sim! O GoPedagoX é 100% responsivo e funciona em qualquer navegador — computador, tablet ou celular. Não precisa instalar nada." },
   { q: "As habilidades BNCC estão atualizadas?", a: "Sim, mantemos nosso banco de habilidades sempre atualizado conforme as diretrizes mais recentes do MEC. O sistema cobre Educação Infantil, Ensino Fundamental e Ensino Médio." },
   { q: "Posso cancelar minha assinatura a qualquer momento?", a: "Sim, sem multa ou fidelidade. Você cancela quando quiser e continua usando todos os recursos do plano até o fim do período já pago." },

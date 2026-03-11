@@ -7,10 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLAN_MAP: Record<string, { plan_type: string; credits: number; logos_limit: number }> = {
-  "prod_U7ABxtNA7eX4Jb": { plan_type: "pro", credits: 15, logos_limit: 1 },
-  "prod_U7ABuFnbvi0lll": { plan_type: "master", credits: 50, logos_limit: 3 },
-  "prod_U7ABCsrepi9iSt": { plan_type: "ultra", credits: 9999, logos_limit: 9999 },
+const PLAN_MAP: Record<string, { plan_type: string; credits_general: number; credits_exams: number; logos_limit: number }> = {
+  "prod_U7rgC68r4gOsXE": { plan_type: "pro", credits_general: 30, credits_exams: 50, logos_limit: 1 },
+  "prod_U7rj8fMAjazzyW": { plan_type: "master", credits_general: 60, credits_exams: 100, logos_limit: 3 },
+  "prod_U7rl14Z9M62oqL": { plan_type: "ultra", credits_general: 9999, credits_exams: 9999, logos_limit: 9999 },
 };
 
 serve(async (req) => {
@@ -83,7 +83,7 @@ serve(async (req) => {
 
     const subscription = subscriptions.data[0];
     const productId = subscription.items.data[0].price.product as string;
-    const planInfo = PLAN_MAP[productId] || { plan_type: "starter", credits: 5, logos_limit: 0 };
+    const planInfo = PLAN_MAP[productId] || { plan_type: "starter", credits_general: 10, credits_exams: 10, logos_limit: 0 };
     
     let subscriptionEnd: string | null = null;
     try {
@@ -102,7 +102,9 @@ serve(async (req) => {
       .from("profiles")
       .update({
         plan_type: planInfo.plan_type,
-        credits_remaining: planInfo.credits,
+        credits_general: planInfo.credits_general,
+        credits_exams: planInfo.credits_exams,
+        credits_remaining: planInfo.credits_general,
         logos_limit: planInfo.logos_limit,
         subscription_status: "active",
         stripe_customer_id: customerId,
@@ -112,7 +114,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: true,
       plan_type: planInfo.plan_type,
-      credits: planInfo.credits,
+      credits_general: planInfo.credits_general,
+      credits_exams: planInfo.credits_exams,
       logos_limit: planInfo.logos_limit,
       subscription_end: subscriptionEnd,
       product_id: productId,
