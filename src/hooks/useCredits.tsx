@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setCache, getCache } from "@/lib/cache-utils";
 import { useAuth } from "./useAuth";
 
 interface PlanInfo {
@@ -53,6 +54,13 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 
   const fetchPlan = useCallback(async () => {
     if (!user) { setLoading(false); return; }
+
+    // Load from cache instantly
+    const cached = getCache<PlanInfo>(`plan_${user.id}`, 10 * 60 * 1000);
+    if (cached) {
+      setPlan(cached);
+      setLoading(false);
+    }
     
     try {
       await supabase.functions.invoke("check-subscription");
@@ -64,14 +72,16 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       .eq("user_id", user.id)
       .maybeSingle();
     if (data) {
-      setPlan({
+      const planData: PlanInfo = {
         planType: (data as any).plan_type || "starter",
         creditsGeneral: (data as any).credits_general ?? 10,
         creditsExams: (data as any).credits_exams ?? 10,
         creditsRemaining: (data as any).credits_remaining ?? 5,
         logosLimit: (data as any).logos_limit ?? 0,
         subscriptionStatus: (data as any).subscription_status || "active",
-      });
+      };
+      setPlan(planData);
+      setCache(`plan_${user.id}`, planData);
     }
     setLoading(false);
   }, [user]);
@@ -103,7 +113,9 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       .eq("user_id", user.id);
 
     if (error) return false;
+    const updated = { ...plan, creditsGeneral: newCredits, creditsRemaining: newCredits };
     setPlan(prev => ({ ...prev, creditsGeneral: newCredits, creditsRemaining: newCredits }));
+    if (user) setCache(`plan_${user.id}`, updated);
     return true;
   };
 
@@ -119,7 +131,9 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       .eq("user_id", user.id);
 
     if (error) return false;
+    const updated = { ...plan, creditsExams: newCredits };
     setPlan(prev => ({ ...prev, creditsExams: newCredits }));
+    if (user) setCache(`plan_${user.id}`, updated);
     return true;
   };
 
