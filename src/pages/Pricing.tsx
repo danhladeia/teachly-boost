@@ -148,7 +148,6 @@ export default function Pricing() {
           const isAnnual = billingCycle === "annual";
           const basePrice = isAnnual ? p.priceAnnualTotal : p.priceMonthly;
           const monthlyEquivalent = isAnnual ? p.priceAnnualTotal / 12 : p.priceMonthly;
-          const finalPrice = couponApplied ? discount(basePrice) : basePrice;
           const paymentLink = isAnnual ? p.linkAnnual : p.linkMonthly;
           const isPaid = p.priceMonthly > 0;
 
