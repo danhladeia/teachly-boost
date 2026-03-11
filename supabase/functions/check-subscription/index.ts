@@ -98,23 +98,22 @@ serve(async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
-      // No active subscription — downgrade to starter if not already
-      if (currentPlanType !== "starter") {
+      // No active subscription — only downgrade if NOT admin-managed
+      if (!isAdminManaged && currentPlanType !== "starter") {
         await supabaseClient
           .from("profiles")
           .update({ ...STARTER_DEFAULTS, stripe_customer_id: customerId })
           .eq("user_id", userId);
-      } else {
-        // Just update stripe_customer_id and status
+      } else if (!isAdminManaged) {
         await supabaseClient
           .from("profiles")
           .update({ subscription_status: "inactive", stripe_customer_id: customerId })
           .eq("user_id", userId);
       }
       return new Response(JSON.stringify({
-        subscribed: false,
-        plan_type: "starter",
-        credits: 5,
+        subscribed: isAdminManaged,
+        plan_type: isAdminManaged ? currentPlanType : "starter",
+        credits: isAdminManaged ? (currentProfile?.credits_general ?? 10) : 5,
         logos_limit: 0,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
