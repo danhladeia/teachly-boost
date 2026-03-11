@@ -420,10 +420,14 @@ export default function DiagramGenerator() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <TimbreSelector
-                onSelect={setSelectedTimbre}
-                selectedId={selectedTimbre?.id || undefined}
-              />
+              <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+                <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+                <TimbreSelector
+                  onSelect={setSelectedTimbre}
+                  selectedId={selectedTimbre?.id || undefined}
+                  label="Selecionar escola/timbre"
+                />
+              </div>
 
               <div>
                 <Label className="text-xs">Descreva o diagrama</Label>

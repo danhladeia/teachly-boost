@@ -85,6 +85,16 @@ export default function SlideConfigPanel({
             <Textarea placeholder="Cole aqui o texto do livro, apostila ou anotações que a IA deve usar como base..." value={textoBase} onChange={e => setTextoBase(e.target.value)} className="min-h-[80px]" />
           </div>
 
+          {/* File upload - right after texto base */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Arquivo base <span className="text-muted-foreground">(opcional)</span></Label>
+            <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+              <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground truncate">{arquivo ? arquivo.name : "PDF, DOCX ou TXT"}</span>
+              <input type="file" accept=".pdf,.docx,.txt,.doc" className="hidden" onChange={onFileUpload} />
+            </label>
+          </div>
+
           <div className="grid gap-3 grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Nível</Label>

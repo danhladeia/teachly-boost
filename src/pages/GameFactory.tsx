@@ -856,20 +856,8 @@ export default function GameFactory() {
                 </Section>
               )
 
-              {/* Color Mode */}
-              <Section title="🎨 Aparência">
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Modo de Cor</Label>
-                  <div className="flex gap-1">
-                    {([["color", "Colorido"], ["grayscale", "P&B"], ["high-contrast", "Alto Contraste"]] as const).map(([key, label]) => (
-                      <button key={key} onClick={() => setColorMode(key)}
-                        className={`px-2 py-1 rounded text-[9px] border flex-1 ${colorMode === key ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
+              {/* Gabarito */}
+              <Section title="📋 Gabarito">
                 <div className="space-y-1">
                   <Label className="text-[10px]">Gabarito do Professor</Label>
                   <Select value={answerKey} onValueChange={v => setAnswerKey(v as AnswerKeyMode)}>
