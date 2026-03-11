@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
 import OMRResultView from "./OMRResultView";
 
 interface DetectedAnswer {
@@ -35,6 +36,7 @@ type Step = "select-gabarito" | "camera" | "validate" | "result";
 
 export default function CameraScanner() {
   const { user } = useAuth();
+  const { canCorrectExam, deductExamCredits } = useCredits();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -207,6 +209,13 @@ export default function CameraScanner() {
 
   const captureAndProcess = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
+
+    // Check exam credits before processing
+    if (!canCorrectExam(1)) {
+      toast.error("Créditos de correção insuficientes. Faça upgrade do seu plano.");
+      return;
+    }
+
     const video = videoRef.current;
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
@@ -252,6 +261,8 @@ export default function CameraScanner() {
         setProvaInfo(result.prova_info);
       }
 
+      // Deduct 1 exam credit for successful processing
+      await deductExamCredits(1);
       toast.success(`${(result.respostas || []).length} respostas detectadas!`);
       setStep("validate");
     } catch (err: any) {

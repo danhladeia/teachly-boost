@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
 import OMRResultView from "./OMRResultView";
 
 interface DetectedAnswer {
@@ -56,6 +57,7 @@ const altLabels = ["A", "B", "C", "D"];
 
 export default function OMRScanner() {
   const { user } = useAuth();
+  const { canCorrectExam, deductExamCredits } = useCredits();
   const [step, setStep] = useState<"select-gabarito" | "upload" | "results">("select-gabarito");
   const [sheets, setSheets] = useState<ProcessedSheet[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -256,6 +258,14 @@ export default function OMRScanner() {
       return;
     }
     if (sheets.length === 0) return;
+
+    // Check exam credits before processing
+    const pendingCount = sheets.filter(s => s.status !== "done").length;
+    if (!canCorrectExam(pendingCount)) {
+      toast.error("Créditos de correção insuficientes. Faça upgrade do seu plano.");
+      return;
+    }
+
     setProcessing(true);
     setProgress(0);
 
@@ -298,6 +308,8 @@ export default function OMRScanner() {
         // Apply preloaded gabarito if QR didn't detect one
         const withGabarito = applyPreloadedGabarito(processed);
         setSheets(prev => prev.map((s, idx) => idx === i ? withGabarito : s));
+        // Deduct 1 exam credit per successfully processed sheet
+        await deductExamCredits(1);
       } catch (err: any) {
         setSheets(prev => prev.map((s, idx) => idx === i ? { ...s, status: "error", errorMsg: err.message } : s));
       }
