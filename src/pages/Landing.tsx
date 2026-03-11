@@ -78,7 +78,7 @@ const plans = [
   {
     name: "Pro", price: "R$ 19,90", originalPrice: null, period: "/mês", icon: Zap,
     color: "text-primary", logo: planPro,
-    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via ticket"],
     cta: "Assinar Pro"
   },
   {
