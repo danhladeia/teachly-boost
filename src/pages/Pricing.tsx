@@ -20,7 +20,7 @@ const plans = [
     linkAnnual: null as string | null,
     popular: false,
     features: ["10 créditos únicos", "10 correções de prova", "Até 20 documentos salvos", "Acesso a todos os módulos", "Exportação PDF", "Suporte via ticket"],
-    description: null as string | null,
+    description: "Dê o primeiro passo na automação da sua rotina pedagógica. Experimente o poder da IA com 10 créditos para criação de planos de aula ou atividades e 10 correções de prova instantâneas. Ideal para testar nossas ferramentas e sentir a economia de tempo real no seu dia a dia escolar antes de evoluir para o próximo nível.",
     cta: "Plano Atual",
   },
   {
@@ -49,7 +49,7 @@ const plans = [
     linkMonthly: "https://buy.stripe.com/5kQdR37tk7jL6vE2ZE9sk04",
     linkAnnual: "https://buy.stripe.com/7sY8wJeVM0Vng6e6bQ9sk05",
     popular: false,
-    features: ["Créditos e Correções Ilimitados", "Documentos Ilimitados", "Timbres Ilimitados", "Suporte prioritário via ticket e WhatsApp"],
+    features: ["Créditos e Correções Ilimitados", "Documentos Ilimitados", "Timbres Ilimitados", "Suporte com prioridade máxima"],
     description: "A solução definitiva para coordenadores ou professores com altíssimo volume de alunos. Liberdade ilimitada para criar conteúdos, corrigir provas e cadastrar quantos timbres precisar.",
     cta: "Assinar Ultra",
   },
