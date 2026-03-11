@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { Monitor, Smartphone } from "lucide-react";
 import type { Block } from "./types";
 
 interface A4PreviewProps {
