@@ -92,10 +92,14 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         const float = resolveFloat(block);
         const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
         if (nextBlock && nextBlock.type === "text") {
+          // Use CSS float for text wrapping around image
+          const floatDir = float === "right" ? "right" : "left";
+          const marginStyle = floatDir === "right" ? { marginLeft: "4mm", marginBottom: "3mm" } : { marginRight: "4mm", marginBottom: "3mm" };
           rendered.push(
-            <div key={block.id} data-block-id={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
-              <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
-              <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
+            <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
+              <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", float: floatDir, ...marginStyle }} />
+              <div style={{ textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
+              <div style={{ clear: "both" }} />
             </div>
           );
           i += 2; continue;
