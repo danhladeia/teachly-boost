@@ -960,11 +960,11 @@ export default function Exams() {
             {/* RIGHT - Preview */}
             <div className="overflow-x-hidden min-w-0">
               <ResponsiveA4Wrapper>
-              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center min-w-0">
+              <div className="bg-muted/30 rounded-lg p-1 sm:p-4 flex justify-center min-w-0">
                 <div
                   id="prova-print-area"
-                  className="bg-white text-black shadow-lg w-full lg:w-[210mm]"
-                  style={{ minHeight: "297mm", padding: "10mm 8mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  className="bg-white text-black shadow-lg"
+                  style={{ width: "210mm", maxWidth: "100%", minHeight: "297mm", padding: "15mm 10mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {showHeader && selectedTimbre?.bannerUrl && (
                     <div style={{ textAlign: "center", marginBottom: "4mm" }}>
