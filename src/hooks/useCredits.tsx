@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setCache, getCache } from "@/lib/cache-utils";
 import { useAuth } from "./useAuth";
 
 interface PlanInfo {
