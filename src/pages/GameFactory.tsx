@@ -22,6 +22,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTimbre } from "@/hooks/useTimbre";
+import TimbreSelector from "@/components/TimbreSelector";
+import type { TimbreData } from "@/hooks/useTimbre";
 import { useCredits } from "@/hooks/useCredits";
 import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 import {
