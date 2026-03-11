@@ -83,7 +83,7 @@ serve(async (req) => {
 
     const subscription = subscriptions.data[0];
     const productId = subscription.items.data[0].price.product as string;
-    const planInfo = PLAN_MAP[productId] || { plan_type: "starter", credits: 5, logos_limit: 0 };
+    const planInfo = PLAN_MAP[productId] || { plan_type: "starter", credits_general: 10, credits_exams: 10, logos_limit: 0 };
     
     let subscriptionEnd: string | null = null;
     try {
