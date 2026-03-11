@@ -50,8 +50,7 @@ export default function Dashboard() {
   const [userName, setUserName] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { plan, planLimits } = useCredits();
-  const { docCount, docLimit, usagePercent } = useDocumentLimits();
+
 
   useEffect(() => {
     loadDocs();
