@@ -209,6 +209,13 @@ export default function CameraScanner() {
 
   const captureAndProcess = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
+
+    // Check exam credits before processing
+    if (!canCorrectExam(1)) {
+      toast.error("Créditos de correção insuficientes. Faça upgrade do seu plano.");
+      return;
+    }
+
     const video = videoRef.current;
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
