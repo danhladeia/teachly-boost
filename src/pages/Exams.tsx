@@ -21,6 +21,7 @@ import TimbreSelector from "@/components/TimbreSelector";
 import type { TimbreData } from "@/hooks/useTimbre";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
+import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 
 const niveis: Record<string, string[]> = {
   "Fundamental - Séries Iniciais": ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
