@@ -469,31 +469,28 @@ export default function GameFactory() {
           <Card className="shadow-card">
             <CardContent className="p-3 space-y-3">
 
-              {/* Timbre / Branding - at the top */}
-              <Section title="🏫 Cabeçalho Institucional" defaultOpen={header.showHeader}>
-                <div className="flex items-center justify-between mb-1">
-                  <Label className="text-[10px]">Incluir timbre no documento</Label>
-                  <Switch checked={header.showHeader} onCheckedChange={v => setHeader(h => ({ ...h, showHeader: v }))} />
-                </div>
-                {header.showHeader && (
-                  <div className="space-y-1.5">
-                    <TimbreSelector
-                      selectedId={selectedTimbre?.id}
-                      onSelect={handleTimbreSelect}
-                      label="Timbre da escola"
-                    />
-                    <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
-                      <Input placeholder="Disciplina" value={header.disciplina} onChange={e => setHeader(h => ({ ...h, disciplina: e.target.value }))} className="h-7 text-[9px]" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input placeholder="Série/Turma" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
-                      <Input placeholder="Data" value={header.data} onChange={e => setHeader(h => ({ ...h, data: e.target.value }))} className="h-7 text-[9px]" />
-                    </div>
-                  </div>
+              {/* Timbre / Branding - Cabeçalho Institucional (padrão BNCC) */}
+              <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+                <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+                <TimbreSelector
+                  selectedId={selectedTimbre?.id}
+                  onSelect={handleTimbreSelect}
+                  label="Selecionar escola/timbre"
+                />
+                {!selectedTimbre && (
+                  <Input placeholder="Ou digite o nome da escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
                 )}
-              </Section>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Professor(a)</Label>
+                    <Input placeholder="Nome do professor" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Turma</Label>
+                    <Input placeholder="Ex: 5ºA, Turma 301" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
+                  </div>
+                </div>
+              </div>
 
               {/* Quick/Advanced toggle */}
               <div className="flex items-center justify-between">
