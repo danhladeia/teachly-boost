@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import { useLocation } from "react-router-dom";
 import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
