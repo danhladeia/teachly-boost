@@ -470,26 +470,18 @@ export default function GameFactory() {
             <CardContent className="p-3 space-y-3">
 
               {/* Timbre / Branding - at the top */}
-              <Section title="🏫 Timbre da Escola" defaultOpen={header.showHeader}>
+              <Section title="🏫 Cabeçalho Institucional" defaultOpen={header.showHeader}>
                 <div className="flex items-center justify-between mb-1">
                   <Label className="text-[10px]">Incluir timbre no documento</Label>
                   <Switch checked={header.showHeader} onCheckedChange={v => setHeader(h => ({ ...h, showHeader: v }))} />
                 </div>
                 {header.showHeader && (
                   <div className="space-y-1.5">
-                    {(timbre.escola || timbre.logoUrl) && (
-                      <div className="rounded border border-primary/20 bg-primary/5 p-1.5 text-[9px] text-primary flex items-center gap-1.5">
-                        {timbre.logoUrl && <img src={timbre.logoUrl} alt="Logo" className="h-5 object-contain" crossOrigin="anonymous" />}
-                        <span>Timbre carregado: <strong>{timbre.escola || "Logo"}</strong></span>
-                      </div>
-                    )}
-                    {!timbre.logoUrl && (
-                      <div>
-                        <Label className="text-[9px]">Logo (opcional)</Label>
-                        <Input type="file" accept="image/*" onChange={handleLogoUpload} className="h-7 text-[9px]" />
-                        {header.logoUrl && <img src={header.logoUrl} alt="Logo" className="h-7 mt-1 object-contain" />}
-                      </div>
-                    )}
+                    <TimbreSelector
+                      selectedId={selectedTimbre?.id}
+                      onSelect={handleTimbreSelect}
+                      label="Timbre da escola"
+                    />
                     <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
                     <div className="grid grid-cols-2 gap-1">
                       <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
