@@ -72,25 +72,25 @@ const plans = [
   {
     name: "Starter", price: "R$ 0,00", originalPrice: null, period: "", icon: Star,
     color: "text-muted-foreground", logo: planStarter,
-    features: ["5 créditos únicos", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
     cta: "Começar grátis"
   },
   {
-    name: "Pro", price: "R$ 18,67", originalPrice: "R$ 24,90", period: "/mês", icon: Zap,
+    name: "Pro", price: "R$ 24,90", originalPrice: null, period: "/mês", icon: Zap,
     color: "text-primary", logo: planPro,
-    features: ["15 créditos/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
+    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via e-mail"],
     cta: "Assinar Pro"
   },
   {
-    name: "Master", price: "R$ 33,67", originalPrice: "R$ 44,90", period: "/mês", icon: Crown,
+    name: "Master", price: "R$ 44,90", originalPrice: null, period: "/mês", icon: Crown,
     color: "text-plan-pratico", popular: true, logo: planMaster,
-    features: ["50 créditos/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário"],
     cta: "Assinar Master"
   },
   {
-    name: "Ultra", price: "R$ 67,42", originalPrice: "R$ 89,90", period: "/mês", icon: Rocket,
+    name: "Ultra", price: "R$ 89,90", originalPrice: null, period: "/mês", icon: Rocket,
     color: "text-plan-mestre", logo: planUltra,
-    features: ["Créditos Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
+    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário máximo"],
     cta: "Assinar Ultra"
   }
 ];
