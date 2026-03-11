@@ -327,6 +327,7 @@ export default function GameFactory() {
   const handleSave = async () => {
     if (!user) { toast.error("Faça login para salvar"); return; }
     if (!gameData) return;
+    if (!docLimits.checkAndWarnLimit()) return;
     setSaving(true);
     try {
       const { error } = await supabase.from("documentos_salvos").insert({
