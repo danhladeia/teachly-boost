@@ -64,6 +64,7 @@ const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "",
 export default function Exams() {
   const { user } = useAuth();
   const location = useLocation();
+  const docLimits = useDocumentLimits();
   const [titulo, setTitulo] = useState("");
   const [temas, setTemas] = useState("");
   const [nivel, setNivel] = useState("");
