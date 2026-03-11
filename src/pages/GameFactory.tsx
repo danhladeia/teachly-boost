@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import {
   Gamepad2, Search as SearchIcon, Grid3X3, Lock, MapPin,
   Sparkles, Loader2, Printer, RotateCcw, FileDown, ArrowLeft,
