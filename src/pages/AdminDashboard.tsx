@@ -84,11 +84,27 @@ export default function AdminDashboard() {
     }
   };
 
-  const giveCredits = async () => {
+  const creditTypeLabels: Record<string, string> = {
+    credits_remaining: "Créditos gerais",
+    creditos_ia: "Créditos IA",
+    creditos_correcao: "Créditos correção",
+    logos_limit: "Limite de logos",
+  };
+
+  const requestGiveCredits = () => {
     if (!selected) return;
     const amount = parseInt(creditAmount);
     if (isNaN(amount) || amount <= 0) { toast.error("Informe um valor válido"); return; }
+    setConfirmDialog({
+      open: true,
+      title: "Confirmar envio de créditos",
+      description: `Adicionar +${amount} ${creditTypeLabels[creditType] || creditType} para ${selected.nome || selected.email}?`,
+      onConfirm: () => executeGiveCredits(amount),
+    });
+  };
 
+  const executeGiveCredits = async (amount: number) => {
+    if (!selected) return;
     const currentValue = (selected as any)[creditType] as number;
     const newValue = currentValue + amount;
 
@@ -103,7 +119,17 @@ export default function AdminDashboard() {
     await loadUsers();
   };
 
-  const updatePlan = async (newPlan: string) => {
+  const requestUpdatePlan = (newPlan: string) => {
+    if (!selected) return;
+    setConfirmDialog({
+      open: true,
+      title: "Confirmar alteração de plano",
+      description: `Alterar o plano de ${selected.nome || selected.email} de ${selected.plan_type?.toUpperCase()} para ${newPlan.toUpperCase()}?`,
+      onConfirm: () => executeUpdatePlan(newPlan),
+    });
+  };
+
+  const executeUpdatePlan = async (newPlan: string) => {
     if (!selected) return;
     const planCredits: Record<string, { credits_remaining: number; logos_limit: number }> = {
       starter: { credits_remaining: 5, logos_limit: 0 },
