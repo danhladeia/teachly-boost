@@ -96,7 +96,7 @@ const plans = [
 ];
 
 const faqs = [
-  { q: "Preciso de cartão de crédito para começar?", a: "Não! O plano Starter é totalmente gratuito e não requer cartão de crédito. Você recebe 5 créditos para experimentar todos os módulos da plataforma." },
+  { q: "Preciso de cartão de crédito para começar?", a: "Não! O plano Starter é totalmente gratuito e não requer cartão de crédito. Você recebe 10 créditos de criação e 10 correções de prova para experimentar todos os módulos da plataforma." },
   { q: "O que é um crédito e como funciona?", a: "Cada geração de conteúdo por IA consome 1 crédito: plano de aula, jogo pedagógico, apresentação de slides ou correção de prova. Os planos pagos (Pro, Master, Ultra) renovam os créditos automaticamente todo mês." },
   { q: "Posso usar no celular e no computador?", a: "Sim! O GoPedagoX é 100% responsivo e funciona em qualquer navegador — computador, tablet ou celular. Não precisa instalar nada." },
   { q: "As habilidades BNCC estão atualizadas?", a: "Sim, mantemos nosso banco de habilidades sempre atualizado conforme as diretrizes mais recentes do MEC. O sistema cobre Educação Infantil, Ensino Fundamental e Ensino Médio." },
