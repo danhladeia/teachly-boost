@@ -1032,6 +1032,7 @@ export default function Exams() {
                   )}
                 </div>
               </div>
+              </ResponsiveA4Wrapper>
             </div>
           </div>
         </TabsContent>
