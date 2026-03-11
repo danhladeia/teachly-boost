@@ -41,10 +41,19 @@ export default function LibraryPage() {
   const [filterType, setFilterType] = useState<FilterType>("todos");
   const [search, setSearch] = useState("");
 
-  useEffect(() => { if (user) loadAll(); }, [user]);
+  useEffect(() => {
+    if (user) {
+      const cached = getCache<DocItem[]>(`library_${user.id}`, 5 * 60 * 1000);
+      if (cached) {
+        setDocs(cached);
+        setLoading(false);
+      }
+      loadAll();
+    }
+  }, [user]);
 
   const loadAll = async () => {
-    setLoading(true);
+    if (docs.length === 0) setLoading(true);
     try {
       const [{ data: savedDocs }, { data: provas }] = await Promise.all([
         supabase.from("documentos_salvos")
@@ -82,6 +91,7 @@ export default function LibraryPage() {
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       setDocs(all);
+      if (user) setCache(`library_${user.id}`, all);
     } catch (err) {
       toast.error("Erro ao carregar biblioteca");
     } finally {
