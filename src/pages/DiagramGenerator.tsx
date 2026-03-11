@@ -100,6 +100,8 @@ export default function DiagramGenerator() {
   const [ajusteLoading, setAjusteLoading] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
+  const [diagramTitle, setDiagramTitle] = useState("");
+  const [diagramDescription, setDiagramDescription] = useState("");
   const diagramRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
