@@ -7,10 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLAN_MAP: Record<string, { plan_type: string; credits: number; logos_limit: number }> = {
-  "prod_U7ABxtNA7eX4Jb": { plan_type: "pro", credits: 15, logos_limit: 1 },
-  "prod_U7ABuFnbvi0lll": { plan_type: "master", credits: 50, logos_limit: 3 },
-  "prod_U7ABCsrepi9iSt": { plan_type: "ultra", credits: 9999, logos_limit: 9999 },
+const PLAN_MAP: Record<string, { plan_type: string; credits_general: number; credits_exams: number; logos_limit: number }> = {
+  "prod_U7rgC68r4gOsXE": { plan_type: "pro", credits_general: 30, credits_exams: 50, logos_limit: 1 },
+  "prod_U7rj8fMAjazzyW": { plan_type: "master", credits_general: 60, credits_exams: 100, logos_limit: 3 },
+  "prod_U7rl14Z9M62oqL": { plan_type: "ultra", credits_general: 9999, credits_exams: 9999, logos_limit: 9999 },
 };
 
 serve(async (req) => {
