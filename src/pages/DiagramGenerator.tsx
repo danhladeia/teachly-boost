@@ -433,6 +433,27 @@ export default function DiagramGenerator() {
                 />
               </div>
 
+              <div>
+                <Label className="text-xs">Título do diagrama (opcional)</Label>
+                <Input
+                  placeholder="Ex: Ciclo da Água"
+                  value={diagramTitle}
+                  onChange={e => setDiagramTitle(e.target.value)}
+                  className="h-8 text-xs mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Descrição contextual (opcional)</Label>
+                <Textarea
+                  placeholder="Texto informativo para incluir acima ou abaixo do diagrama..."
+                  value={diagramDescription}
+                  onChange={e => setDiagramDescription(e.target.value)}
+                  rows={2}
+                  className="text-xs mt-1"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Tipo</Label>
