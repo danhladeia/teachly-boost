@@ -49,7 +49,7 @@ const plans = [
     linkMonthly: "https://buy.stripe.com/5kQdR37tk7jL6vE2ZE9sk04",
     linkAnnual: "https://buy.stripe.com/7sY8wJeVM0Vng6e6bQ9sk05",
     popular: false,
-    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário via ticket e WhatsApp"],
+    features: ["Créditos e Correções Ilimitados", "Documentos Ilimitados", "Timbres Ilimitados", "Suporte prioritário via ticket e WhatsApp"],
     description: "A solução definitiva para coordenadores ou professores com altíssimo volume de alunos. Liberdade ilimitada para criar conteúdos, corrigir provas e cadastrar quantos timbres precisar.",
     cta: "Assinar Ultra",
   },

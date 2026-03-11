@@ -174,7 +174,7 @@ export default function Landing() {
                 </a>
               </motion.div>
               <motion.p variants={fadeUp} className="mt-4 text-sm text-primary-foreground/50">
-                5 créditos grátis • Sem cartão de crédito
+                10 créditos grátis • Sem cartão de crédito
               </motion.p>
             </motion.div>
           </div>

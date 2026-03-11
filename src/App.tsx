@@ -69,7 +69,7 @@ const AppRoutes = () => (
     <Route path="/privacidade" element={<Privacy />} />
     <Route path="/suporte-admin" element={<AdminRoute><SupportAdmin /></AdminRoute>} />
     <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-    <Route path="/app" element={<ProtectedRoute><CreditsProvider><AppLayout /></CreditsProvider></ProtectedRoute>}>
+    <Route path="/app" element={<ProtectedRoute><CreditsProvider><DocLimitsProvider><AppLayout /></DocLimitsProvider></CreditsProvider></ProtectedRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="biblioteca" element={<LibraryPage />} />
       <Route path="bncc" element={<BNCCPlanner />} />
