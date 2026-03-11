@@ -274,16 +274,31 @@ export default function Support() {
                 <div ref={messagesEndRef} />
               </div>
               {selected.status !== "resolved" && (
-                <div className="border-t p-3 flex gap-2">
-                  <Input
-                    placeholder="Digite sua mensagem..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                  />
-                  <Button size="icon" onClick={sendMessage} disabled={sending} className="shrink-0">
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
+                <div className="border-t p-3 space-y-2">
+                  {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {attachments.map((f, i) => (
+                        <Badge key={i} variant="secondary" className="text-[9px] gap-1">
+                          {f.name.length > 15 ? f.name.slice(0, 12) + "..." : f.name}
+                          <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}><X className="h-2.5 w-2.5" /></button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      placeholder="Digite sua mensagem..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                    />
+                    <Button size="icon" onClick={sendMessage} disabled={sending} className="shrink-0">
+                      {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>

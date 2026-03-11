@@ -306,7 +306,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
     <>
       {showHeader && bannerUrl && (
         <div style={{ textAlign: "center", marginBottom: "4mm" }}>
-          <img src={bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
+          <img src={bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain", margin: "0 auto", display: "block" }} crossOrigin="anonymous" />
         </div>
       )}
       {showHeader && (escola || logoUrl) && (

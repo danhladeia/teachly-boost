@@ -166,22 +166,16 @@ export default function Pricing() {
                 <div>
                   {isPaid ? (
                     <>
-                      {couponApplied && (
-                        <p className="text-sm text-muted-foreground line-through">{fmt(basePrice)}</p>
-                      )}
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className={`font-display text-3xl font-extrabold ${couponApplied ? "text-green-600" : ""}`}>
-                          {fmt(couponApplied ? discount(monthlyEquivalent) : monthlyEquivalent)}
+                        <span className="font-display text-3xl font-extrabold">
+                          {fmt(monthlyEquivalent)}
                         </span>
                         <span className="text-sm text-muted-foreground">/mês</span>
                       </div>
                       {isAnnual && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          cobrado {fmt(finalPrice)}/ano (2 meses grátis)
+                          cobrado {fmt(basePrice)}/ano (2 meses grátis)
                         </p>
-                      )}
-                      {couponApplied && (
-                        <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
                       )}
                     </>
                   ) : (

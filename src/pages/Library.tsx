@@ -215,24 +215,15 @@ export default function LibraryPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-sm truncate">{doc.titulo}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <div className="flex items-center gap-2 mt-0.5">
                           <Badge variant="secondary" className="text-[10px] py-0">{cfg.label}</Badge>
-                          {doc.disciplina && (
-                            <span className="text-[10px] text-muted-foreground">{doc.disciplina}</span>
-                          )}
-                          {doc.nivel && (
-                            <span className="text-[10px] text-muted-foreground">{doc.nivel}</span>
-                          )}
-                          {doc.temas && (
-                            <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{doc.temas}</span>
-                          )}
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(doc.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 shrink-0">
                       <Button
                         size="icon"
                         variant="ghost"
