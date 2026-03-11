@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTimbre } from "@/hooks/useTimbre";
 import { useCredits } from "@/hooks/useCredits";
+import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 import {
   defaultHeader, defaultDirections, etapaConfig, getWordSearchDefaults,
   type Difficulty, type EtapaEscolar, type EditorMode, type GameConfig, type GameHeader,
@@ -76,6 +77,7 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
 export default function GameFactory() {
   const { user } = useAuth();
   const { timbre } = useTimbre();
+  const docLimits = useDocumentLimits();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [tema, setTema] = useState("");
   const [palavras, setPalavras] = useState("");
@@ -137,7 +139,6 @@ export default function GameFactory() {
   useEffect(() => {
     setHeader(h => ({
       ...h,
-      escola: timbre.escola || h.escola,
       logoUrl: timbre.logoUrl || h.logoUrl,
       bannerUrl: timbre.bannerUrl || h.bannerUrl,
     }));
@@ -326,6 +327,7 @@ export default function GameFactory() {
   const handleSave = async () => {
     if (!user) { toast.error("Faça login para salvar"); return; }
     if (!gameData) return;
+    if (!docLimits.checkAndWarnLimit()) return;
     setSaving(true);
     try {
       const { error } = await supabase.from("documentos_salvos").insert({

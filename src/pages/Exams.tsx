@@ -21,6 +21,7 @@ import TimbreSelector from "@/components/TimbreSelector";
 import type { TimbreData } from "@/hooks/useTimbre";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
+import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 
 const niveis: Record<string, string[]> = {
   "Fundamental - Séries Iniciais": ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
@@ -63,6 +64,7 @@ const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "",
 export default function Exams() {
   const { user } = useAuth();
   const location = useLocation();
+  const docLimits = useDocumentLimits();
   const [titulo, setTitulo] = useState("");
   const [temas, setTemas] = useState("");
   const [nivel, setNivel] = useState("");
@@ -470,6 +472,7 @@ export default function Exams() {
 
   const handleSave = async () => {
     if (!user) { toast.error("Faça login"); return; }
+    if (!currentProvaId && !docLimits.checkAndWarnLimit()) return;
     setSaving(true);
     try {
       const provaData = {
@@ -700,7 +703,6 @@ export default function Exams() {
                         selectedId={selectedTimbre?.id}
                         onSelect={t => {
                           setSelectedTimbre(t);
-                          if (t) setEscola(t.escola);
                         }}
                       />
                       <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />

@@ -72,25 +72,25 @@ const plans = [
   {
     name: "Starter", price: "R$ 0,00", originalPrice: null, period: "", icon: Star,
     color: "text-muted-foreground", logo: planStarter,
-    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água", "Suporte via ticket"],
+    features: ["10 créditos únicos", "10 correções de prova", "Até 20 documentos salvos", "Acesso a todos os módulos", "Exportação PDF", "Suporte via ticket"],
     cta: "Começar grátis"
   },
   {
     name: "Pro", price: "R$ 19,90", originalPrice: null, period: "/mês", icon: Zap,
     color: "text-primary", logo: planPro,
-    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via ticket"],
+    features: ["30 créditos/mês", "50 correções de prova/mês", "Até 150 documentos salvos", "1 Timbre Escolar", "Suporte via ticket"],
     cta: "Assinar Pro"
   },
   {
     name: "Master", price: "R$ 34,90", originalPrice: null, period: "/mês", icon: Crown,
     color: "text-plan-pratico", popular: true, logo: planMaster,
-    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 3 Timbres (Multiescolas)", "Sem marca d'água", "Suporte prioritário via ticket"],
+    features: ["60 créditos/mês", "100 correções de prova/mês", "Até 500 documentos salvos", "Até 3 Timbres (Multiescolas)", "Suporte prioritário via ticket"],
     cta: "Assinar Master"
   },
   {
     name: "Ultra", price: "R$ 69,90", originalPrice: null, period: "/mês", icon: Rocket,
     color: "text-plan-mestre", logo: planUltra,
-    features: ["Créditos e Correções Ilimitados", "Timbres Ilimitados", "Sem marca d'água", "Suporte prioritário via ticket e WhatsApp"],
+    features: ["Créditos e Correções Ilimitados", "Documentos Ilimitados", "Timbres Ilimitados", "Suporte prioritário via ticket e WhatsApp"],
     cta: "Assinar Ultra"
   }
 ];
@@ -174,7 +174,7 @@ export default function Landing() {
                 </a>
               </motion.div>
               <motion.p variants={fadeUp} className="mt-4 text-sm text-primary-foreground/50">
-                5 créditos grátis • Sem cartão de crédito
+                10 créditos grátis • Sem cartão de crédito
               </motion.p>
             </motion.div>
           </div>

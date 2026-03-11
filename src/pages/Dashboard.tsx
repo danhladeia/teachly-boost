@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Sun, Moon, Sunset } from "lucide-react";
+import { BookOpen, FileText, Gamepad2, Presentation, FileCheck, Trash2, Eye, GitBranch, StickyNote, Stamp, Sun, Moon, Sunset, Coins, FileCheck as FileCheckIcon, FolderOpen, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import CreditsDisplay from "@/components/CreditsDisplay";
+import { useCredits } from "@/hooks/useCredits";
+import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 
 const tipoConfig: Record<string, { label: string; icon: any; color: string; route: string }> = {
   plano: { label: "Plano de Aula", icon: BookOpen, color: "text-primary", route: "/app/bncc" },
@@ -35,6 +37,12 @@ function getGreeting(): { text: string; Icon: typeof Sun } {
   return { text: "Boa noite", Icon: Moon };
 }
 
+function getBarColor(percent: number) {
+  if (percent >= 91) return "bg-destructive";
+  if (percent >= 71) return "bg-yellow-500";
+  return "bg-primary";
+}
+
 export default function Dashboard() {
   const [docs, setDocs] = useState<any[]>([]);
   const [provas, setProvas] = useState<any[]>([]);
@@ -42,6 +50,8 @@ export default function Dashboard() {
   const [userName, setUserName] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { plan, planLimits } = useCredits();
+  const { docCount, docLimit, usagePercent } = useDocumentLimits();
 
   useEffect(() => {
     loadDocs();
@@ -97,34 +107,107 @@ export default function Dashboard() {
     } catch { toast.error("Erro ao excluir"); }
   };
 
-  const counts: Record<string, number> = {
-    plano: docs.filter(d => d.tipo === "plano").length,
-    atividade: docs.filter(d => d.tipo === "atividade").length,
-    jogo: docs.filter(d => d.tipo === "jogo").length,
-    slide: docs.filter(d => d.tipo === "slide").length,
-    prova: provas.length,
-  };
-  const totalCount = docs.length + provas.length;
-
   const allDocs = [...docs, ...provas].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
-  const recentDocs = allDocs.slice(0, 3);
+  const recentDocs = allDocs.slice(0, 5);
 
   const { text: greetingText, Icon: GreetingIcon } = getGreeting();
+
+  const isUnlimited = plan.planType === "ultra";
+  const generalPercent = isUnlimited ? 0 : planLimits.maxGeneral > 0 ? Math.min(100, ((planLimits.maxGeneral - plan.creditsGeneral) / planLimits.maxGeneral) * 100) : 0;
+  const examsPercent = isUnlimited ? 0 : planLimits.maxExams > 0 ? Math.min(100, ((planLimits.maxExams - plan.creditsExams) / planLimits.maxExams) * 100) : 0;
 
   return (
     <div className="space-y-6">
       {/* Header with greeting */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <GreetingIcon className="h-6 w-6 text-primary" />
-            {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
-        </div>
-        <CreditsDisplay />
+      <div>
+        <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+          <GreetingIcon className="h-6 w-6 text-primary" />
+          {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+      </div>
+
+      {/* Plan Consumption Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* General credits */}
+        <Card className="shadow-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold flex items-center gap-1.5">
+                <Coins className="h-3.5 w-3.5 text-primary" /> Créditos de Criação
+              </span>
+              {isUnlimited ? (
+                <span className="text-xs font-bold text-primary">∞ Ilimitado</span>
+              ) : (
+                <span className="text-xs font-medium">{plan.creditsGeneral} / {planLimits.maxGeneral}</span>
+              )}
+            </div>
+            {!isUnlimited && (
+              <>
+                <Progress value={100 - generalPercent} className={`h-2 [&>div]:${getBarColor(generalPercent)}`} />
+                {generalPercent >= 91 && (
+                  <Link to="/app/planos" className="text-[10px] text-destructive font-medium hover:underline mt-1 inline-block">
+                    Fazer upgrade →
+                  </Link>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Exam credits */}
+        <Card className="shadow-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold flex items-center gap-1.5">
+                <FileCheckIcon className="h-3.5 w-3.5 text-destructive" /> Correções de Prova
+              </span>
+              {isUnlimited ? (
+                <span className="text-xs font-bold text-primary">∞ Ilimitado</span>
+              ) : (
+                <span className="text-xs font-medium">{plan.creditsExams} / {planLimits.maxExams}</span>
+              )}
+            </div>
+            {!isUnlimited && (
+              <>
+                <Progress value={100 - examsPercent} className={`h-2 [&>div]:${getBarColor(examsPercent)}`} />
+                {examsPercent >= 91 && (
+                  <Link to="/app/planos" className="text-[10px] text-destructive font-medium hover:underline mt-1 inline-block">
+                    Fazer upgrade →
+                  </Link>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Document storage */}
+        <Card className="shadow-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold flex items-center gap-1.5">
+                <FolderOpen className="h-3.5 w-3.5 text-plan-pratico" /> Documentos Salvos
+              </span>
+              {isUnlimited ? (
+                <span className="text-xs font-bold text-primary">∞ Ilimitado</span>
+              ) : (
+                <span className="text-xs font-medium">{docCount} / {docLimit}</span>
+              )}
+            </div>
+            {!isUnlimited && (
+              <>
+                <Progress value={usagePercent} className={`h-2 [&>div]:${getBarColor(usagePercent)}`} />
+                {usagePercent >= 91 && (
+                  <Link to="/app/planos" className="text-[10px] text-destructive font-medium hover:underline mt-1 inline-block">
+                    Fazer upgrade →
+                  </Link>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Access Tools */}
@@ -146,29 +229,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Minimal Activity Report */}
-      <div>
-        <h2 className="font-display text-sm font-semibold text-muted-foreground mb-3">📊 Resumo</h2>
-        <div className="flex flex-wrap gap-3">
-          {Object.entries(counts).map(([key, count]) => {
-            const cfg = tipoConfig[key];
-            if (!cfg) return null;
-            return (
-              <div key={key} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 shadow-card">
-                <cfg.icon className={`h-4 w-4 ${cfg.color}`} />
-                <span className="text-xs text-muted-foreground">{cfg.label}s</span>
-                <span className="font-display text-sm font-bold">{count}</span>
-              </div>
-            );
-          })}
-          <div className="flex items-center gap-2 rounded-lg border bg-primary/5 px-3 py-2 shadow-card">
-            <span className="text-xs text-muted-foreground">Total</span>
-            <span className="font-display text-sm font-bold text-primary">{totalCount}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Library - Last 3 */}
+      {/* Recent Library - Last 5 as simplified list */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-sm font-semibold text-muted-foreground">📚 Últimos Documentos</h2>
@@ -177,7 +238,9 @@ export default function Dashboard() {
           </Button>
         </div>
         {loading ? (
-          <p className="text-muted-foreground text-sm">Carregando...</p>
+          <div className="space-y-1">
+            {[1, 2, 3].map(i => <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />)}
+          </div>
         ) : recentDocs.length === 0 ? (
           <Card className="shadow-card">
             <CardContent className="py-8 text-center">
@@ -187,39 +250,42 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
+          <div className="rounded-lg border divide-y">
             {recentDocs.map(doc => {
               const cfg = tipoConfig[doc.tipo] || tipoConfig.plano;
               const Icon = cfg.icon;
               return (
-                <Card key={`${doc.source || "doc"}-${doc.id}`} className="shadow-card hover:shadow-elevated transition-all">
-                  <CardContent className="flex items-center justify-between gap-3 p-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted ${cfg.color}`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{doc.titulo}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <Badge variant="secondary" className="text-[10px]">{cfg.label}</Badge>
-                          {doc.disciplina && <span className="text-[10px] text-muted-foreground">{doc.disciplina}</span>}
-                          <span className="text-[10px] text-muted-foreground">{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigate(cfg.route, { state: { loadDocId: doc.id, source: doc.source || "documentos" } })}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(doc)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div
+                  key={`${doc.source || "doc"}-${doc.id}`}
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors"
+                >
+                  <Icon className={`h-4 w-4 shrink-0 ${cfg.color}`} />
+                  <span className="font-medium text-sm truncate flex-1 min-w-0">
+                    {doc.titulo || <span className="text-muted-foreground italic">Sem título</span>}
+                  </span>
+                  <Badge variant="secondary" className="text-[10px] py-0 shrink-0">{cfg.label}</Badge>
+                  <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
+                    {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                  <div className="flex gap-0.5 shrink-0">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" title="Visualizar" onClick={() => navigate(cfg.route, { state: { loadDocId: doc.id, source: doc.source || "documentos" } })}>
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir" onClick={() => handleDelete(doc)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
               );
             })}
           </div>
+        )}
+
+        {/* Document counter */}
+        {!isUnlimited && (
+          <p className={`text-xs mt-2 ${usagePercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+            Documentos salvos: {docCount} / {docLimit}
+          </p>
         )}
       </div>
     </div>
