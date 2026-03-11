@@ -951,7 +951,8 @@ export default function Exams() {
             </div>
 
             {/* RIGHT - Preview */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-hidden min-w-0">
+              <ResponsiveA4Wrapper>
               <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center min-w-0">
                 <div
                   id="prova-print-area"

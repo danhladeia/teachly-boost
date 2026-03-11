@@ -940,27 +940,29 @@ export default function GameFactory() {
         </div>
 
         {/* RIGHT: Preview */}
-        <div className="flex-1 min-w-0">
-          <div className="bg-muted/30 rounded-lg p-4 flex flex-col items-center gap-6 overflow-auto">
-            {gameData ? (
-              <>
-                <div className="shadow-elevated">{renderPreview()}</div>
-                {answerKey !== "none" && showAnswerKey && (
-                  <div className="shadow-elevated">
-                    <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <Gamepad2 className="h-12 w-12 mb-3 opacity-30" />
-                <p className="text-sm font-medium">
-                  {mode === "ai" ? "Insira o tema e clique em \"Gerar com IA\"" : "Configure e clique em \"Gerar Jogo\""}
-                </p>
-                <p className="text-xs mt-1">O preview A4 aparecerá aqui</p>
-              </div>
-            )}
-          </div>
+        <div className="flex-1 min-w-0 overflow-x-hidden">
+          <ResponsiveA4Wrapper>
+            <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6">
+              {gameData ? (
+                <>
+                  <div className="shadow-elevated">{renderPreview()}</div>
+                  {answerKey !== "none" && showAnswerKey && (
+                    <div className="shadow-elevated">
+                      <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                  <Gamepad2 className="h-12 w-12 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">
+                    {mode === "ai" ? "Insira o tema e clique em \"Gerar com IA\"" : "Configure e clique em \"Gerar Jogo\""}
+                  </p>
+                  <p className="text-xs mt-1">O preview A4 aparecerá aqui</p>
+                </div>
+              )}
+            </div>
+          </ResponsiveA4Wrapper>
         </div>
       </div>
     </div>
