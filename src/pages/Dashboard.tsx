@@ -204,12 +204,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Document counter */}
-        {!isUnlimited && (
-          <p className={`text-xs mt-2 ${usagePercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-            Documentos salvos: {docCount} / {docLimit}
-          </p>
-        )}
+
       </div>
     </div>
   );
