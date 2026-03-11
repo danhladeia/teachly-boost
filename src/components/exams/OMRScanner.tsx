@@ -308,6 +308,8 @@ export default function OMRScanner() {
         // Apply preloaded gabarito if QR didn't detect one
         const withGabarito = applyPreloadedGabarito(processed);
         setSheets(prev => prev.map((s, idx) => idx === i ? withGabarito : s));
+        // Deduct 1 exam credit per successfully processed sheet
+        await deductExamCredits(1);
       } catch (err: any) {
         setSheets(prev => prev.map((s, idx) => idx === i ? { ...s, status: "error", errorMsg: err.message } : s));
       }

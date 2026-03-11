@@ -36,6 +36,7 @@ type Step = "select-gabarito" | "camera" | "validate" | "result";
 
 export default function CameraScanner() {
   const { user } = useAuth();
+  const { canCorrectExam, deductExamCredits } = useCredits();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
