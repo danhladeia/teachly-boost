@@ -417,6 +417,7 @@ export default function Activities() {
   };
 
   const handleSave = async () => {
+    if (!docLimits.checkAndWarnLimit()) return;
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
