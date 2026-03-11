@@ -72,7 +72,7 @@ const plans = [
   {
     name: "Starter", price: "R$ 0,00", originalPrice: null, period: "", icon: Star,
     color: "text-muted-foreground", logo: planStarter,
-    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água"],
+    features: ["10 créditos únicos", "10 correções de prova", "Acesso a todos os módulos", "Exportação PDF", "Com marca d'água", "Suporte via ticket"],
     cta: "Começar grátis"
   },
   {
