@@ -87,7 +87,8 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
         </CardContent>
       </Card>
 
-      <Card className="shadow-card overflow-x-auto max-w-full">
+      <ResponsiveA4Wrapper>
+      <Card className="shadow-card overflow-hidden max-w-full">
         <div id="plano-print-area" className="bg-white text-black mx-auto" style={{ width: "210mm", maxWidth: "100%", padding: "15mm 15mm", fontFamily: "'Inter', sans-serif", fontSize: "11pt", lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "break-word" }}>
           {/* Timbre banner image */}
           {showHeader && bannerUrl && (
