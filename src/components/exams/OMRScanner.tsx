@@ -258,6 +258,14 @@ export default function OMRScanner() {
       return;
     }
     if (sheets.length === 0) return;
+
+    // Check exam credits before processing
+    const pendingCount = sheets.filter(s => s.status !== "done").length;
+    if (!canCorrectExam(pendingCount)) {
+      toast.error("Créditos de correção insuficientes. Faça upgrade do seu plano.");
+      return;
+    }
+
     setProcessing(true);
     setProgress(0);
 
