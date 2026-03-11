@@ -187,6 +187,7 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
           )}
         </div>
       </Card>
+      </ResponsiveA4Wrapper>
     </div>
   );
 }
