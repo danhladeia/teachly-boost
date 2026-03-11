@@ -42,6 +42,7 @@ export const emptyBlock = (type: BlockType): Block => ({
 export default function Activities() {
   const location = useLocation();
   const navigate = useNavigate();
+  const docLimits = useDocumentLimits();
   const [blocks, setBlocks] = useState<Block[]>([emptyBlock("title")]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiNivel, setAiNivel] = useState("");
