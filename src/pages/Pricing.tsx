@@ -29,7 +29,7 @@ const plans = [
     linkMonthly: "https://buy.stripe.com/5kQ6oB3d45bD07geIm9sk08",
     linkAnnual: "https://buy.stripe.com/5kQ28lbJA6fH07gbwa9sk09",
     popular: false,
-    features: ["30 créditos/mês", "50 correções de prova/mês", "1 Timbre Escolar", "Sem marca d'água", "Suporte via ticket"],
+    features: ["30 créditos/mês", "50 correções de prova/mês", "Até 150 documentos salvos", "1 Timbre Escolar", "Suporte via ticket"],
     description: "Ideal para o docente que busca modernizar sua prática em uma única escola. Garanta 30 criações mensais (Planos BNCC, Slides, Jogos) e corrija até 50 provas via celular com agilidade. Elimine o trabalho manual e foque no que importa: o aprendizado do seu aluno.",
     cta: "Assinar Pro",
   },
