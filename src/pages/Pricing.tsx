@@ -60,8 +60,6 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const discount = (v: number) => v * 0.75;
 
 export default function Pricing() {
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const { plan } = useCredits();
