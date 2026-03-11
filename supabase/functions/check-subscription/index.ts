@@ -73,17 +73,17 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
 
     if (customers.data.length === 0) {
-      // No Stripe customer — downgrade to starter if not already
-      if (currentPlanType !== "starter") {
+      // No Stripe customer — only downgrade if NOT admin-managed
+      if (!isAdminManaged && currentPlanType !== "starter") {
         await supabaseClient
           .from("profiles")
           .update(STARTER_DEFAULTS)
           .eq("user_id", userId);
       }
       return new Response(JSON.stringify({
-        subscribed: false,
-        plan_type: "starter",
-        credits: 5,
+        subscribed: isAdminManaged,
+        plan_type: isAdminManaged ? currentPlanType : "starter",
+        credits: isAdminManaged ? (currentProfile?.credits_general ?? 10) : 5,
         logos_limit: 0,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
