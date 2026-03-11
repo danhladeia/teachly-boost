@@ -57,6 +57,7 @@ const altLabels = ["A", "B", "C", "D"];
 
 export default function OMRScanner() {
   const { user } = useAuth();
+  const { canCorrectExam, deductExamCredits } = useCredits();
   const [step, setStep] = useState<"select-gabarito" | "upload" | "results">("select-gabarito");
   const [sheets, setSheets] = useState<ProcessedSheet[]>([]);
   const [processing, setProcessing] = useState(false);
