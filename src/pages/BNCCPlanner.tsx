@@ -195,7 +195,6 @@ export default function BNCCPlanner() {
               selectedId={selectedTimbre?.id}
               onSelect={t => {
                 setSelectedTimbre(t);
-                if (t?.escola) setEscola(t.escola);
               }}
               label="Selecionar escola/timbre"
             />

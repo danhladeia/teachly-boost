@@ -482,7 +482,6 @@ export default function Activities() {
                     selectedId={selectedTimbre?.id}
                     onSelect={t => {
                       setSelectedTimbre(t);
-                      if (t) setEscola(t.escola);
                     }}
                   />
                   <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />

@@ -137,7 +137,6 @@ export default function GameFactory() {
   useEffect(() => {
     setHeader(h => ({
       ...h,
-      escola: timbre.escola || h.escola,
       logoUrl: timbre.logoUrl || h.logoUrl,
       bannerUrl: timbre.bannerUrl || h.bannerUrl,
     }));
