@@ -20,7 +20,7 @@ const plans = [
     linkAnnual: null as string | null,
     popular: false,
     features: ["10 créditos únicos", "10 correções de prova", "Até 20 documentos salvos", "Acesso a todos os módulos", "Exportação PDF", "Suporte via ticket"],
-    description: null as string | null,
+    description: "Dê o primeiro passo na automação da sua rotina pedagógica. Experimente o poder da IA com 10 créditos para criação de planos de aula ou atividades e 10 correções de prova instantâneas. Ideal para testar nossas ferramentas e sentir a economia de tempo real no seu dia a dia escolar antes de evoluir para o próximo nível.",
     cta: "Plano Atual",
   },
   {
