@@ -174,15 +174,6 @@ export default function SlideConfigPanel({
             </div>
           )}
 
-          {/* File upload */}
-          <div className="space-y-1.5">
-            <Label className="text-xs">Arquivo base <span className="text-muted-foreground">(opcional)</span></Label>
-            <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
-              <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground truncate">{arquivo ? arquivo.name : "PDF, DOCX ou TXT"}</span>
-              <input type="file" accept=".pdf,.docx,.txt,.doc" className="hidden" onChange={onFileUpload} />
-            </label>
-          </div>
 
           <Button size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" disabled={loading || !tema.trim()} onClick={onGenerate}>
             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-2 h-4 w-4" /> Gerar Slides</>}

@@ -101,6 +101,8 @@ ${tamanhoInstrucao}
 ${enemInstrucao}
 ${textoImportadoInstrucao}
 
+REGRA FUNDAMENTAL: As questões (abertas e de múltipla escolha) devem ser DIRETAMENTE relacionadas e correlacionadas ao texto gerado ou importado. O aluno deve precisar LER E COMPREENDER o texto para responder as questões. NÃO gere questões genéricas ou desconectadas do conteúdo textual apresentado. Cada questão deve fazer referência explícita ou implícita a informações presentes no texto.
+
 IMPORTANTE: Após os blocos de texto e ANTES das questões, insira um bloco separador com type "separator" e content "${sepTitle}".
 
 ${tipoInstrucao}

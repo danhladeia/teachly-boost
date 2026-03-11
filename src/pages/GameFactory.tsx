@@ -854,7 +854,7 @@ export default function GameFactory() {
                     </Select>
                   </div>
                 </Section>
-              )
+              )}
 
               {/* Gabarito */}
               <Section title="📋 Gabarito">
