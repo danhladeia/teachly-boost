@@ -167,7 +167,7 @@ export default function Pricing() {
           const basePrice = isAnnual ? p.priceAnnualTotal : p.priceMonthly;
           const monthlyEquivalent = isAnnual ? p.priceAnnualTotal / 12 : p.priceMonthly;
           const finalPrice = couponApplied ? discount(basePrice) : basePrice;
-          const priceId = isAnnual ? p.priceIdAnnual : p.priceIdMonthly;
+          const paymentLink = isAnnual ? p.linkAnnual : p.linkMonthly;
           const isPaid = p.priceMonthly > 0;
 
           return (
