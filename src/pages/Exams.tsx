@@ -472,6 +472,7 @@ export default function Exams() {
 
   const handleSave = async () => {
     if (!user) { toast.error("Faça login"); return; }
+    if (!currentProvaId && !docLimits.checkAndWarnLimit()) return;
     setSaving(true);
     try {
       const provaData = {
