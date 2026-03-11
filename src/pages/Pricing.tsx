@@ -65,6 +65,7 @@ export default function Pricing() {
   const [managingPortal, setManagingPortal] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const { plan } = useCredits();
+  const { user } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -87,16 +88,12 @@ export default function Pricing() {
     }
   };
 
-  const handleCheckout = async (priceId: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, couponId: couponApplied ? "promo_1T8wfd7gJSrf8FzwdQboSbV2" : undefined },
-      });
-      if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao iniciar checkout");
+  const handlePaymentLink = (link: string) => {
+    const url = new URL(link);
+    if (user?.email) {
+      url.searchParams.set("prefilled_email", user.email);
     }
+    window.open(url.toString(), "_blank");
   };
 
   const handleManageSubscription = async () => {
