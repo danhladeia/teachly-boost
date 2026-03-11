@@ -43,22 +43,24 @@ export default function SlideConfigPanel({
 }: Props) {
   return (
     <div className="space-y-4">
-      {/* TIMBRE - Primeiro */}
+      {/* TIMBRE - Cabeçalho Institucional (padrão BNCC) */}
       {onTimbreSelect && (
         <Card className="shadow-card">
           <CardContent className="pt-4 space-y-3">
-            <h3 className="text-xs font-semibold flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho dos Slides</h3>
-            <TimbreSelector
-              selectedId={selectedTimbre?.id}
-              onSelect={onTimbreSelect}
-              label="Escola/Instituição"
-            />
-            {setProfessor && (
-              <div className="space-y-1">
-                <Label className="text-[10px]">Professor(a)</Label>
-                <Input placeholder="Nome do professor" value={professor || ""} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
-              </div>
-            )}
+            <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+              <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+              <TimbreSelector
+                selectedId={selectedTimbre?.id}
+                onSelect={onTimbreSelect}
+                label="Selecionar escola/timbre"
+              />
+              {setProfessor && (
+                <div className="space-y-1">
+                  <Label className="text-[10px]">Professor(a)</Label>
+                  <Input placeholder="Nome do professor" value={professor || ""} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
