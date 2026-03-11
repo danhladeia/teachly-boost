@@ -307,7 +307,7 @@ export default function AdminDashboard() {
                       onChange={(e) => setCreditAmount(e.target.value)}
                       className="text-sm"
                     />
-                    <Button onClick={giveCredits} className="shrink-0 gradient-primary border-0 text-primary-foreground">
+                    <Button onClick={requestGiveCredits} className="shrink-0 gradient-primary border-0 text-primary-foreground">
                       <Gift className="h-4 w-4 mr-1" /> Dar
                     </Button>
                   </div>
