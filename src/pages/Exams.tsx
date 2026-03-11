@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
+import CreditsIndicator from "@/components/CreditsIndicator";
 import { useLocation } from "react-router-dom";
 import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -662,21 +663,27 @@ export default function Exams() {
           </h1>
           <p className="text-muted-foreground text-[10px] sm:text-sm">Crie provas, embaralhe versões e corrija por foto com IA</p>
         </div>
+        <CreditsIndicator />
+      </div>
+
+      {/* Action buttons below title on mobile */}
+      {questoes.length > 0 && (
         <div className="flex gap-1 sm:gap-2 flex-wrap">
-          {questoes.length > 0 && (
-            <>
-              <Button size="sm" variant="outline" onClick={handlePrint} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Printer className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Imprimir</span><span className="sm:hidden">Imp.</span></Button>
-              <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> PDF</Button>
-              <Button size="sm" variant="outline" onClick={() => exportExamToDocx(previewQuestions, { titulo, escola: showHeader ? escola : undefined, professor, turma, bannerUrl: showHeader ? selectedTimbre?.bannerUrl : undefined, logoUrl: showHeader ? selectedTimbre?.logoUrl : undefined })} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> DOCX</Button>
-              <Button size="sm" variant="outline" onClick={handleShuffle} disabled={shuffling || !currentProvaId} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3">
-                <Shuffle className="mr-1 h-3.5 w-3.5" /> {shuffling ? "..." : <span className="hidden sm:inline">Embaralhar</span>}{!shuffling && <span className="sm:hidden">Emb.</span>}
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Save className="mr-1 h-3.5 w-3.5" /> {saving ? "..." : "Salvar"}</Button>
-            </>
-          )}
+          <Button size="sm" variant="outline" onClick={handlePrint} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Printer className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Imprimir</span><span className="sm:hidden">Imp.</span></Button>
+          <Button size="sm" variant="outline" onClick={() => exportToPdf("prova-print-area", "prova")} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> PDF</Button>
+          <Button size="sm" variant="outline" onClick={() => exportExamToDocx(previewQuestions, { titulo, escola: showHeader ? escola : undefined, professor, turma, bannerUrl: showHeader ? selectedTimbre?.bannerUrl : undefined, logoUrl: showHeader ? selectedTimbre?.logoUrl : undefined })} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><FileDown className="mr-1 h-3.5 w-3.5" /> DOCX</Button>
+          <Button size="sm" variant="outline" onClick={handleShuffle} disabled={shuffling || !currentProvaId} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3">
+            <Shuffle className="mr-1 h-3.5 w-3.5" /> {shuffling ? "..." : <span className="hidden sm:inline">Embaralhar</span>}{!shuffling && <span className="sm:hidden">Emb.</span>}
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Save className="mr-1 h-3.5 w-3.5" /> {saving ? "..." : "Salvar"}</Button>
           <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
         </div>
-      </div>
+      )}
+      {questoes.length === 0 && (
+        <div className="flex justify-end">
+          <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
+        </div>
+      )}
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList className="w-full grid grid-cols-4">
@@ -954,11 +961,11 @@ export default function Exams() {
             {/* RIGHT - Preview */}
             <div className="overflow-x-hidden min-w-0">
               <ResponsiveA4Wrapper>
-              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex justify-center min-w-0">
+              <div className="bg-muted/30 rounded-lg p-1 sm:p-4 flex justify-center min-w-0">
                 <div
                   id="prova-print-area"
-                  className="bg-white text-black shadow-lg w-full lg:w-[210mm]"
-                  style={{ minHeight: "297mm", padding: "10mm 8mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
+                  className="bg-white text-black shadow-lg"
+                  style={{ width: "210mm", maxWidth: "100%", minHeight: "297mm", padding: "15mm 10mm", fontFamily: "'Inter', 'Arial', sans-serif", fontSize: "11pt", lineHeight: 1.6 }}
                 >
                   {showHeader && selectedTimbre?.bannerUrl && (
                     <div style={{ textAlign: "center", marginBottom: "4mm" }}>
