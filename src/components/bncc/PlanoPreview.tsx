@@ -97,9 +97,9 @@ export default function PlanoPreview({ plano, modelo, professor, turma, serie, e
             </div>
           )}
           {showHeader && (escola || logoUrl) && (
-            <div style={{ textAlign: "center", marginBottom: "6mm", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm" }}>
+            <div style={{ textAlign: "center", marginBottom: "6mm", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm", flexDirection: "column" }}>
               {logoUrl && !bannerUrl && <img src={logoUrl} alt="" style={{ maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />}
-              {escola && <div style={{ fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif" }}>{escola}</div>}
+              {escola && <div style={{ fontWeight: 700, fontSize: "14pt", fontFamily: "'Montserrat', sans-serif", textAlign: "center" }}>{escola}</div>}
             </div>
           )}
 

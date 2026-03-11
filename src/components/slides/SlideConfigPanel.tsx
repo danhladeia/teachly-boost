@@ -43,22 +43,24 @@ export default function SlideConfigPanel({
 }: Props) {
   return (
     <div className="space-y-4">
-      {/* TIMBRE - Primeiro */}
+      {/* TIMBRE - Cabeçalho Institucional (padrão BNCC) */}
       {onTimbreSelect && (
         <Card className="shadow-card">
           <CardContent className="pt-4 space-y-3">
-            <h3 className="text-xs font-semibold flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho dos Slides</h3>
-            <TimbreSelector
-              selectedId={selectedTimbre?.id}
-              onSelect={onTimbreSelect}
-              label="Escola/Instituição"
-            />
-            {setProfessor && (
-              <div className="space-y-1">
-                <Label className="text-[10px]">Professor(a)</Label>
-                <Input placeholder="Nome do professor" value={professor || ""} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
-              </div>
-            )}
+            <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+              <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+              <TimbreSelector
+                selectedId={selectedTimbre?.id}
+                onSelect={onTimbreSelect}
+                label="Selecionar escola/timbre"
+              />
+              {setProfessor && (
+                <div className="space-y-1">
+                  <Label className="text-[10px]">Professor(a)</Label>
+                  <Input placeholder="Nome do professor" value={professor || ""} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -81,6 +83,16 @@ export default function SlideConfigPanel({
           <div className="space-y-2">
             <Label>Texto base <span className="text-muted-foreground text-xs">(opcional — cole seu conteúdo)</span></Label>
             <Textarea placeholder="Cole aqui o texto do livro, apostila ou anotações que a IA deve usar como base..." value={textoBase} onChange={e => setTextoBase(e.target.value)} className="min-h-[80px]" />
+          </div>
+
+          {/* File upload - right after texto base */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Arquivo base <span className="text-muted-foreground">(opcional)</span></Label>
+            <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+              <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground truncate">{arquivo ? arquivo.name : "PDF, DOCX ou TXT"}</span>
+              <input type="file" accept=".pdf,.docx,.txt,.doc" className="hidden" onChange={onFileUpload} />
+            </label>
           </div>
 
           <div className="grid gap-3 grid-cols-2">
@@ -162,15 +174,6 @@ export default function SlideConfigPanel({
             </div>
           )}
 
-          {/* File upload */}
-          <div className="space-y-1.5">
-            <Label className="text-xs">Arquivo base <span className="text-muted-foreground">(opcional)</span></Label>
-            <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
-              <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground truncate">{arquivo ? arquivo.name : "PDF, DOCX ou TXT"}</span>
-              <input type="file" accept=".pdf,.docx,.txt,.doc" className="hidden" onChange={onFileUpload} />
-            </label>
-          </div>
 
           <Button size="lg" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" disabled={loading || !tema.trim()} onClick={onGenerate}>
             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...</> : <><Sparkles className="mr-2 h-4 w-4" /> Gerar Slides</>}

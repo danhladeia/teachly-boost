@@ -50,7 +50,7 @@ const GAMES = [
   { id: "cruzadinha", title: "Palavras Cruzadas", icon: Grid3X3, desc: "Grade com dicas horizontais e verticais", needsWords: true, supportsAI: true },
   { id: "criptograma", title: "Criptograma Lógico", icon: Lock, desc: "Decifre a mensagem com tabela de códigos", needsWords: false, supportsAI: true },
   { id: "sudoku", title: "Sudoku Temático", icon: Grid3X3, desc: "Puzzles 4×4 a 9×9 com números ou símbolos", needsWords: false, supportsAI: false },
-  { id: "labirinto", title: "Labirinto com Desafios", icon: MapPin, desc: "Encontre o caminho resolvendo perguntas", needsWords: false, supportsAI: true },
+  { id: "labirinto", title: "Labirinto", icon: MapPin, desc: "Encontre o caminho da entrada à saída", needsWords: false, supportsAI: false },
 ];
 
 function Tip({ text }: { text: string }) {
@@ -469,31 +469,28 @@ export default function GameFactory() {
           <Card className="shadow-card">
             <CardContent className="p-3 space-y-3">
 
-              {/* Timbre / Branding - at the top */}
-              <Section title="🏫 Cabeçalho Institucional" defaultOpen={header.showHeader}>
-                <div className="flex items-center justify-between mb-1">
-                  <Label className="text-[10px]">Incluir timbre no documento</Label>
-                  <Switch checked={header.showHeader} onCheckedChange={v => setHeader(h => ({ ...h, showHeader: v }))} />
-                </div>
-                {header.showHeader && (
-                  <div className="space-y-1.5">
-                    <TimbreSelector
-                      selectedId={selectedTimbre?.id}
-                      onSelect={handleTimbreSelect}
-                      label="Timbre da escola"
-                    />
-                    <Input placeholder="Escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input placeholder="Professor(a)" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
-                      <Input placeholder="Disciplina" value={header.disciplina} onChange={e => setHeader(h => ({ ...h, disciplina: e.target.value }))} className="h-7 text-[9px]" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input placeholder="Série/Turma" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
-                      <Input placeholder="Data" value={header.data} onChange={e => setHeader(h => ({ ...h, data: e.target.value }))} className="h-7 text-[9px]" />
-                    </div>
-                  </div>
+              {/* Timbre / Branding - Cabeçalho Institucional (padrão BNCC) */}
+              <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+                <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+                <TimbreSelector
+                  selectedId={selectedTimbre?.id}
+                  onSelect={handleTimbreSelect}
+                  label="Selecionar escola/timbre"
+                />
+                {!selectedTimbre && (
+                  <Input placeholder="Ou digite o nome da escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
                 )}
-              </Section>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Professor(a)</Label>
+                    <Input placeholder="Nome do professor" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Turma</Label>
+                    <Input placeholder="Ex: 5ºA, Turma 301" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
+                  </div>
+                </div>
+              </div>
 
               {/* Quick/Advanced toggle */}
               <div className="flex items-center justify-between">
@@ -844,70 +841,23 @@ export default function GameFactory() {
 
               {/* LABIRINTO */}
               {selectedGame === "labirinto" && (
-                <>
-                  <Section title="🏁 Configurações do Labirinto">
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Tamanho <Tip text="Tamanho visual do labirinto na página" /></Label>
-                      <Select value={mazeSize} onValueChange={setMazeSize}>
-                        <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Pequeno (¼ página)</SelectItem>
-                          <SelectItem value="medium">Médio (½ página)</SelectItem>
-                          <SelectItem value="large">Grande (página inteira)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {mode === "manual" && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px]">🔒 Incluir perguntas nos checkpoints <Tip text="Opcional — adicione perguntas que bloqueiam o caminho" /></Label>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-semibold">Perguntas ({mazeQuestions.length}/5)</Label>
-                          <Button variant="outline" size="sm" onClick={addMazeQuestion} className="h-5 text-[9px] px-2">+ Pergunta</Button>
-                        </div>
-                        {mazeQuestions.length === 0 && (
-                          <p className="text-[9px] text-muted-foreground italic">Nenhuma pergunta adicionada. O labirinto será gerado apenas com o caminho.</p>
-                        )}
-                        {mazeQuestions.map((q, qi) => (
-                          <div key={qi} className="space-y-1 border rounded p-2 bg-muted/30">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold">Checkpoint {String.fromCharCode(65 + qi)}</span>
-                              <button onClick={() => removeMazeQuestion(qi)} className="text-destructive text-[9px]">✕</button>
-                            </div>
-                            <Input placeholder="Pergunta..." value={q.question} onChange={e => updateMazeQuestion(qi, "question", e.target.value)} className="h-6 text-[9px]" />
-                            {q.alternatives.map((alt, ai) => (
-                              <div key={ai} className="flex gap-1 items-center">
-                                <button onClick={() => updateMazeQuestion(qi, "correctIndex", ai)}
-                                  className={`w-4 h-4 rounded-full border text-[7px] flex items-center justify-center shrink-0 ${q.correctIndex === ai ? "bg-primary text-primary-foreground" : "border-border"}`}>
-                                  {String.fromCharCode(65 + ai)}
-                                </button>
-                                <Input placeholder={`Alt. ${String.fromCharCode(65 + ai)}`} value={alt} onChange={e => updateMazeAlternative(qi, ai, e.target.value)} className="h-5 text-[9px] flex-1" />
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Section>
-                </>
+                <Section title="🏁 Configurações do Labirinto">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Tamanho <Tip text="Tamanho visual do labirinto na página" /></Label>
+                    <Select value={mazeSize} onValueChange={setMazeSize}>
+                      <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="small">Pequeno (¼ página)</SelectItem>
+                        <SelectItem value="medium">Médio (½ página)</SelectItem>
+                        <SelectItem value="large">Grande (página inteira)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </Section>
               )}
 
-              {/* Color Mode */}
-              <Section title="🎨 Aparência">
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Modo de Cor</Label>
-                  <div className="flex gap-1">
-                    {([["color", "Colorido"], ["grayscale", "P&B"], ["high-contrast", "Alto Contraste"]] as const).map(([key, label]) => (
-                      <button key={key} onClick={() => setColorMode(key)}
-                        className={`px-2 py-1 rounded text-[9px] border flex-1 ${colorMode === key ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
+              {/* Gabarito */}
+              <Section title="📋 Gabarito">
                 <div className="space-y-1">
                   <Label className="text-[10px]">Gabarito do Professor</Label>
                   <Select value={answerKey} onValueChange={v => setAnswerKey(v as AnswerKeyMode)}>

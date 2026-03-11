@@ -471,33 +471,28 @@ export default function Activities() {
       <div className="grid gap-4 lg:grid-cols-[380px_1fr] overflow-hidden">
         {/* LEFT PANEL */}
         <div className="space-y-4 pr-1">
-          {/* TIMBRE - Primeiro */}
+          {/* TIMBRE - Cabeçalho Institucional (padrão BNCC) */}
           <Card className="shadow-card">
             <CardContent className="pt-4 space-y-3">
-              <h3 className="text-xs font-semibold flex items-center gap-1"><Building2 className="h-3 w-3" /> Cabeçalho da Atividade</h3>
-              <div className="flex items-center gap-2">
-                <Switch checked={showHeader} onCheckedChange={setShowHeader} id="act-header" />
-                <Label htmlFor="act-header" className="text-xs">Mostrar timbre da escola</Label>
-              </div>
-              {showHeader && (
-                <>
-                  <TimbreSelector
-                    selectedId={selectedTimbre?.id}
-                    onSelect={t => {
-                      setSelectedTimbre(t);
-                    }}
-                  />
-                  <Input placeholder="Nome da escola (ou selecione um timbre)" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
-                </>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Professor(a)</Label>
-                  <Input placeholder="Nome" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px]">Turma</Label>
-                  <Input placeholder="Ex: 5ºA" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
+              <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
+                <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
+                <TimbreSelector
+                  selectedId={selectedTimbre?.id}
+                  onSelect={t => { setSelectedTimbre(t); }}
+                  label="Selecionar escola/timbre"
+                />
+                {!selectedTimbre && (
+                  <Input placeholder="Ou digite o nome da escola" value={escola} onChange={e => setEscola(e.target.value)} className="h-8 text-xs" />
+                )}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Professor(a)</Label>
+                    <Input placeholder="Nome do professor" value={professor} onChange={e => setProfessor(e.target.value)} className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Turma</Label>
+                    <Input placeholder="Ex: 5ºA, Turma 301" value={turma} onChange={e => setTurma(e.target.value)} className="h-8 text-xs" />
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
