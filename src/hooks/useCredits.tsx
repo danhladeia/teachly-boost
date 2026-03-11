@@ -131,7 +131,9 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       .eq("user_id", user.id);
 
     if (error) return false;
+    const updated = { ...plan, creditsExams: newCredits };
     setPlan(prev => ({ ...prev, creditsExams: newCredits }));
+    if (user) setCache(`plan_${user.id}`, updated);
     return true;
   };
 
