@@ -219,6 +219,28 @@ export default function Support() {
                 <Label>Mensagem</Label>
                 <Textarea placeholder="Detalhe sua dúvida ou problema..." rows={5} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
               </div>
+              {/* File attachments */}
+              <div className="space-y-2">
+                <Label className="text-xs">Anexos (opcional)</Label>
+                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+                  <Paperclip className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Anexar imagens, documentos ou vídeos</span>
+                  <input ref={fileInputRef} type="file" multiple accept="image/*,video/*,.pdf,.docx,.doc,.txt,.xlsx,.xls" className="hidden" onChange={e => {
+                    if (e.target.files) setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+                    e.target.value = "";
+                  }} />
+                </label>
+                {attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {attachments.map((f, i) => (
+                      <Badge key={i} variant="secondary" className="text-[10px] gap-1">
+                        {f.name.length > 20 ? f.name.slice(0, 17) + "..." : f.name}
+                        <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="ml-1"><X className="h-3 w-3" /></button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button onClick={createTicket} disabled={creating} className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
                   {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</> : <><Send className="mr-2 h-4 w-4" /> Enviar</>}
