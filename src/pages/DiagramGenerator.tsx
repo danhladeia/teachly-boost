@@ -100,6 +100,8 @@ export default function DiagramGenerator() {
   const [ajusteLoading, setAjusteLoading] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
+  const [diagramTitle, setDiagramTitle] = useState("");
+  const [diagramDescription, setDiagramDescription] = useState("");
   const diagramRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -433,6 +435,27 @@ export default function DiagramGenerator() {
                 />
               </div>
 
+              <div>
+                <Label className="text-xs">Título do diagrama (opcional)</Label>
+                <Input
+                  placeholder="Ex: Ciclo da Água"
+                  value={diagramTitle}
+                  onChange={e => setDiagramTitle(e.target.value)}
+                  className="h-8 text-xs mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Descrição contextual (opcional)</Label>
+                <Textarea
+                  placeholder="Texto informativo para incluir acima ou abaixo do diagrama..."
+                  value={diagramDescription}
+                  onChange={e => setDiagramDescription(e.target.value)}
+                  rows={2}
+                  className="text-xs mt-1"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Tipo</Label>
@@ -523,18 +546,32 @@ export default function DiagramGenerator() {
               boxSizing: "border-box",
             }}
           >
-            {/* Header / Branding */}
+            {/* Header / Branding — always centered */}
             {(bannerUrl || logoUrl || escolaFinal) && (
-              <div className="mb-4 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
+              <div className="mb-4 pb-3 border-b" style={{ borderColor: "#e5e7eb", textAlign: "center" }}>
                 {bannerUrl ? (
-                  <img src={bannerUrl} alt="Banner" style={{ width: "100%", maxHeight: "96px", objectFit: "contain" }} crossOrigin="anonymous" />
+                  <img src={bannerUrl} alt="Banner" style={{ maxWidth: "100%", maxHeight: "96px", objectFit: "contain", margin: "0 auto", display: "block" }} crossOrigin="anonymous" />
                 ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
                     {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "contain" }} crossOrigin="anonymous" />}
                     {escolaFinal && <span style={{ fontWeight: 600, fontSize: "14px" }}>{escolaFinal}</span>}
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Title */}
+            {diagramTitle && (
+              <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: "16pt", fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
+                {diagramTitle}
+              </h2>
+            )}
+
+            {/* Description above diagram */}
+            {diagramDescription && (
+              <p style={{ textAlign: "justify", fontSize: "10pt", color: "#374151", marginBottom: "6mm", lineHeight: 1.6 }}>
+                {diagramDescription}
+              </p>
             )}
 
             {svgOutput ? (

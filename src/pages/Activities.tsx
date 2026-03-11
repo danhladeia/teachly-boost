@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle, Gamepad2 } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,7 @@ export const emptyBlock = (type: BlockType): Block => ({
 
 export default function Activities() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [blocks, setBlocks] = useState<Block[]>([emptyBlock("title")]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiNivel, setAiNivel] = useState("");
@@ -721,6 +722,7 @@ export default function Activities() {
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-open")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Aberta</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-mc")}><ListOrdered className="mr-1 h-3 w-3" /> Q. Múltipla</Button>
                     <Button variant="outline" size="sm" onClick={() => addBlock("question-enem")} className="border-primary/30 text-primary"><GraduationCap className="mr-1 h-3 w-3" /> Q. ENEM</Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate("/app/jogos")} className="col-span-2 border-green-500/30 text-green-600"><Gamepad2 className="mr-1 h-3 w-3" /> Inserir Jogo Pedagógico</Button>
                   </div>
                   <div className="space-y-1">
                     <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">

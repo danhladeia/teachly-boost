@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, Tag, Settings } from "lucide-react";
+import { CheckCircle2, Settings, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,8 +59,6 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const discount = (v: number) => v * 0.75;
 
 export default function Pricing() {
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const { plan } = useCredits();
@@ -77,16 +74,6 @@ export default function Pricing() {
       toast.info("Checkout cancelado.");
     }
   }, []);
-
-  const applyCoupon = () => {
-    if (coupon.trim().toUpperCase() === "GOPEDAGOX") {
-      setCouponApplied(true);
-      toast.success("Cupom aplicado! Você economizou 25% 🎉");
-    } else {
-      setCouponApplied(false);
-      toast.error("Cupom inválido");
-    }
-  };
 
   const handlePaymentLink = (link: string) => {
     const url = new URL(link);
@@ -143,20 +130,14 @@ export default function Pricing() {
         </button>
       </div>
 
-      {/* Coupon */}
-      <div className="max-w-md mx-auto">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-10" placeholder="Possui um cupom?" value={coupon} onChange={e => setCoupon(e.target.value)} onKeyDown={e => e.key === "Enter" && applyCoupon()} />
-          </div>
-          <Button variant="outline" onClick={applyCoupon}>Aplicar</Button>
-        </div>
-        {couponApplied && (
-          <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! 25% OFF será aplicado automaticamente no checkout.
+      {/* Coupon banner */}
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-3 rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-6 py-4 shadow-lg">
+          <Sparkles className="h-5 w-5 text-destructive shrink-0" />
+          <p className="text-sm font-bold text-destructive">
+            ⏰ Use o cupom <span className="rounded bg-destructive px-2 py-0.5 text-destructive-foreground font-extrabold">GOPEDAGOX</span> no checkout e ganhe 25% de desconto vitalício!
           </p>
-        )}
+        </div>
       </div>
 
       {/* Plans */}
@@ -166,7 +147,6 @@ export default function Pricing() {
           const isAnnual = billingCycle === "annual";
           const basePrice = isAnnual ? p.priceAnnualTotal : p.priceMonthly;
           const monthlyEquivalent = isAnnual ? p.priceAnnualTotal / 12 : p.priceMonthly;
-          const finalPrice = couponApplied ? discount(basePrice) : basePrice;
           const paymentLink = isAnnual ? p.linkAnnual : p.linkMonthly;
           const isPaid = p.priceMonthly > 0;
 
@@ -185,22 +165,16 @@ export default function Pricing() {
                 <div>
                   {isPaid ? (
                     <>
-                      {couponApplied && (
-                        <p className="text-sm text-muted-foreground line-through">{fmt(basePrice)}</p>
-                      )}
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className={`font-display text-3xl font-extrabold ${couponApplied ? "text-green-600" : ""}`}>
-                          {fmt(couponApplied ? discount(monthlyEquivalent) : monthlyEquivalent)}
+                        <span className="font-display text-3xl font-extrabold">
+                          {fmt(monthlyEquivalent)}
                         </span>
                         <span className="text-sm text-muted-foreground">/mês</span>
                       </div>
                       {isAnnual && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          cobrado {fmt(finalPrice)}/ano (2 meses grátis)
+                          cobrado {fmt(basePrice)}/ano (2 meses grátis)
                         </p>
-                      )}
-                      {couponApplied && (
-                        <Badge variant="secondary" className="mt-1 text-green-600 bg-green-50">-25% OFF</Badge>
                       )}
                     </>
                   ) : (

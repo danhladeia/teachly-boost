@@ -92,10 +92,14 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         const float = resolveFloat(block);
         const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
         if (nextBlock && nextBlock.type === "text") {
+          // Use CSS float for text wrapping around image
+          const floatDir = float === "right" ? "right" : "left";
+          const marginStyle = floatDir === "right" ? { marginLeft: "4mm", marginBottom: "3mm" } : { marginRight: "4mm", marginBottom: "3mm" };
           rendered.push(
-            <div key={block.id} data-block-id={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
-              <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
-              <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
+            <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
+              <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", float: floatDir, ...marginStyle }} />
+              <div style={{ textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
+              <div style={{ clear: "both" }} />
             </div>
           );
           i += 2; continue;
@@ -113,10 +117,13 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         if (nextBlock && nextBlock.type === "image" && nextBlock.imageUrl && nextBlock.imageFloat !== "none") {
           const size = imageSizeMap[nextBlock.imageSize || "medium"];
           const float = resolveFloat(nextBlock);
+          const floatDir = float === "right" ? "right" : "left";
+          const marginStyle = floatDir === "right" ? { marginLeft: "4mm", marginBottom: "3mm" } : { marginRight: "4mm", marginBottom: "3mm" };
           rendered.push(
-            <div key={block.id} data-block-id={block.id} style={{ display: "flex", gap: "5mm", marginBottom: "4mm", alignItems: "flex-start", flexDirection: float === "right" ? "row-reverse" : "row" }}>
-              <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", flexShrink: 0 }} />
-              <div style={{ flex: 1, textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
+            <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
+              <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", float: floatDir, ...marginStyle }} />
+              <div style={{ textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
+              <div style={{ clear: "both" }} />
             </div>
           );
           i += 2; continue;
@@ -299,7 +306,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
     <>
       {showHeader && bannerUrl && (
         <div style={{ textAlign: "center", marginBottom: "4mm" }}>
-          <img src={bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
+          <img src={bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain", margin: "0 auto", display: "block" }} crossOrigin="anonymous" />
         </div>
       )}
       {showHeader && (escola || logoUrl) && (
@@ -337,7 +344,16 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
   };
 
   return (
-    <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6 w-full overflow-x-auto max-w-full">
+    <div data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6 w-full overflow-x-hidden max-w-full">
+      <style>{`
+        @media (max-width: 800px) {
+          [data-a4-container] > #atividade-print-area,
+          [data-a4-container] > .bg-white {
+            transform-origin: top center;
+            transform: scale(calc(min(1, (100vw - 32px) / 793.7)));
+          }
+        }
+      `}</style>
       {/* Hidden measurement container - renders everything flat to measure heights */}
       <div
         ref={measureRef}

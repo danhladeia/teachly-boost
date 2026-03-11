@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Loader2, Plus, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { MessageSquare, Send, Loader2, Plus, Clock, CheckCircle2, AlertCircle, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,9 @@ export default function Support() {
   const [creating, setCreating] = useState(false);
   const [sending, setSending] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadTickets(); }, [user]);
   useEffect(() => { if (selected) loadMessages(selected.id); }, [selected]);
@@ -75,6 +77,20 @@ export default function Support() {
     if (data) setMessages(data);
   };
 
+  const uploadAttachments = async (ticketId: string): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of attachments) {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${user!.id}/${ticketId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("support-attachments").upload(path, file, { contentType: file.type });
+      if (!error) {
+        const { data: urlData } = supabase.storage.from("support-attachments").getPublicUrl(path);
+        urls.push(urlData.publicUrl);
+      }
+    }
+    return urls;
+  };
+
   const createTicket = async () => {
     if (!user || !newSubject.trim() || !newMessage.trim()) { toast.error("Preencha assunto e mensagem"); return; }
     setCreating(true);
@@ -92,15 +108,23 @@ export default function Support() {
       .single();
 
     if (ticket) {
+      let content = newMessage;
+      if (attachments.length > 0) {
+        const urls = await uploadAttachments((ticket as any).id);
+        if (urls.length > 0) {
+          content += "\n\n📎 Anexos:\n" + urls.map(u => u).join("\n");
+        }
+      }
       await (supabase.from("support_messages" as any) as any).insert({
         ticket_id: (ticket as any).id,
         sender_type: "user",
         sender_id: user.id,
-        content: newMessage,
+        content,
       });
       toast.success("Ticket criado!");
       setNewSubject("");
       setNewMessage("");
+      setAttachments([]);
       setShowNew(false);
       await loadTickets();
       setSelected(ticket as any);
@@ -111,13 +135,21 @@ export default function Support() {
   const sendMessage = async () => {
     if (!user || !selected || !newMessage.trim()) return;
     setSending(true);
+    let content = newMessage;
+    if (attachments.length > 0) {
+      const urls = await uploadAttachments(selected.id);
+      if (urls.length > 0) {
+        content += "\n\n📎 Anexos:\n" + urls.map(u => u).join("\n");
+      }
+    }
     await (supabase.from("support_messages" as any) as any).insert({
       ticket_id: selected.id,
       sender_type: "user",
       sender_id: user.id,
-      content: newMessage,
+      content,
     });
     setNewMessage("");
+    setAttachments([]);
     await loadMessages(selected.id);
     setSending(false);
   };
@@ -187,6 +219,28 @@ export default function Support() {
                 <Label>Mensagem</Label>
                 <Textarea placeholder="Detalhe sua dúvida ou problema..." rows={5} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
               </div>
+              {/* File attachments */}
+              <div className="space-y-2">
+                <Label className="text-xs">Anexos (opcional)</Label>
+                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+                  <Paperclip className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Anexar imagens, documentos ou vídeos</span>
+                  <input ref={fileInputRef} type="file" multiple accept="image/*,video/*,.pdf,.docx,.doc,.txt,.xlsx,.xls" className="hidden" onChange={e => {
+                    if (e.target.files) setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+                    e.target.value = "";
+                  }} />
+                </label>
+                {attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {attachments.map((f, i) => (
+                      <Badge key={i} variant="secondary" className="text-[10px] gap-1">
+                        {f.name.length > 20 ? f.name.slice(0, 17) + "..." : f.name}
+                        <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="ml-1"><X className="h-3 w-3" /></button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button onClick={createTicket} disabled={creating} className="gradient-primary border-0 text-primary-foreground hover:opacity-90">
                   {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</> : <><Send className="mr-2 h-4 w-4" /> Enviar</>}
@@ -220,16 +274,31 @@ export default function Support() {
                 <div ref={messagesEndRef} />
               </div>
               {selected.status !== "resolved" && (
-                <div className="border-t p-3 flex gap-2">
-                  <Input
-                    placeholder="Digite sua mensagem..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                  />
-                  <Button size="icon" onClick={sendMessage} disabled={sending} className="shrink-0">
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
+                <div className="border-t p-3 space-y-2">
+                  {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {attachments.map((f, i) => (
+                        <Badge key={i} variant="secondary" className="text-[9px] gap-1">
+                          {f.name.length > 15 ? f.name.slice(0, 12) + "..." : f.name}
+                          <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}><X className="h-2.5 w-2.5" /></button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      placeholder="Digite sua mensagem..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                    />
+                    <Button size="icon" onClick={sendMessage} disabled={sending} className="shrink-0">
+                      {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
