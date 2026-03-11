@@ -344,7 +344,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
   };
 
   return (
-    <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6 w-full overflow-x-hidden max-w-full">
+    <div data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6 w-full overflow-x-hidden max-w-full">
       <style>{`
         @media (max-width: 800px) {
           [data-a4-container] > #atividade-print-area,
