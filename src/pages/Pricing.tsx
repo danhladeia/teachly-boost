@@ -131,20 +131,14 @@ export default function Pricing() {
         </button>
       </div>
 
-      {/* Coupon */}
-      <div className="max-w-md mx-auto">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-10" placeholder="Possui um cupom?" value={coupon} onChange={e => setCoupon(e.target.value)} onKeyDown={e => e.key === "Enter" && applyCoupon()} />
-          </div>
-          <Button variant="outline" onClick={applyCoupon}>Aplicar</Button>
-        </div>
-        {couponApplied && (
-          <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> 🔥 Cupom aplicado! 25% OFF será aplicado automaticamente no checkout.
+      {/* Coupon banner */}
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-3 rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-6 py-4 shadow-lg">
+          <Sparkles className="h-5 w-5 text-destructive shrink-0" />
+          <p className="text-sm font-bold text-destructive">
+            ⏰ Use o cupom <span className="rounded bg-destructive px-2 py-0.5 text-destructive-foreground font-extrabold">GOPEDAGOX</span> no checkout e ganhe 25% de desconto vitalício!
           </p>
-        )}
+        </div>
       </div>
 
       {/* Plans */}
