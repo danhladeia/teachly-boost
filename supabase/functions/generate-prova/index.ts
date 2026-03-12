@@ -9,13 +9,15 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { temas, nivel, serie, tipo, num_abertas, num_fechadas, titulo } = await req.json();
+    const { temas, nivel, serie, tipo, num_abertas, num_fechadas, titulo, modo_enem } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const numAbertas = num_abertas || 0;
-    const numFechadas = num_fechadas || 0;
-    const totalQ = numAbertas + numFechadas;
+    const isEnem = modo_enem === true;
+    const numAbertas = isEnem ? 0 : (num_abertas || 0);
+    const numFechadas = isEnem ? 0 : (num_fechadas || 0);
+    const numEnem = isEnem ? (num_fechadas || 5) : 0;
+    const totalQ = numAbertas + numFechadas + numEnem;
 
     let linguagem = "";
     if (nivel?.includes("Iniciais")) {
@@ -27,18 +29,33 @@ serve(async (req) => {
     }
 
     let tipoInstrucao = "";
-    if (numAbertas > 0 && numFechadas > 0) {
-      tipoInstrucao = `Gere ${numFechadas} questão(ões) de múltipla escolha com 4 alternativas (indique correctIndex 0-3) e ${numAbertas} questão(ões) aberta(s) com linhas para resposta.`;
-    } else if (numAbertas > 0) {
-      tipoInstrucao = `Gere ${numAbertas} questão(ões) aberta(s) com linhas para resposta.`;
+    let enemInstrucao = "";
+
+    if (isEnem) {
+      enemInstrucao = `
+MODO ENEM ATIVADO - Siga RIGOROSAMENTE a estrutura de itens do ENEM:
+Cada questão DEVE ter:
+1. Um texto-base (trecho de livro, notícia, tirinha, gráfico, artigo). VARIE os gêneros textuais.
+2. Uma fonte/referência do texto base.
+3. O ENUNCIADO como frase incompleta (NÃO use perguntas diretas).
+4. EXATAMENTE 5 alternativas (A a E). Apenas 1 correta, as demais são DISTRATORES.
+Gere exatamente ${numEnem} questões no formato ENEM.`;
+      tipoInstrucao = `Gere exatamente ${numEnem} questões no formato ENEM com 5 alternativas cada.`;
     } else {
-      tipoInstrucao = `Gere ${numFechadas} questão(ões) de múltipla escolha com 4 alternativas cada (indique correctIndex 0-3 para a resposta correta).`;
+      if (numAbertas > 0 && numFechadas > 0) {
+        tipoInstrucao = `Gere ${numFechadas} questão(ões) de múltipla escolha com 4 alternativas (indique correctIndex 0-3) e ${numAbertas} questão(ões) aberta(s) com linhas para resposta.`;
+      } else if (numAbertas > 0) {
+        tipoInstrucao = `Gere ${numAbertas} questão(ões) aberta(s) com linhas para resposta.`;
+      } else {
+        tipoInstrucao = `Gere ${numFechadas} questão(ões) de múltipla escolha com 4 alternativas cada (indique correctIndex 0-3 para a resposta correta).`;
+      }
     }
 
     const systemPrompt = `Você é um especialista em criar provas pedagógicas.
 Dado temas/conteúdos, gere questões para uma prova.
 ${serie ? `A prova é para ${serie}.` : ""}
 ${linguagem}
+${enemInstrucao}
 ${tipoInstrucao}
 
 Os temas/conteúdos da prova são: ${temas}
@@ -46,8 +63,8 @@ Os temas/conteúdos da prova são: ${temas}
 Responda APENAS com JSON:
 {
   "questoes": [
-    { "type": "question-mc", "content": "Enunciado?", "alternatives": ["A", "B", "C", "D"], "correctIndex": 0 },
-    { "type": "question-open", "content": "Pergunta aberta?", "lines": 4 }
+    ${isEnem ? `{ "type": "question-mc", "textoBase": "Texto base...", "fonte": "AUTOR. Obra. 2020.", "content": "A partir da leitura do texto, conclui-se que", "alternatives": ["A", "B", "C", "D", "E"], "correctIndex": 0 }` : `{ "type": "question-mc", "content": "Enunciado?", "alternatives": ["A", "B", "C", "D"], "correctIndex": 0 },
+    { "type": "question-open", "content": "Pergunta aberta?", "lines": 4 }`}
   ]
 }
 Gere exatamente ${totalQ} questões no total. Sem markdown, apenas JSON puro.`;
