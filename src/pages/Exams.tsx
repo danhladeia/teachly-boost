@@ -121,7 +121,17 @@ export default function Exams() {
     loadSavedProvas();
     loadSavedActivities();
     loadSavedPlans();
+    loadRespostasAlunos();
   }, [user]);
+
+  // Auto-enable ENEM mode when Ensino Médio is selected
+  useEffect(() => {
+    if (nivel === "Ensino Médio") {
+      setModoEnem(true);
+    } else {
+      setModoEnem(false);
+    }
+  }, [nivel]);
 
   // Load exam from Library navigation
   useEffect(() => {
