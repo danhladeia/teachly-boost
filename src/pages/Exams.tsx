@@ -712,9 +712,10 @@ export default function Exams() {
       )}
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="criar" className="text-[10px] sm:text-xs px-1 sm:px-3">Criar</TabsTrigger>
           <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas</TabsTrigger>
+          <TabsTrigger value="resultados" className="text-[10px] sm:text-xs px-1 sm:px-3"><ClipboardCheck className="mr-0.5 sm:mr-1 h-3 w-3" /> Resultados</TabsTrigger>
           <TabsTrigger value="corrigir" className="text-[10px] sm:text-xs px-1 sm:px-3">Corrigir</TabsTrigger>
           <TabsTrigger value="camera" className="text-[10px] sm:text-xs px-1 sm:px-3"><Camera className="mr-0.5 sm:mr-1 h-3 w-3" /> Câmera</TabsTrigger>
         </TabsList>
