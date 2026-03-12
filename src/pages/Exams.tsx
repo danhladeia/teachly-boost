@@ -107,6 +107,8 @@ export default function Exams() {
   const [importFileNameProva, setImportFileNameProva] = useState("");
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [respostasAlunos, setRespostasAlunos] = useState<any[]>([]);
+  const [loadingRespostas, setLoadingRespostas] = useState(false);
 
   // Load profile data
   useEffect(() => {
