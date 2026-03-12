@@ -1148,6 +1148,79 @@ export default function Exams() {
           </div>
         </TabsContent>
 
+        <TabsContent value="resultados">
+          <div className="max-w-3xl mx-auto space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2"><ClipboardCheck className="h-5 w-5" /> Provas Corrigidas</h2>
+              <Button size="sm" variant="outline" onClick={loadRespostasAlunos} disabled={loadingRespostas}>
+                {loadingRespostas ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
+              </Button>
+            </div>
+            {respostasAlunos.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma prova corrigida ainda. Use as abas "Corrigir" ou "Câmera" para corrigir provas.</CardContent></Card>
+            ) : (
+              <div className="space-y-2">
+                {/* Group by prova */}
+                {(() => {
+                  const grouped: Record<string, any[]> = {};
+                  respostasAlunos.forEach(r => {
+                    const key = r.prova_id;
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(r);
+                  });
+                  const provaNames: Record<string, string> = {};
+                  savedProvas.forEach(p => { provaNames[p.id] = p.titulo; });
+                  
+                  return Object.entries(grouped).map(([provaId, respostas]) => (
+                    <Card key={provaId} className="shadow-card">
+                      <CardHeader className="py-3">
+                        <CardTitle className="text-sm font-semibold">
+                          📝 {provaNames[provaId] || "Prova"} 
+                          <Badge variant="secondary" className="ml-2 text-[10px]">{respostas.length} aluno(s)</Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1 pt-0">
+                        <div className="rounded border overflow-hidden">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="bg-muted/50">
+                                <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
+                                <th className="text-center px-3 py-1.5 font-medium">Nota</th>
+                                <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
+                                <th className="text-right px-3 py-1.5 font-medium">Data</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {respostas.map(r => (
+                                <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
+                                  <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
+                                  <td className="text-center px-3 py-1.5">
+                                    {r.nota !== null ? (
+                                      <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
+                                        {r.nota.toFixed(1)}
+                                      </Badge>
+                                    ) : "—"}
+                                  </td>
+                                  <td className="text-center px-3 py-1.5 text-muted-foreground">
+                                    {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
+                                  </td>
+                                  <td className="text-right px-3 py-1.5 text-muted-foreground">
+                                    {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="corrigir">
           <OMRScanner />
         </TabsContent>
