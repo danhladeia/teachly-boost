@@ -474,7 +474,7 @@ export default function Exams() {
         ? `${temas}\n\nTexto base para gerar as questões:\n${textoImportadoProva.slice(0, 4000)}`
         : temas;
       const { data, error } = await supabase.functions.invoke("generate-prova", {
-        body: { temas: temasComContexto, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
+        body: { temas: temasComContexto, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: modoEnem ? "enem" : tipoQuestoes, num_abertas: modoEnem ? 0 : nA, num_fechadas: nF, titulo, modo_enem: modoEnem },
       });
       if (error) throw error;
       if (data?.questoes) {
@@ -482,7 +482,7 @@ export default function Exams() {
           id: genId(),
           type: q.type === "question-open" ? "open" : "mc",
           content: q.content || "",
-          alternatives: q.alternatives || ["", "", "", ""],
+          alternatives: q.alternatives || (modoEnem ? ["", "", "", "", ""] : ["", "", "", ""]),
           correctIndex: q.correctIndex ?? 0,
           lines: q.lines || 4,
           pontos: 1,
