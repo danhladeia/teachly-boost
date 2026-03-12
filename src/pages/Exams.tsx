@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import CreditsIndicator from "@/components/CreditsIndicator";
 import { useLocation } from "react-router-dom";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -83,6 +83,7 @@ export default function Exams() {
   const [saving, setSaving] = useState(false);
   const [questoes, setQuestoes] = useState<ExamQuestion[]>([]);
   const [mainTab, setMainTab] = useState("criar");
+  const [modoEnem, setModoEnem] = useState(false);
 
   // DB persistence state
   const [currentProvaId, setCurrentProvaId] = useState<string | null>(null);
@@ -106,6 +107,8 @@ export default function Exams() {
   const [importFileNameProva, setImportFileNameProva] = useState("");
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [respostasAlunos, setRespostasAlunos] = useState<any[]>([]);
+  const [loadingRespostas, setLoadingRespostas] = useState(false);
 
   // Load profile data
   useEffect(() => {
@@ -118,7 +121,17 @@ export default function Exams() {
     loadSavedProvas();
     loadSavedActivities();
     loadSavedPlans();
+    loadRespostasAlunos();
   }, [user]);
+
+  // Auto-enable ENEM mode when Ensino Médio is selected
+  useEffect(() => {
+    if (nivel === "Ensino Médio") {
+      setModoEnem(true);
+    } else {
+      setModoEnem(false);
+    }
+  }, [nivel]);
 
   // Load exam from Library navigation
   useEffect(() => {
@@ -188,6 +201,19 @@ export default function Exams() {
         .limit(30);
       setSavedPlans(data || []);
     } catch {}
+  };
+
+  const loadRespostasAlunos = async () => {
+    if (!user) return;
+    setLoadingRespostas(true);
+    try {
+      const { data } = await supabase
+        .from("respostas_alunos")
+        .select("id, nome_aluno, nota, tempo_gasto, created_at, prova_id, respostas_json")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      setRespostasAlunos(data || []);
+    } catch {} finally { setLoadingRespostas(false); }
   };
 
   const handleFileImportProva = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -448,7 +474,7 @@ export default function Exams() {
         ? `${temas}\n\nTexto base para gerar as questões:\n${textoImportadoProva.slice(0, 4000)}`
         : temas;
       const { data, error } = await supabase.functions.invoke("generate-prova", {
-        body: { temas: temasComContexto, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: tipoQuestoes, num_abertas: nA, num_fechadas: nF, titulo },
+        body: { temas: temasComContexto, nivel, serie: serie ? `${nivel} - ${serie}` : nivel, tipo: modoEnem ? "enem" : tipoQuestoes, num_abertas: modoEnem ? 0 : nA, num_fechadas: nF, titulo, modo_enem: modoEnem },
       });
       if (error) throw error;
       if (data?.questoes) {
@@ -456,7 +482,7 @@ export default function Exams() {
           id: genId(),
           type: q.type === "question-open" ? "open" : "mc",
           content: q.content || "",
-          alternatives: q.alternatives || ["", "", "", ""],
+          alternatives: q.alternatives || (modoEnem ? ["", "", "", "", ""] : ["", "", "", ""]),
           correctIndex: q.correctIndex ?? 0,
           lines: q.lines || 4,
           pontos: 1,
@@ -686,9 +712,10 @@ export default function Exams() {
       )}
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="criar" className="text-[10px] sm:text-xs px-1 sm:px-3">Criar</TabsTrigger>
           <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas</TabsTrigger>
+          <TabsTrigger value="resultados" className="text-[10px] sm:text-xs px-1 sm:px-3"><ClipboardCheck className="mr-0.5 sm:mr-1 h-3 w-3" /> Resultados</TabsTrigger>
           <TabsTrigger value="corrigir" className="text-[10px] sm:text-xs px-1 sm:px-3">Corrigir</TabsTrigger>
           <TabsTrigger value="camera" className="text-[10px] sm:text-xs px-1 sm:px-3"><Camera className="mr-0.5 sm:mr-1 h-3 w-3" /> Câmera</TabsTrigger>
         </TabsList>
@@ -823,27 +850,52 @@ export default function Exams() {
                       </Select>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Tipo de questões</Label>
-                    <Select value={tipoQuestoes} onValueChange={setTipoQuestoes}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
-                        <SelectItem value="aberta">Só Abertas</SelectItem>
-                        <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+
+                  {/* ENEM Mode Toggle */}
+                  {nivel === "Ensino Médio" && (
+                    <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-2.5 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={modoEnem} onCheckedChange={setModoEnem} id="enem-mode-prova" />
+                        <Label htmlFor="enem-mode-prova" className="text-xs font-semibold flex items-center gap-1">
+                          <GraduationCap className="h-4 w-4 text-primary" /> Modo ENEM
+                        </Label>
+                      </div>
+                      {modoEnem && (
+                        <div className="text-[9px] text-muted-foreground space-y-0.5">
+                          <p>🎯 Questões no padrão ENEM com:</p>
+                          <p>• Texto-base contextualizado</p>
+                          <p>• Enunciado como frase incompleta</p>
+                          <p>• 5 alternativas (A-E) com distratores</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Question type - hidden in ENEM mode */}
+                  {!modoEnem && (
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Tipo de questões</Label>
+                      <Select value={tipoQuestoes} onValueChange={setTipoQuestoes}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
+                          <SelectItem value="aberta">Só Abertas</SelectItem>
+                          <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-2">
-                    {tipoQuestoes !== "multipla_escolha" && (
+                    {!modoEnem && tipoQuestoes !== "multipla_escolha" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Q. Abertas</Label>
                         <Input type="number" min={0} max={30} value={numAbertas} onChange={e => setNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
-                    {tipoQuestoes !== "aberta" && (
+                    {(modoEnem || tipoQuestoes !== "aberta") && (
                       <div className="space-y-1">
-                        <Label className="text-[10px]">Q. Múltipla Escolha</Label>
+                        <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Q. Múltipla Escolha"}</Label>
                         <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
@@ -1091,6 +1143,79 @@ export default function Exams() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="resultados">
+          <div className="max-w-3xl mx-auto space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2"><ClipboardCheck className="h-5 w-5" /> Provas Corrigidas</h2>
+              <Button size="sm" variant="outline" onClick={loadRespostasAlunos} disabled={loadingRespostas}>
+                {loadingRespostas ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
+              </Button>
+            </div>
+            {respostasAlunos.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma prova corrigida ainda. Use as abas "Corrigir" ou "Câmera" para corrigir provas.</CardContent></Card>
+            ) : (
+              <div className="space-y-2">
+                {/* Group by prova */}
+                {(() => {
+                  const grouped: Record<string, any[]> = {};
+                  respostasAlunos.forEach(r => {
+                    const key = r.prova_id;
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(r);
+                  });
+                  const provaNames: Record<string, string> = {};
+                  savedProvas.forEach(p => { provaNames[p.id] = p.titulo; });
+                  
+                  return Object.entries(grouped).map(([provaId, respostas]) => (
+                    <Card key={provaId} className="shadow-card">
+                      <CardHeader className="py-3">
+                        <CardTitle className="text-sm font-semibold">
+                          📝 {provaNames[provaId] || "Prova"} 
+                          <Badge variant="secondary" className="ml-2 text-[10px]">{respostas.length} aluno(s)</Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1 pt-0">
+                        <div className="rounded border overflow-hidden">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="bg-muted/50">
+                                <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
+                                <th className="text-center px-3 py-1.5 font-medium">Nota</th>
+                                <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
+                                <th className="text-right px-3 py-1.5 font-medium">Data</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {respostas.map(r => (
+                                <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
+                                  <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
+                                  <td className="text-center px-3 py-1.5">
+                                    {r.nota !== null ? (
+                                      <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
+                                        {r.nota.toFixed(1)}
+                                      </Badge>
+                                    ) : "—"}
+                                  </td>
+                                  <td className="text-center px-3 py-1.5 text-muted-foreground">
+                                    {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
+                                  </td>
+                                  <td className="text-right px-3 py-1.5 text-muted-foreground">
+                                    {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ));
+                })()}
               </div>
             )}
           </div>
