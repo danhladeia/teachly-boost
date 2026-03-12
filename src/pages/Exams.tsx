@@ -203,6 +203,19 @@ export default function Exams() {
     } catch {}
   };
 
+  const loadRespostasAlunos = async () => {
+    if (!user) return;
+    setLoadingRespostas(true);
+    try {
+      const { data } = await supabase
+        .from("respostas_alunos")
+        .select("id, nome_aluno, nota, tempo_gasto, created_at, prova_id, respostas_json")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      setRespostasAlunos(data || []);
+    } catch {} finally { setLoadingRespostas(false); }
+  };
+
   const handleFileImportProva = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
