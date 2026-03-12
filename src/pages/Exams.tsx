@@ -850,27 +850,52 @@ export default function Exams() {
                       </Select>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Tipo de questões</Label>
-                    <Select value={tipoQuestoes} onValueChange={setTipoQuestoes}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
-                        <SelectItem value="aberta">Só Abertas</SelectItem>
-                        <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+
+                  {/* ENEM Mode Toggle */}
+                  {nivel === "Ensino Médio" && (
+                    <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-2.5 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={modoEnem} onCheckedChange={setModoEnem} id="enem-mode-prova" />
+                        <Label htmlFor="enem-mode-prova" className="text-xs font-semibold flex items-center gap-1">
+                          <GraduationCap className="h-4 w-4 text-primary" /> Modo ENEM
+                        </Label>
+                      </div>
+                      {modoEnem && (
+                        <div className="text-[9px] text-muted-foreground space-y-0.5">
+                          <p>🎯 Questões no padrão ENEM com:</p>
+                          <p>• Texto-base contextualizado</p>
+                          <p>• Enunciado como frase incompleta</p>
+                          <p>• 5 alternativas (A-E) com distratores</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Question type - hidden in ENEM mode */}
+                  {!modoEnem && (
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Tipo de questões</Label>
+                      <Select value={tipoQuestoes} onValueChange={setTipoQuestoes}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mista">Mista (abertas + fechadas)</SelectItem>
+                          <SelectItem value="aberta">Só Abertas</SelectItem>
+                          <SelectItem value="multipla_escolha">Só Múltipla Escolha</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-2">
-                    {tipoQuestoes !== "multipla_escolha" && (
+                    {!modoEnem && tipoQuestoes !== "multipla_escolha" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Q. Abertas</Label>
                         <Input type="number" min={0} max={30} value={numAbertas} onChange={e => setNumAbertas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
-                    {tipoQuestoes !== "aberta" && (
+                    {(modoEnem || tipoQuestoes !== "aberta") && (
                       <div className="space-y-1">
-                        <Label className="text-[10px]">Q. Múltipla Escolha</Label>
+                        <Label className="text-[10px]">{modoEnem ? "Questões ENEM" : "Q. Múltipla Escolha"}</Label>
                         <Input type="number" min={0} max={30} value={numFechadas} onChange={e => setNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
