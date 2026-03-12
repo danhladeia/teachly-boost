@@ -83,6 +83,7 @@ export default function Exams() {
   const [saving, setSaving] = useState(false);
   const [questoes, setQuestoes] = useState<ExamQuestion[]>([]);
   const [mainTab, setMainTab] = useState("criar");
+  const [modoEnem, setModoEnem] = useState(false);
 
   // DB persistence state
   const [currentProvaId, setCurrentProvaId] = useState<string | null>(null);
