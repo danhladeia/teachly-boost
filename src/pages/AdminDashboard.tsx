@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
+import AdminNotificationSender from "@/components/AdminNotificationSender";
 
 interface UserProfile {
   id: string;
