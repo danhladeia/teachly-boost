@@ -147,21 +147,27 @@ export default function Dashboard() {
   const recentDocs = allDocs.slice(0, 5);
 
   const { text: greetingText, Icon: GreetingIcon } = getGreeting();
-
-
+  const dailyQuote = getDailyQuote();
 
   return (
     <div className="space-y-6">
-      {/* Header with greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <GreetingIcon className="h-6 w-6 text-primary" />
-            {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+      {/* Header with greeting + daily quote */}
+      <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-card">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="space-y-2">
+            <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+              <GreetingIcon className="h-6 w-6 text-primary" />
+              {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
+            </h1>
+            <blockquote className="border-l-2 border-primary/40 pl-3 py-0.5">
+              <p className="text-sm italic text-muted-foreground leading-relaxed">
+                "{dailyQuote.frase}"
+              </p>
+              <footer className="text-xs text-primary/70 font-medium mt-1">— {dailyQuote.autor}</footer>
+            </blockquote>
+          </div>
+          <CreditsIndicator />
         </div>
-        <CreditsIndicator />
       </div>
 
 

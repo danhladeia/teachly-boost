@@ -339,6 +339,9 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Send Notification */}
+              <AdminNotificationSender users={users} />
             </div>
           ) : (
             <Card className="shadow-card flex items-center justify-center min-h-[300px]">
