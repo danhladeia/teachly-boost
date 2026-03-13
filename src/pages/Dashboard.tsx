@@ -30,6 +30,41 @@ const tools = [
   { title: "Timbres", icon: Stamp, route: "/app/timbres", color: "text-accent-foreground", bg: "bg-accent" },
 ];
 
+const frasesEducacionais = [
+  { frase: "Educação não transforma o mundo. Educação muda as pessoas. Pessoas transformam o mundo.", autor: "Paulo Freire" },
+  { frase: "A educação é a arma mais poderosa que você pode usar para mudar o mundo.", autor: "Nelson Mandela" },
+  { frase: "O objetivo da educação é a virtude e o desejo de se tornar um bom cidadão.", autor: "Platão" },
+  { frase: "Educar é semear com sabedoria e colher com paciência.", autor: "Augusto Cury" },
+  { frase: "A tarefa essencial do professor é despertar a alegria de trabalhar e de conhecer.", autor: "Albert Einstein" },
+  { frase: "Uma criança, um professor, um livro e uma caneta podem mudar o mundo.", autor: "Malala Yousafzai" },
+  { frase: "O conhecimento é a única coisa que ninguém pode tirar de você.", autor: "B. B. King" },
+  { frase: "Se você acha que a educação é cara, experimente a ignorância.", autor: "Derek Bok" },
+  { frase: "Ensinar não é transferir conhecimento, mas criar as possibilidades para a sua própria produção ou a sua construção.", autor: "Paulo Freire" },
+  { frase: "O que sabemos é uma gota; o que ignoramos é um oceano.", autor: "Isaac Newton" },
+  { frase: "A raiz do estudo é amarga, mas seus frutos são doces.", autor: "Aristóteles" },
+  { frase: "A educação não é preparação para a vida; a educação é a própria vida.", autor: "John Dewey" },
+  { frase: "O importante na educação não é apenas ensinar a somar, mas sim ensinar a dividir.", autor: "Millôr Fernandes" },
+  { frase: "A mente que se abre a uma nova ideia jamais voltará ao seu tamanho original.", autor: "Albert Einstein" },
+  { frase: "A educação é o passaporte para o futuro, pois o amanhã pertence àqueles que se preparam hoje.", autor: "Malcolm X" },
+  { frase: "Feliz aquele que transfere o que sabe e aprende o que ensina.", autor: "Cora Coralina" },
+  { frase: "A verdadeira educação consiste em pôr a descoberto ou fazer atualizar o melhor de uma pessoa.", autor: "Mahatma Gandhi" },
+  { frase: "Para viajar para longe, não há melhor nave do que um livro.", autor: "Emily Dickinson" },
+  { frase: "O analfabeto do futuro não será aquele que não sabe ler, mas aquele que não sabe como aprender.", autor: "Alvin Toffler" },
+  { frase: "A maior descoberta de todos os tempos é que uma pessoa pode mudar seu futuro basta mudar sua atitude.", autor: "Oprah Winfrey" },
+  { frase: "O conhecimento torna a alma jovem e diminui a amargura da velhice.", autor: "Leonardo da Vinci" },
+  { frase: "A única coisa que interfere com minha aprendizagem é a minha educação.", autor: "Albert Einstein" },
+  { frase: "Não se pode falar de educação sem amor.", autor: "Paulo Freire" },
+  { frase: "Educação gera confiança. Confiança gera esperança. Esperança gera paz.", autor: "Confúcio" },
+  { frase: "O propósito da educação é substituir uma mente vazia por uma mente aberta.", autor: "Malcolm Forbes" },
+  { frase: "Aprender é a única coisa de que a mente nunca se cansa, nunca tem medo e nunca se arrepende.", autor: "Leonardo da Vinci" },
+];
+
+function getDailyQuote() {
+  const today = new Date();
+  const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
+  return frasesEducacionais[dayOfYear % frasesEducacionais.length];
+}
+
 function getGreeting(): { text: string; Icon: typeof Sun } {
   const h = new Date().getHours();
   if (h >= 5 && h < 12) return { text: "Bom dia", Icon: Sun };
@@ -112,21 +147,27 @@ export default function Dashboard() {
   const recentDocs = allDocs.slice(0, 5);
 
   const { text: greetingText, Icon: GreetingIcon } = getGreeting();
-
-
+  const dailyQuote = getDailyQuote();
 
   return (
     <div className="space-y-6">
-      {/* Header with greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <GreetingIcon className="h-6 w-6 text-primary" />
-            {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">Acesso rápido às suas ferramentas pedagógicas</p>
+      {/* Header with greeting + daily quote */}
+      <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-card">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="space-y-2">
+            <h1 className="font-display text-2xl font-bold flex items-center gap-2">
+              <GreetingIcon className="h-6 w-6 text-primary" />
+              {greetingText}{userName ? `, Professor(a) ${userName}!` : "!"}
+            </h1>
+            <blockquote className="border-l-2 border-primary/40 pl-3 py-0.5">
+              <p className="text-sm italic text-muted-foreground leading-relaxed">
+                "{dailyQuote.frase}"
+              </p>
+              <footer className="text-xs text-primary/70 font-medium mt-1">— {dailyQuote.autor}</footer>
+            </blockquote>
+          </div>
+          <CreditsIndicator />
         </div>
-        <CreditsIndicator />
       </div>
 
 

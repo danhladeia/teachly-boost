@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
+import AdminNotificationSender from "@/components/AdminNotificationSender";
 
 interface UserProfile {
   id: string;
@@ -338,6 +339,9 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Send Notification */}
+              <AdminNotificationSender users={users} />
             </div>
           ) : (
             <Card className="shadow-card flex items-center justify-center min-h-[300px]">
