@@ -83,7 +83,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         const f = imgBlock.imageFloat || "none";
         if (f === "alternating") {
           alternatingIdx++;
-          return alternatingIdx % 2 === 1 ? "left" : "right";
+          return alternatingIdx % 2 === 1 ? "right" : "left";
         }
         return f;
       };
