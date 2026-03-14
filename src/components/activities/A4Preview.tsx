@@ -429,8 +429,10 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
       {pages.length > 0 ? (
         <div
           id="atividade-print-area"
-          className="flex flex-col items-center gap-6"
-          style={!isMobileView && scaleFactor < 1 ? {
+          className="flex flex-col items-center"
+          style={{
+            gap: isMobileView ? "24px" : "0px",
+            ...((!isMobileView && scaleFactor < 1) ? {
             transform: `scale(${scaleFactor})`,
             transformOrigin: "top center",
             width: PAGE_WIDTH,
