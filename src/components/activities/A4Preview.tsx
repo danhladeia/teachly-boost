@@ -433,10 +433,11 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
           style={{
             gap: isMobileView ? "24px" : "0px",
             ...((!isMobileView && scaleFactor < 1) ? {
-            transform: `scale(${scaleFactor})`,
-            transformOrigin: "top center",
-            width: PAGE_WIDTH,
-          } : undefined}
+              transform: `scale(${scaleFactor})`,
+              transformOrigin: "top center",
+              width: PAGE_WIDTH,
+            } : {}),
+          }}
         >
           {pages.map((pageBlockIndices, pageIdx) => (
             <div
