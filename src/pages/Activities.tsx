@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
+import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle, Puzzle, Search, Grid3X3, Lock, Dice5, Navigation } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 import { Button } from "@/components/ui/button";
