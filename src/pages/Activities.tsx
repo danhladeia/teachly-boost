@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle, Puzzle, Search, Grid3X3, Lock, Dice5, Navigation } from "lucide-react";
+import { FileText, Sparkles, Type, ListOrdered, AlignLeft, Loader2, Image, Building2, BookOpen, Settings2, Hash, Upload, SeparatorHorizontal, FileUp, GraduationCap, AlertTriangle } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 import { Button } from "@/components/ui/button";
@@ -75,8 +75,6 @@ export default function Activities() {
   const [importFileName, setImportFileName] = useState("");
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const [currentDocId, setCurrentDocId] = useState<string | null>(null);
-  const [includeGames, setIncludeGames] = useState<string[]>([]);
-  const [generatingGames, setGeneratingGames] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -354,60 +352,6 @@ export default function Activities() {
         } else {
           setBlocks(generatedBlocks);
         }
-        // Generate games if selected
-        if (includeGames.length > 0 && data?.blocks) {
-          setGeneratingGames(true);
-          const textContent = data.blocks
-            .filter((b: any) => b.type === "text")
-            .map((b: any) => b.content)
-            .join(" ");
-
-          for (const gameType of includeGames) {
-            try {
-              if (gameType === "caca-palavras" || gameType === "cruzadinha") {
-                toast.info(`Gerando ${gameType === "caca-palavras" ? "caça-palavras" : "palavras cruzadas"}...`);
-                const { data: gameData } = await supabase.functions.invoke("generate-game", {
-                  body: { gameType, tema: textContent.slice(0, 500), difficulty: "medio", count: gameType === "caca-palavras" ? 12 : 8 },
-                });
-                if (gameData && !gameData.error) {
-                  // Add a separator and game placeholder block
-                  setBlocks(prev => [...prev, 
-                    { ...emptyBlock("separator"), content: gameType === "caca-palavras" ? "🔍 Caça-Palavras" : "✏️ Palavras Cruzadas" },
-                    { ...emptyBlock("text"), content: gameType === "caca-palavras" 
-                      ? `Encontre as seguintes palavras no caça-palavras: ${(gameData.palavras || []).join(", ")}` 
-                      : `Resolva as palavras cruzadas com as dicas abaixo:\n${(gameData.dicas || []).map((d: any, i: number) => `${i+1}. ${d.dica} (${d.palavra})`).join("\n")}` 
-                    },
-                  ]);
-                }
-              } else if (gameType === "criptograma") {
-                toast.info("Gerando criptograma...");
-                const { data: gameData } = await supabase.functions.invoke("generate-game", {
-                  body: { gameType: "criptograma", tema: aiPrompt || "educação", difficulty: "medio" },
-                });
-                if (gameData?.mensagem) {
-                  setBlocks(prev => [...prev,
-                    { ...emptyBlock("separator"), content: "🔐 Criptograma" },
-                    { ...emptyBlock("text"), content: `Desvende a mensagem secreta: ${gameData.mensagem.replace(/[A-Z]/g, "_ ")}` },
-                  ]);
-                }
-              } else if (gameType === "sudoku") {
-                setBlocks(prev => [...prev,
-                  { ...emptyBlock("separator"), content: "🔢 Sudoku" },
-                  { ...emptyBlock("text"), content: "Complete o sudoku abaixo seguindo as regras: cada linha, coluna e bloco 3x3 deve conter os números de 1 a 9 sem repetição." },
-                ]);
-              } else if (gameType === "labirinto") {
-                setBlocks(prev => [...prev,
-                  { ...emptyBlock("separator"), content: "🏃 Labirinto" },
-                  { ...emptyBlock("text"), content: "Encontre o caminho da entrada até a saída no labirinto abaixo." },
-                ]);
-              }
-            } catch (err) {
-              console.error(`Game generation error (${gameType}):`, err);
-            }
-          }
-          setGeneratingGames(false);
-        }
-
         toast.success(modoEnem ? "Atividade ENEM gerada!" : "Atividade gerada!");
       }
     } catch (err: any) {
@@ -415,7 +359,6 @@ export default function Activities() {
     } finally {
       setAiLoading(false);
       setGeneratingImages(false);
-      setGeneratingGames(false);
     }
   };
 
@@ -762,37 +705,8 @@ export default function Activities() {
                     )}
                   </div>
 
-                  {/* Games section */}
-                  <div className="space-y-2 rounded-lg border border-dashed border-primary/30 p-2">
-                    <Label className="text-xs font-semibold flex items-center gap-1"><Puzzle className="h-3 w-3 text-primary" /> Inserir Jogo Pedagógico</Label>
-                    <p className="text-[9px] text-muted-foreground">Caça-palavras e Cruzadinha serão gerados com base no texto da atividade.</p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { id: "caca-palavras", label: "Caça-Palavras", icon: <Search className="h-3 w-3" /> },
-                        { id: "cruzadinha", label: "Palavras Cruzadas", icon: <Grid3X3 className="h-3 w-3" /> },
-                        { id: "criptograma", label: "Criptograma", icon: <Lock className="h-3 w-3" /> },
-                        { id: "sudoku", label: "Sudoku", icon: <Dice5 className="h-3 w-3" /> },
-                        { id: "labirinto", label: "Labirinto", icon: <Navigation className="h-3 w-3" /> },
-                      ].map(game => (
-                        <label key={game.id} className={`flex items-center gap-1.5 rounded-md border p-1.5 cursor-pointer transition-colors text-[10px] ${includeGames.includes(game.id) ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-muted-foreground/40 text-muted-foreground"}`}>
-                          <input
-                            type="checkbox"
-                            checked={includeGames.includes(game.id)}
-                            onChange={e => {
-                              if (e.target.checked) setIncludeGames(prev => [...prev, game.id]);
-                              else setIncludeGames(prev => prev.filter(g => g !== game.id));
-                            }}
-                            className="h-3 w-3 accent-primary"
-                          />
-                          {game.icon}
-                          <span>{game.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button onClick={handleAiGenerate} disabled={aiLoading || generatingImages || generatingGames} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                    {aiLoading || generatingImages || generatingGames ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingGames ? "Gerando jogos..." : generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> {modoEnem ? "Gerar Atividade ENEM" : "Gerar Atividade"}</>}
+                  <Button onClick={handleAiGenerate} disabled={aiLoading || generatingImages} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                    {aiLoading || generatingImages ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> {modoEnem ? "Gerar Atividade ENEM" : "Gerar Atividade"}</>}
                   </Button>
                 </TabsContent>
 
