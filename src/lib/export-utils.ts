@@ -42,49 +42,8 @@ export async function exportToPdf(elementId: string, filename: string) {
 
   // Special handling for paginated A4 previews (atividades)
   if (isPaginatedA4) {
-    // Filter only actual page divs (with height 297mm)
     const pageEls = directChildren.filter((el) => el.style.height.includes("297mm"));
     if (pageEls.length === 0) return;
-
-    // Save original styles
-    const origTransform = element.style.transform;
-    const origTransformOrigin = element.style.transformOrigin;
-    const origWidth = element.style.width;
-    const origGap = element.style.gap;
-    const origDisplay = element.style.display;
-    const origAlignItems = element.style.alignItems;
-
-    // Remove any scaling on the container
-    element.style.transform = "none";
-    element.style.transformOrigin = "";
-    element.style.width = "210mm";
-    element.style.gap = "0";
-    element.style.display = "block";
-    element.style.alignItems = "";
-
-    const savedPageStyles = pageEls.map((el) => ({
-      el,
-      boxShadow: el.style.boxShadow,
-      margin: el.style.margin,
-      overflow: el.style.overflow,
-      pageBreakAfter: el.style.pageBreakAfter,
-      pageBreakInside: el.style.pageBreakInside,
-      breakInside: el.style.breakInside,
-    }));
-
-    // Hide non-page elements temporarily
-    const nonPageEls = directChildren.filter((el) => !el.style.height.includes("297mm"));
-    const savedNonPage = nonPageEls.map(el => ({ el, display: el.style.display }));
-    nonPageEls.forEach(el => { el.style.display = "none"; });
-
-    pageEls.forEach((el, index) => {
-      el.style.boxShadow = "none";
-      el.style.margin = "0";
-      el.style.overflow = "hidden";
-      el.style.pageBreakInside = "avoid";
-      el.style.breakInside = "avoid";
-      el.style.pageBreakAfter = index === pageEls.length - 1 ? "auto" : "always";
-    });
 
     // Clone pages into a temporary container to avoid blank page issues from gap/scale
     const tempContainer = document.createElement("div");
