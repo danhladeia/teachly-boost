@@ -128,7 +128,7 @@ export default function SlideConfigPanel({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Qtd slides</Label>
-              <Input type="number" min={3} max={30} value={numSlides === 0 ? "" : numSlides} onChange={e => setNumSlides(e.target.value === "" ? 0 : Math.max(3, Math.min(30, parseInt(e.target.value))))} onBlur={() => { if (numSlides === 0) setNumSlides(8); }} className="h-9" />
+              <Input type="number" min={1} max={50} value={numSlides === 0 ? "" : numSlides} onChange={e => { const raw = e.target.value; if (raw === "") { setNumSlides(0); return; } const parsed = parseInt(raw, 10); if (!isNaN(parsed)) setNumSlides(Math.min(50, parsed)); }} onBlur={() => { if (numSlides < 1) setNumSlides(8); }} className="h-9" />
             </div>
           </div>
 

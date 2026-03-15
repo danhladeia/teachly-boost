@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import CreditsIndicator from "@/components/CreditsIndicator";
 import { useLocation } from "react-router-dom";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, ChevronRight, Camera, FileText, Upload, FileUp, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,6 +62,60 @@ interface SavedVersao {
 const genId = () => Math.random().toString(36).slice(2, 10);
 const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0, pontos: 1 });
 const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4, pontos: 1 });
+
+function ResultadoProvaCollapsible({ provaName, respostas }: { provaName: string; respostas: any[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card className="shadow-card">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors rounded-t-lg"
+      >
+        <span className="text-sm font-semibold flex items-center gap-2">
+          📝 {provaName}
+          <Badge variant="secondary" className="text-[10px]">{respostas.length} aluno(s)</Badge>
+        </span>
+        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      {open && (
+        <CardContent className="space-y-1 pt-0">
+          <div className="rounded border overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
+                  <th className="text-center px-3 py-1.5 font-medium">Nota</th>
+                  <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {respostas.map((r: any) => (
+                  <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
+                    <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
+                    <td className="text-center px-3 py-1.5">
+                      {r.nota !== null ? (
+                        <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
+                          {r.nota.toFixed(1)}
+                        </Badge>
+                      ) : "—"}
+                    </td>
+                    <td className="text-center px-3 py-1.5 text-muted-foreground">
+                      {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
+                    </td>
+                    <td className="text-right px-3 py-1.5 text-muted-foreground">
+                      {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
 
 export default function Exams() {
   const { user } = useAuth();
@@ -702,19 +756,13 @@ export default function Exams() {
             <Shuffle className="mr-1 h-3.5 w-3.5" /> {shuffling ? "..." : <span className="hidden sm:inline">Embaralhar</span>}{!shuffling && <span className="sm:hidden">Emb.</span>}
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Save className="mr-1 h-3.5 w-3.5" /> {saving ? "..." : "Salvar"}</Button>
-          <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
-        </div>
-      )}
-      {questoes.length === 0 && (
-        <div className="flex justify-end">
-          <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
         </div>
       )}
 
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="criar" className="text-[10px] sm:text-xs px-1 sm:px-3">Criar</TabsTrigger>
-          <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas</TabsTrigger>
+          <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas Provas</TabsTrigger>
           <TabsTrigger value="resultados" className="text-[10px] sm:text-xs px-1 sm:px-3"><ClipboardCheck className="mr-0.5 sm:mr-1 h-3 w-3" /> Resultados</TabsTrigger>
           <TabsTrigger value="corrigir" className="text-[10px] sm:text-xs px-1 sm:px-3">Corrigir</TabsTrigger>
           <TabsTrigger value="camera" className="text-[10px] sm:text-xs px-1 sm:px-3"><Camera className="mr-0.5 sm:mr-1 h-3 w-3" /> Câmera</TabsTrigger>
@@ -1159,8 +1207,7 @@ export default function Exams() {
             {respostasAlunos.length === 0 ? (
               <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma prova corrigida ainda. Use as abas "Corrigir" ou "Câmera" para corrigir provas.</CardContent></Card>
             ) : (
-              <div className="space-y-2">
-                {/* Group by prova */}
+              <div className="space-y-3">
                 {(() => {
                   const grouped: Record<string, any[]> = {};
                   respostasAlunos.forEach(r => {
@@ -1172,48 +1219,11 @@ export default function Exams() {
                   savedProvas.forEach(p => { provaNames[p.id] = p.titulo; });
                   
                   return Object.entries(grouped).map(([provaId, respostas]) => (
-                    <Card key={provaId} className="shadow-card">
-                      <CardHeader className="py-3">
-                        <CardTitle className="text-sm font-semibold">
-                          📝 {provaNames[provaId] || "Prova"} 
-                          <Badge variant="secondary" className="ml-2 text-[10px]">{respostas.length} aluno(s)</Badge>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-1 pt-0">
-                        <div className="rounded border overflow-hidden">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-muted/50">
-                                <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
-                                <th className="text-center px-3 py-1.5 font-medium">Nota</th>
-                                <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
-                                <th className="text-right px-3 py-1.5 font-medium">Data</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {respostas.map(r => (
-                                <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
-                                  <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
-                                  <td className="text-center px-3 py-1.5">
-                                    {r.nota !== null ? (
-                                      <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
-                                        {r.nota.toFixed(1)}
-                                      </Badge>
-                                    ) : "—"}
-                                  </td>
-                                  <td className="text-center px-3 py-1.5 text-muted-foreground">
-                                    {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
-                                  </td>
-                                  <td className="text-right px-3 py-1.5 text-muted-foreground">
-                                    {new Date(r.created_at).toLocaleDateString("pt-BR")}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <ResultadoProvaCollapsible
+                      key={provaId}
+                      provaName={provaNames[provaId] || "Prova"}
+                      respostas={respostas}
+                    />
                   ));
                 })()}
               </div>
