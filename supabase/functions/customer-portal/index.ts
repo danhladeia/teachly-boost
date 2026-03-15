@@ -33,29 +33,21 @@ serve(async (req) => {
     });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ error: "No Stripe customer found. Você não possui uma assinatura ativa." }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 404,
-      });
-    }
+    if (customers.data.length === 0) throw new Error("No Stripe customer found");
 
     const customerId = customers.data[0].id;
-    const origin = req.headers.get("origin") || "https://gopedagox.lovable.app";
+    const origin = req.headers.get("origin") || "http://localhost:3000";
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/app/configuracoes`,
-      flow_data: undefined,
+      return_url: `${origin}/app/planos`,
     });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error("[CUSTOMER-PORTAL] Error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

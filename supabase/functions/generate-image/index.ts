@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, style, disciplina } = await req.json();
+    const { prompt, style } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -19,13 +19,9 @@ serve(async (req) => {
       });
     }
 
-    const isEnglish = disciplina?.toLowerCase()?.includes("inglês") || disciplina?.toLowerCase()?.includes("ingles") || disciplina?.toLowerCase()?.includes("english");
-
-    const langInstruction = isEnglish
-      ? "Any text, labels, or captions in the image MUST be written in English."
-      : "IMPORTANTE: Todo e qualquer texto, rótulo, legenda ou palavra visível na imagem DEVE estar escrito em Português do Brasil (PT-BR). Nunca use inglês.";
-
-    const fullPrompt = `${prompt}. ${langInstruction}. ${style ? `Style: ${style}.` : ""} High quality, educational illustration, clean composition.`;
+    const fullPrompt = style
+      ? `${prompt}. Style: ${style}. High quality, educational illustration, clean composition.`
+      : `${prompt}. High quality, educational illustration, clean composition.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

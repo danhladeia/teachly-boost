@@ -58,25 +58,23 @@ export default function AppSettings() {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) {
+        // Check if it's a "no customer" error
         const errMsg = typeof error === "object" && error.message ? error.message : String(error);
-        if (errMsg.includes("No Stripe customer") || errMsg.includes("customer") || errMsg.includes("404")) {
-          toast.info("Você não possui uma assinatura ativa. Acesse a página de planos para assinar.");
+        if (errMsg.includes("No Stripe customer") || errMsg.includes("customer")) {
+          toast.info("Você não possui uma assinatura ativa no Stripe. Acesse a página de planos para assinar.");
           return;
         }
         throw error;
       }
       if (data?.error) {
         if (data.error.includes("No Stripe customer") || data.error.includes("customer")) {
-          toast.info("Você não possui uma assinatura ativa. Acesse a página de planos para assinar.");
+          toast.info("Você não possui uma assinatura ativa no Stripe. Acesse a página de planos para assinar.");
           return;
         }
         throw new Error(data.error);
       }
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      } else {
-        toast.error("Não foi possível abrir o portal de assinatura.");
-      }
+      if (data?.url) window.open(data.url, "_blank");
+      else toast.error("Não foi possível abrir o portal de assinatura.");
     } catch (err: any) {
       const msg = err?.message || "Erro ao abrir portal de assinatura";
       if (msg.includes("No Stripe customer") || msg.includes("customer")) {
