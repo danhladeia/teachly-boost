@@ -188,10 +188,10 @@ export default function Activities() {
     e.target.value = "";
   };
 
-  const generateAiImage = async (description: string): Promise<string | undefined> => {
+  const generateAiImage = async (description: string, disciplina?: string): Promise<string | undefined> => {
     try {
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: description, style: "educational illustration" },
+        body: { prompt: description, style: "educational illustration", disciplina: disciplina || aiDisciplina },
       });
       if (error) throw error;
       return data?.image_url || undefined;
