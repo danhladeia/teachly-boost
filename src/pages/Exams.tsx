@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import CreditsIndicator from "@/components/CreditsIndicator";
 import { useLocation } from "react-router-dom";
-import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
+import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, ChevronRight, Camera, FileText, Upload, FileUp, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
