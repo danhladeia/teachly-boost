@@ -188,10 +188,10 @@ export default function Activities() {
     e.target.value = "";
   };
 
-  const generateAiImage = async (description: string): Promise<string | undefined> => {
+  const generateAiImage = async (description: string, disciplina?: string): Promise<string | undefined> => {
     try {
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: description, style: "educational illustration" },
+        body: { prompt: description, style: "educational illustration", disciplina: disciplina || aiDisciplina },
       });
       if (error) throw error;
       return data?.image_url || undefined;
@@ -599,6 +599,24 @@ export default function Activities() {
                     </div>
                   )}
 
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Extensão do texto</Label>
+                    <Select value={aiTamanhoTexto} onValueChange={v => setAiTamanhoTexto(v as any)}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="curto">Curto (~500 caracteres)</SelectItem>
+                        <SelectItem value="medio">Médio (~1500 caracteres)</SelectItem>
+                        <SelectItem value="longo">Longo (~3000+ caracteres)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Separator title */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
+                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
+                  </div>
+
                   {/* Question type - hidden in ENEM mode */}
                   {!modoEnem && (
                     <div className="space-y-2">
@@ -627,24 +645,6 @@ export default function Activities() {
                         <Input type="number" min={0} max={20} value={aiNumFechadas === 0 ? "" : aiNumFechadas} onChange={e => setAiNumFechadas(e.target.value === "" ? 0 : parseInt(e.target.value))} className="h-8 text-xs" />
                       </div>
                     )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Extensão do texto</Label>
-                    <Select value={aiTamanhoTexto} onValueChange={v => setAiTamanhoTexto(v as any)}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="curto">Curto (~500 caracteres)</SelectItem>
-                        <SelectItem value="medio">Médio (~1500 caracteres)</SelectItem>
-                        <SelectItem value="longo">Longo (~3000+ caracteres)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Separator title */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
-                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
                   </div>
 
                   {/* AI Image Generation */}
