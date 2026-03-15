@@ -58,30 +58,26 @@ export default function AppSettings() {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) {
-        // Check if it's a "no customer" error
-        const errMsg = typeof error === "object" && error.message ? error.message : String(error);
-        if (errMsg.includes("No Stripe customer") || errMsg.includes("customer")) {
-          toast.info("Você não possui uma assinatura ativa no Stripe. Acesse a página de planos para assinar.");
+        // Check if user has no Stripe customer
+        const errorMsg = typeof error === "object" && error.message ? error.message : String(error);
+        if (errorMsg.includes("No Stripe customer") || errorMsg.includes("not found")) {
+          toast.error("Nenhuma assinatura encontrada. Faça upgrade primeiro na página de planos.");
           return;
         }
         throw error;
       }
       if (data?.error) {
-        if (data.error.includes("No Stripe customer") || data.error.includes("customer")) {
-          toast.info("Você não possui uma assinatura ativa no Stripe. Acesse a página de planos para assinar.");
+        if (data.error.includes("No Stripe customer") || data.error.includes("not found")) {
+          toast.error("Nenhuma assinatura encontrada. Faça upgrade primeiro na página de planos.");
           return;
         }
         throw new Error(data.error);
       }
       if (data?.url) window.open(data.url, "_blank");
-      else toast.error("Não foi possível abrir o portal de assinatura.");
+      else toast.error("Não foi possível abrir o portal. Tente novamente.");
     } catch (err: any) {
-      const msg = err?.message || "Erro ao abrir portal de assinatura";
-      if (msg.includes("No Stripe customer") || msg.includes("customer")) {
-        toast.info("Você não possui uma assinatura ativa. Acesse a página de planos para assinar.");
-      } else {
-        toast.error(msg);
-      }
+      console.error("Portal error:", err);
+      toast.error("Erro ao abrir portal de assinatura. Verifique se você tem uma assinatura ativa.");
     } finally { setManagingPortal(false); }
   };
 

@@ -83,7 +83,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         const f = imgBlock.imageFloat || "none";
         if (f === "alternating") {
           alternatingIdx++;
-          return alternatingIdx % 2 === 1 ? "left" : "right";
+          return alternatingIdx % 2 === 1 ? "right" : "left";
         }
         return f;
       };
@@ -429,12 +429,15 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
       {pages.length > 0 ? (
         <div
           id="atividade-print-area"
-          className="flex flex-col items-center gap-6"
-          style={!isMobileView && scaleFactor < 1 ? {
-            transform: `scale(${scaleFactor})`,
-            transformOrigin: "top center",
-            width: PAGE_WIDTH,
-          } : undefined}
+          className="flex flex-col items-center"
+          style={{
+            gap: isMobileView ? "24px" : "0px",
+            ...((!isMobileView && scaleFactor < 1) ? {
+              transform: `scale(${scaleFactor})`,
+              transformOrigin: "top center",
+              width: PAGE_WIDTH,
+            } : {}),
+          }}
         >
           {pages.map((pageBlockIndices, pageIdx) => (
             <div

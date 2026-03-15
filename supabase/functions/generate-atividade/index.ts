@@ -103,6 +103,8 @@ ${textoImportadoInstrucao}
 
 REGRA FUNDAMENTAL: As questões (abertas e de múltipla escolha) devem ser DIRETAMENTE relacionadas e correlacionadas ao texto gerado ou importado. O aluno deve precisar LER E COMPREENDER o texto para responder as questões. NÃO gere questões genéricas ou desconectadas do conteúdo textual apresentado. Cada questão deve fazer referência explícita ou implícita a informações presentes no texto.
 
+REGRA IMPORTANTE SOBRE ENUNCIADOS: NÃO use expressões como "De acordo com o texto", "Com base no texto", "Segundo o texto", "Conforme o texto", "A partir do texto", "O texto afirma que", "Baseado no texto" nos enunciados das questões. As questões devem ser formuladas de forma direta, sem mencionar explicitamente o texto como referência. Em vez de "De acordo com o texto, qual é a capital da França?", use "Qual é a capital da França?".
+
 IMPORTANTE: Após os blocos de texto e ANTES das questões, insira um bloco separador com type "separator" e content "${sepTitle}".
 
 ${tipoInstrucao}

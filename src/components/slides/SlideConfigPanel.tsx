@@ -128,7 +128,12 @@ export default function SlideConfigPanel({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Qtd slides</Label>
-              <Input type="number" min={1} max={50} value={numSlides === 0 ? "" : numSlides} onChange={e => { const raw = e.target.value; if (raw === "") { setNumSlides(0); return; } const parsed = parseInt(raw, 10); if (!isNaN(parsed)) setNumSlides(Math.min(50, parsed)); }} onBlur={() => { if (numSlides < 1) setNumSlides(8); }} className="h-9" />
+              <Input type="number" min={3} max={50} value={numSlides === 0 ? "" : numSlides} onChange={e => {
+                const val = e.target.value;
+                if (val === "") { setNumSlides(0); return; }
+                const num = parseInt(val);
+                if (!isNaN(num)) setNumSlides(Math.max(1, Math.min(50, num)));
+              }} onBlur={() => { if (numSlides < 3) setNumSlides(3); }} className="h-9" />
             </div>
           </div>
 
