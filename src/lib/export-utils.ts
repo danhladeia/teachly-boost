@@ -86,6 +86,25 @@ export async function exportToPdf(elementId: string, filename: string) {
       el.style.pageBreakAfter = index === pageEls.length - 1 ? "auto" : "always";
     });
 
+    // Clone pages into a temporary container to avoid blank page issues from gap/scale
+    const tempContainer = document.createElement("div");
+    tempContainer.style.width = "210mm";
+    tempContainer.style.position = "absolute";
+    tempContainer.style.left = "-9999px";
+    tempContainer.style.top = "0";
+    document.body.appendChild(tempContainer);
+
+    pageEls.forEach((el, index) => {
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.style.boxShadow = "none";
+      clone.style.margin = "0";
+      clone.style.overflow = "hidden";
+      clone.style.pageBreakInside = "avoid";
+      clone.style.breakInside = "avoid";
+      clone.style.pageBreakAfter = index === pageEls.length - 1 ? "auto" : "always";
+      tempContainer.appendChild(clone);
+    });
+
     await html2pdf()
       .set({
         margin: [0, 0, 0, 0],
@@ -95,25 +114,10 @@ export async function exportToPdf(elementId: string, filename: string) {
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"] },
       })
-      .from(element)
+      .from(tempContainer)
       .save();
 
-    // Restore everything
-    savedPageStyles.forEach((s) => {
-      s.el.style.boxShadow = s.boxShadow;
-      s.el.style.margin = s.margin;
-      s.el.style.overflow = s.overflow;
-      s.el.style.pageBreakAfter = s.pageBreakAfter;
-      s.el.style.pageBreakInside = s.pageBreakInside;
-      s.el.style.breakInside = s.breakInside;
-    });
-    savedNonPage.forEach(s => { s.el.style.display = s.display; });
-    element.style.transform = origTransform;
-    element.style.transformOrigin = origTransformOrigin;
-    element.style.width = origWidth;
-    element.style.gap = origGap;
-    element.style.display = origDisplay;
-    element.style.alignItems = origAlignItems;
+    document.body.removeChild(tempContainer);
     return;
   }
 

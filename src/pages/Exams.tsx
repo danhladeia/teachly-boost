@@ -63,6 +63,60 @@ const genId = () => Math.random().toString(36).slice(2, 10);
 const emptyMC = (): ExamQuestion => ({ id: genId(), type: "mc", content: "", alternatives: ["", "", "", ""], correctIndex: 0, lines: 0, pontos: 1 });
 const emptyOpen = (): ExamQuestion => ({ id: genId(), type: "open", content: "", alternatives: [], correctIndex: -1, lines: 4, pontos: 1 });
 
+function ResultadoProvaCollapsible({ provaName, respostas }: { provaName: string; respostas: any[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card className="shadow-card">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors rounded-t-lg"
+      >
+        <span className="text-sm font-semibold flex items-center gap-2">
+          📝 {provaName}
+          <Badge variant="secondary" className="text-[10px]">{respostas.length} aluno(s)</Badge>
+        </span>
+        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      {open && (
+        <CardContent className="space-y-1 pt-0">
+          <div className="rounded border overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
+                  <th className="text-center px-3 py-1.5 font-medium">Nota</th>
+                  <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {respostas.map((r: any) => (
+                  <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
+                    <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
+                    <td className="text-center px-3 py-1.5">
+                      {r.nota !== null ? (
+                        <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
+                          {r.nota.toFixed(1)}
+                        </Badge>
+                      ) : "—"}
+                    </td>
+                    <td className="text-center px-3 py-1.5 text-muted-foreground">
+                      {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
+                    </td>
+                    <td className="text-right px-3 py-1.5 text-muted-foreground">
+                      {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
 export default function Exams() {
   const { user } = useAuth();
   const location = useLocation();
