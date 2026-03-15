@@ -702,12 +702,6 @@ export default function Exams() {
             <Shuffle className="mr-1 h-3.5 w-3.5" /> {shuffling ? "..." : <span className="hidden sm:inline">Embaralhar</span>}{!shuffling && <span className="sm:hidden">Emb.</span>}
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Save className="mr-1 h-3.5 w-3.5" /> {saving ? "..." : "Salvar"}</Button>
-          <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
-        </div>
-      )}
-      {questoes.length === 0 && (
-        <div className="flex justify-end">
-          <Button size="sm" variant="ghost" onClick={handleNewExam} className="h-7 text-[10px] sm:h-8 sm:text-xs px-2 sm:px-3"><Plus className="mr-1 h-3.5 w-3.5" /> Nova</Button>
         </div>
       )}
 
