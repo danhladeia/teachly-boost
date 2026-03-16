@@ -33,19 +33,14 @@ serve(async (req) => {
     });
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) {
-      return new Response(JSON.stringify({ error: "No Stripe customer found for this email. Please subscribe to a plan first." }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 404,
-      });
-    }
+    if (customers.data.length === 0) throw new Error("No Stripe customer found");
 
     const customerId = customers.data[0].id;
     const origin = req.headers.get("origin") || "http://localhost:3000";
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/app/configuracoes`,
+      return_url: `${origin}/app/planos`,
     });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {

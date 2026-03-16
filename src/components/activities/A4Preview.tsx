@@ -83,7 +83,6 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
         const f = imgBlock.imageFloat || "none";
         if (f === "alternating") {
           alternatingIdx++;
-          // First image = right, second = left, alternating
           return alternatingIdx % 2 === 1 ? "right" : "left";
         }
         return f;

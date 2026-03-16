@@ -57,38 +57,27 @@ export default function AppSettings() {
     setManagingPortal(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-      
-      // Handle function invocation errors
       if (error) {
+        // Check if user has no Stripe customer
         const errorMsg = typeof error === "object" && error.message ? error.message : String(error);
-        console.error("Portal invocation error:", errorMsg);
-        if (errorMsg.includes("No Stripe customer") || errorMsg.includes("not found") || errorMsg.includes("404")) {
+        if (errorMsg.includes("No Stripe customer") || errorMsg.includes("not found")) {
           toast.error("Nenhuma assinatura encontrada. Faça upgrade primeiro na página de planos.");
-        } else {
-          toast.error("Erro ao abrir portal. Tente novamente.");
+          return;
         }
-        return;
+        throw error;
       }
-      
-      // Handle response-level errors
       if (data?.error) {
-        console.error("Portal data error:", data.error);
         if (data.error.includes("No Stripe customer") || data.error.includes("not found")) {
           toast.error("Nenhuma assinatura encontrada. Faça upgrade primeiro na página de planos.");
-        } else {
-          toast.error("Erro ao abrir portal. Tente novamente.");
+          return;
         }
-        return;
+        throw new Error(data.error);
       }
-      
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      } else {
-        toast.error("Não foi possível abrir o portal. Tente novamente.");
-      }
+      if (data?.url) window.open(data.url, "_blank");
+      else toast.error("Não foi possível abrir o portal. Tente novamente.");
     } catch (err: any) {
       console.error("Portal error:", err);
-      toast.error("Erro ao abrir portal de assinatura.");
+      toast.error("Erro ao abrir portal de assinatura. Verifique se você tem uma assinatura ativa.");
     } finally { setManagingPortal(false); }
   };
 
