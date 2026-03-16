@@ -762,37 +762,8 @@ export default function Activities() {
                     )}
                   </div>
 
-                  {/* Games section */}
-                  <div className="space-y-2 rounded-lg border border-dashed border-primary/30 p-2">
-                    <Label className="text-xs font-semibold flex items-center gap-1"><Puzzle className="h-3 w-3 text-primary" /> Inserir Jogo Pedagógico</Label>
-                    <p className="text-[9px] text-muted-foreground">Caça-palavras e Cruzadinha serão gerados com base no texto da atividade.</p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { id: "caca-palavras", label: "Caça-Palavras", icon: <Search className="h-3 w-3" /> },
-                        { id: "cruzadinha", label: "Palavras Cruzadas", icon: <Grid3X3 className="h-3 w-3" /> },
-                        { id: "criptograma", label: "Criptograma", icon: <Lock className="h-3 w-3" /> },
-                        { id: "sudoku", label: "Sudoku", icon: <Dice5 className="h-3 w-3" /> },
-                        { id: "labirinto", label: "Labirinto", icon: <Navigation className="h-3 w-3" /> },
-                      ].map(game => (
-                        <label key={game.id} className={`flex items-center gap-1.5 rounded-md border p-1.5 cursor-pointer transition-colors text-[10px] ${includeGames.includes(game.id) ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-muted-foreground/40 text-muted-foreground"}`}>
-                          <input
-                            type="checkbox"
-                            checked={includeGames.includes(game.id)}
-                            onChange={e => {
-                              if (e.target.checked) setIncludeGames(prev => [...prev, game.id]);
-                              else setIncludeGames(prev => prev.filter(g => g !== game.id));
-                            }}
-                            className="h-3 w-3 accent-primary"
-                          />
-                          {game.icon}
-                          <span>{game.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button onClick={handleAiGenerate} disabled={aiLoading || generatingImages || generatingGames} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
-                    {aiLoading || generatingImages || generatingGames ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingGames ? "Gerando jogos..." : generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> {modoEnem ? "Gerar Atividade ENEM" : "Gerar Atividade"}</>}
+                  <Button onClick={handleAiGenerate} disabled={aiLoading || generatingImages} size="sm" className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90">
+                    {aiLoading || generatingImages ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> {generatingImages ? "Gerando imagens..." : "Gerando..."}</> : <><Sparkles className="mr-1 h-4 w-4" /> {modoEnem ? "Gerar Atividade ENEM" : "Gerar Atividade"}</>}
                   </Button>
                 </TabsContent>
 
