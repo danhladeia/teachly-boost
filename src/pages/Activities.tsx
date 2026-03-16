@@ -355,17 +355,6 @@ export default function Activities() {
           setBlocks(generatedBlocks);
         }
         // Games removed
-                  { ...emptyBlock("separator"), content: "🏃 Labirinto" },
-                  { ...emptyBlock("text"), content: "Encontre o caminho da entrada até a saída no labirinto abaixo." },
-                ]);
-              }
-            } catch (err) {
-              console.error(`Game generation error (${gameType}):`, err);
-            }
-          }
-          setGeneratingGames(false);
-        }
-
         toast.success(modoEnem ? "Atividade ENEM gerada!" : "Atividade gerada!");
       }
     } catch (err: any) {
@@ -373,7 +362,6 @@ export default function Activities() {
     } finally {
       setAiLoading(false);
       setGeneratingImages(false);
-      setGeneratingGames(false);
     }
   };
 
