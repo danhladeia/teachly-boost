@@ -354,49 +354,7 @@ export default function Activities() {
         } else {
           setBlocks(generatedBlocks);
         }
-        // Generate games if selected
-        if (includeGames.length > 0 && data?.blocks) {
-          setGeneratingGames(true);
-          const textContent = data.blocks
-            .filter((b: any) => b.type === "text")
-            .map((b: any) => b.content)
-            .join(" ");
-
-          for (const gameType of includeGames) {
-            try {
-              if (gameType === "caca-palavras" || gameType === "cruzadinha") {
-                toast.info(`Gerando ${gameType === "caca-palavras" ? "caça-palavras" : "palavras cruzadas"}...`);
-                const { data: gameData } = await supabase.functions.invoke("generate-game", {
-                  body: { gameType, tema: textContent.slice(0, 500), difficulty: "medio", count: gameType === "caca-palavras" ? 12 : 8 },
-                });
-                if (gameData && !gameData.error) {
-                  // Add a separator and game placeholder block
-                  setBlocks(prev => [...prev, 
-                    { ...emptyBlock("separator"), content: gameType === "caca-palavras" ? "🔍 Caça-Palavras" : "✏️ Palavras Cruzadas" },
-                    { ...emptyBlock("text"), content: gameType === "caca-palavras" 
-                      ? `Encontre as seguintes palavras no caça-palavras: ${(gameData.palavras || []).join(", ")}` 
-                      : `Resolva as palavras cruzadas com as dicas abaixo:\n${(gameData.dicas || []).map((d: any, i: number) => `${i+1}. ${d.dica} (${d.palavra})`).join("\n")}` 
-                    },
-                  ]);
-                }
-              } else if (gameType === "criptograma") {
-                toast.info("Gerando criptograma...");
-                const { data: gameData } = await supabase.functions.invoke("generate-game", {
-                  body: { gameType: "criptograma", tema: aiPrompt || "educação", difficulty: "medio" },
-                });
-                if (gameData?.mensagem) {
-                  setBlocks(prev => [...prev,
-                    { ...emptyBlock("separator"), content: "🔐 Criptograma" },
-                    { ...emptyBlock("text"), content: `Desvende a mensagem secreta: ${gameData.mensagem.replace(/[A-Z]/g, "_ ")}` },
-                  ]);
-                }
-              } else if (gameType === "sudoku") {
-                setBlocks(prev => [...prev,
-                  { ...emptyBlock("separator"), content: "🔢 Sudoku" },
-                  { ...emptyBlock("text"), content: "Complete o sudoku abaixo seguindo as regras: cada linha, coluna e bloco 3x3 deve conter os números de 1 a 9 sem repetição." },
-                ]);
-              } else if (gameType === "labirinto") {
-                setBlocks(prev => [...prev,
+        // Games removed
                   { ...emptyBlock("separator"), content: "🏃 Labirinto" },
                   { ...emptyBlock("text"), content: "Encontre o caminho da entrada até a saída no labirinto abaixo." },
                 ]);
