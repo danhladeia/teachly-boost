@@ -75,8 +75,6 @@ export default function Activities() {
   const [importFileName, setImportFileName] = useState("");
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const [currentDocId, setCurrentDocId] = useState<string | null>(null);
-  const [includeGames, setIncludeGames] = useState<string[]>([]);
-  const [generatingGames, setGeneratingGames] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
