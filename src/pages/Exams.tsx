@@ -714,7 +714,7 @@ export default function Exams() {
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="criar" className="text-[10px] sm:text-xs px-1 sm:px-3">Criar</TabsTrigger>
-          <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas Provas</TabsTrigger>
+          <TabsTrigger value="minhas" className="text-[10px] sm:text-xs px-1 sm:px-3">Minhas</TabsTrigger>
           <TabsTrigger value="resultados" className="text-[10px] sm:text-xs px-1 sm:px-3"><ClipboardCheck className="mr-0.5 sm:mr-1 h-3 w-3" /> Resultados</TabsTrigger>
           <TabsTrigger value="corrigir" className="text-[10px] sm:text-xs px-1 sm:px-3">Corrigir</TabsTrigger>
           <TabsTrigger value="camera" className="text-[10px] sm:text-xs px-1 sm:px-3"><Camera className="mr-0.5 sm:mr-1 h-3 w-3" /> Câmera</TabsTrigger>
@@ -1109,9 +1109,7 @@ export default function Exams() {
               <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma prova salva ainda</CardContent></Card>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {savedProvas.map(p => {
-                  const provaRespostas = respostasAlunos.filter(r => r.prova_id === p.id);
-                  return (
+                {savedProvas.map(p => (
                   <Card key={p.id} className="shadow-card hover:shadow-md transition-shadow">
                     <CardContent className="pt-4 space-y-1">
                       <div className="flex items-start justify-between gap-2">
@@ -1142,49 +1140,9 @@ export default function Exams() {
                           {new Date(p.created_at).toLocaleDateString("pt-BR")}
                         </span>
                       </div>
-                      {/* Inline results for this prova */}
-                      {provaRespostas.length > 0 && (
-                        <div className="mt-2 pt-2 border-t space-y-1">
-                          <p className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-                            <ClipboardCheck className="h-3 w-3" /> {provaRespostas.length} resultado(s)
-                          </p>
-                          <div className="rounded border overflow-hidden">
-                            <table className="w-full text-[10px]">
-                              <thead>
-                                <tr className="bg-muted/50">
-                                  <th className="text-left px-2 py-1 font-medium">Aluno</th>
-                                  <th className="text-center px-2 py-1 font-medium">Nota</th>
-                                  <th className="text-right px-2 py-1 font-medium">Data</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {provaRespostas.slice(0, 5).map(r => (
-                                  <tr key={r.id} className="border-t">
-                                    <td className="px-2 py-1">{r.nome_aluno}</td>
-                                    <td className="text-center px-2 py-1">
-                                      {r.nota !== null ? (
-                                        <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[9px]">
-                                          {r.nota.toFixed(1)}
-                                        </Badge>
-                                      ) : "—"}
-                                    </td>
-                                    <td className="text-right px-2 py-1 text-muted-foreground">
-                                      {new Date(r.created_at).toLocaleDateString("pt-BR")}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                          {provaRespostas.length > 5 && (
-                            <p className="text-[9px] text-muted-foreground text-center">+{provaRespostas.length - 5} mais resultados na aba Resultados</p>
-                          )}
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
-                  );
-                })}
+                ))}
               </div>
             )}
           </div>
