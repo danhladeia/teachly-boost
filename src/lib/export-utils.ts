@@ -42,8 +42,13 @@ export async function exportToPdf(elementId: string, filename: string) {
 
   // Special handling for paginated A4 previews (atividades)
   if (isPaginatedA4) {
-    // Filter only actual page divs (with height 297mm)
-    const pageEls = directChildren.filter((el) => el.style.height.includes("297mm"));
+    // Filter only actual page divs (with height 297mm) that have content
+    const pageEls = directChildren.filter((el) => {
+      if (!el.style.height.includes("297mm")) return false;
+      // Skip empty pages (no visible content)
+      const hasContent = el.querySelector("[data-block-id]") || el.querySelector("img") || (el.textContent?.trim().length || 0) > 10;
+      return hasContent;
+    });
     if (pageEls.length === 0) return;
 
     // Clone the element to avoid modifying the live DOM
@@ -60,12 +65,16 @@ export async function exportToPdf(elementId: string, filename: string) {
       const clone = el.cloneNode(true) as HTMLElement;
       clone.style.boxShadow = "none";
       clone.style.margin = "0";
+      clone.style.padding = el.style.padding; // preserve original padding
       clone.style.overflow = "hidden";
       clone.style.width = "210mm";
       clone.style.height = "297mm";
       clone.style.pageBreakInside = "avoid";
       clone.style.breakInside = "avoid";
-      clone.style.pageBreakAfter = index === pageEls.length - 1 ? "auto" : "always";
+      clone.style.transform = "none"; // remove any scale transforms
+      if (index < pageEls.length - 1) {
+        clone.style.pageBreakAfter = "always";
+      }
       wrapper.appendChild(clone);
     });
 
