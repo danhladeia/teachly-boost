@@ -440,20 +440,16 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
             } : {}),
           }}
         >
-          {pages.map((pageBlockIndices, pageIdx) => {
-            // Skip empty pages (no blocks and not the first page with header)
-            if (pageBlockIndices.length === 0 && pageIdx !== 0) return null;
-            return (
-              <div
-                key={pageIdx}
-                className="bg-white text-black shadow-lg a4-page-scaled"
-                style={{ ...pageStyle, ...mobileReadStyle }}
-              >
-                {pageIdx === 0 && headerJSX}
-                {pageBlockIndices.map(blockIdx => blockElements[blockIdx])}
-              </div>
-            );
-          })}
+          {pages.map((pageBlockIndices, pageIdx) => (
+            <div
+              key={pageIdx}
+              className="bg-white text-black shadow-lg a4-page-scaled"
+              style={{ ...pageStyle, ...mobileReadStyle }}
+            >
+              {pageIdx === 0 && headerJSX}
+              {pageBlockIndices.map(blockIdx => blockElements[blockIdx])}
+            </div>
+          ))}
         </div>
       ) : (
         <div
