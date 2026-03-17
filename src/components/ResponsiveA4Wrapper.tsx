@@ -44,8 +44,9 @@ export default function ResponsiveA4Wrapper({ children, printAreaId }: Responsiv
         className="responsive-a4-inner"
         style={scale < 1 ? {
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          transformOrigin: "top center",
           width: "210mm",
+          margin: "0 auto",
           marginBottom: `calc((${scale} - 1) * 297mm)`,
         } : {
           margin: "0 auto",
