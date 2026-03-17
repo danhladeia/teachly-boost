@@ -139,7 +139,7 @@ export default function Activities() {
           alternatives: b.alternatives || (b.type === "question-mc" ? ["", "", "", ""] : b.type === "question-enem" ? ["", "", "", "", ""] : undefined),
         }));
         setBlocks(newBlocks);
-        await useCredit("general");
+        await deductCredit();
         toast.success("Atividade gerada com sucesso!");
       } else {
         toast.error("Resposta inesperada da IA");
