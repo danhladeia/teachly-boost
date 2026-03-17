@@ -1,491 +1,435 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { Monitor, Smartphone } from "lucide-react";
-import type { Block } from "./types";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { FileText, Sparkles, Loader2, Plus, Save, Printer, FileDown, Trash2, Upload, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { exportToPdf } from "@/lib/export-utils";
+import A4Preview from "@/components/activities/A4Preview";
+import BlockEditor from "@/components/activities/BlockEditor";
+import TimbreSelector from "@/components/TimbreSelector";
+import CreditsIndicator from "@/components/CreditsIndicator";
+import EditorTopBar from "@/components/EditorTopBar";
+import type { Block, BlockType } from "@/components/activities/types";
+import type { TimbreData } from "@/hooks/useTimbre";
+import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
+import { useDocumentLimits } from "@/hooks/useDocumentLimits";
 
-interface A4PreviewProps {
-  blocks: Block[];
-  showHeader: boolean;
-  escola: string;
-  autoNumber: boolean;
-  showLines?: boolean;
-  showAluno?: boolean;
-  showData?: boolean;
-  professor?: string;
-  turma?: string;
-  logoUrl?: string;
-  bannerUrl?: string;
-}
-
-function renderKaTeX(text: string): string {
-  try {
-    const katex = (window as any).katex;
-    if (!katex) return text.replace(/\n/g, "<br/>");
-    return text.replace(/\$(.+?)\$/g, (_, formula) => {
-      try {
-        return katex.renderToString(formula, { throwOnError: false });
-      } catch {
-        return `<code>${formula}</code>`;
-      }
-    }).replace(/\n/g, "<br/>");
-  } catch {
-    return text.replace(/\n/g, "<br/>");
-  }
-}
-
-// A4 = 210mm x 297mm. Padding 20mm top/bottom, 15mm left/right.
-// Content height per page = 297 - 40 = 257mm
-const PAGE_WIDTH = "210mm";
-const PAGE_HEIGHT_MM = 297;
-const PADDING_TOP_MM = 15;
-const PADDING_BOTTOM_MM = 15;
-const PADDING_LR = "15mm";
-const CONTENT_HEIGHT_MM = PAGE_HEIGHT_MM - PADDING_TOP_MM - PADDING_BOTTOM_MM; // 267mm
-
-const baseFontStyle: React.CSSProperties = {
-  fontFamily: "'Inter', 'Arial', sans-serif",
-  fontSize: "11pt",
-  lineHeight: 1.6,
-  color: "#000",
-  wordBreak: "break-word",
-  overflowWrap: "break-word",
+const niveis: Record<string, string[]> = {
+  "Fundamental - Séries Iniciais": ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
+  "Fundamental - Séries Finais": ["6º ano", "7º ano", "8º ano", "9º ano"],
+  "Ensino Médio": ["1ª série", "2ª série", "3ª série"],
 };
 
-export default function A4Preview({ blocks, showHeader, escola, autoNumber, showLines = true, showAluno = false, showData = false, professor, turma, logoUrl, bannerUrl }: A4PreviewProps) {
-  const measureRef = useRef<HTMLDivElement>(null);
-  const [pages, setPages] = useState<number[][]>([]); // array of arrays of child indices per page
+const genId = () => Math.random().toString(36).slice(2, 10);
 
+const createBlock = (type: BlockType): Block => ({
+  id: genId(),
+  type,
+  content: "",
+  alignment: type === "title" || type === "separator" ? "center" : "left",
+  alternatives: type === "question-mc" ? ["", "", "", ""] : type === "question-enem" ? ["", "", "", "", ""] : undefined,
+  correctIndex: type === "question-mc" || type === "question-enem" ? 0 : undefined,
+  lines: type === "question-open" ? 4 : undefined,
+});
+
+export default function Activities() {
+  const { user } = useAuth();
+  const { plan, canUseAI, deductCredit } = useCredits();
+  const docLimits = useDocumentLimits();
+  const location = useLocation();
+
+  const [prompt, setPrompt] = useState("");
+  const [disciplina, setDisciplina] = useState("");
+  const [nivel, setNivel] = useState("");
+  const [serie, setSerie] = useState("");
+  const [tamanhoTexto, setTamanhoTexto] = useState("medio");
+  const [tipoQuestoes, setTipoQuestoes] = useState("mista");
+  const [numAbertas, setNumAbertas] = useState(3);
+  const [numFechadas, setNumFechadas] = useState(2);
+  const [modoEnem, setModoEnem] = useState(false);
+  const [separatorTitle, setSeparatorTitle] = useState("Atividades");
+
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [currentDocId, setCurrentDocId] = useState<string | null>(null);
+
+  // Header / Timbre
+  const [showHeader, setShowHeader] = useState(true);
+  const [escola, setEscola] = useState("");
+  const [professor, setProfessor] = useState("");
+  const [turma, setTurma] = useState("");
+  const [autoNumber, setAutoNumber] = useState(true);
+  const [showLines, setShowLines] = useState(true);
+  const [showAluno, setShowAluno] = useState(false);
+  const [showData, setShowData] = useState(false);
+  const [selectedTimbreId, setSelectedTimbreId] = useState<string | undefined>();
+  const [logoUrl, setLogoUrl] = useState<string | undefined>();
+  const [bannerUrl, setBannerUrl] = useState<string | undefined>();
+
+  // Import text
+  const [textoImportado, setTextoImportado] = useState("");
+
+  // Load from library state
   useEffect(() => {
-    if (!(window as any).katex) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css";
-      document.head.appendChild(link);
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js";
-      document.head.appendChild(script);
+    const state = location.state as any;
+    if (state?.conteudo && state?.tipo === "atividade") {
+      const conteudo = state.conteudo;
+      if (conteudo.blocks && Array.isArray(conteudo.blocks)) {
+        setBlocks(conteudo.blocks.map((b: any) => ({ ...b, id: b.id || genId() })));
+      }
+      if (state.id) setCurrentDocId(state.id);
+      window.history.replaceState({}, document.title);
     }
-  }, []);
+  }, [location.state]);
 
-  const imageSizeMap = { small: "30%", medium: "50%", large: "80%" };
-
-  // Build rendered elements
-  const buildRendered = useCallback(() => {
-    const rendered: JSX.Element[] = [];
-    let questionCounter = 0;
-    let alternatingIdx = 0;
-    let i = 0;
-
-    while (i < blocks.length) {
-      const block = blocks[i];
-      const align = block.alignment || "left";
-
-      const resolveFloat = (imgBlock: Block) => {
-        const f = imgBlock.imageFloat || "none";
-        if (f === "alternating") {
-          alternatingIdx++;
-          return alternatingIdx % 2 === 1 ? "left" : "right";
-        }
-        return f;
-      };
-
-      if (block.type === "image" && block.imageUrl && block.imageFloat !== "none") {
-        const size = imageSizeMap[block.imageSize || "medium"];
-        const float = resolveFloat(block);
-        const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
-        if (nextBlock && nextBlock.type === "text") {
-          // Use CSS float for text wrapping around image
-          const floatDir = float === "right" ? "right" : "left";
-          const marginStyle = floatDir === "right" ? { marginLeft: "4mm", marginBottom: "3mm" } : { marginRight: "4mm", marginBottom: "3mm" };
-          rendered.push(
-            <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
-              <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", float: floatDir, ...marginStyle }} />
-              <div style={{ textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(nextBlock.content || "Texto") }} />
-              <div style={{ clear: "both" }} />
-            </div>
-          );
-          i += 2; continue;
-        }
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", textAlign: float === "right" ? "right" : "left" }}>
-            <img src={block.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm" }} />
-          </div>
-        );
-        i++; continue;
-      }
-
-      if (block.type === "text") {
-        const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
-        if (nextBlock && nextBlock.type === "image" && nextBlock.imageUrl && nextBlock.imageFloat !== "none") {
-          const size = imageSizeMap[nextBlock.imageSize || "medium"];
-          const float = resolveFloat(nextBlock);
-          const floatDir = float === "right" ? "right" : "left";
-          const marginStyle = floatDir === "right" ? { marginLeft: "4mm", marginBottom: "3mm" } : { marginRight: "4mm", marginBottom: "3mm" };
-          rendered.push(
-            <div key={block.id} data-block-id={block.id} style={{ marginBottom: "4mm", overflow: "hidden" }}>
-              <img src={nextBlock.imageUrl} alt="" style={{ width: size, maxHeight: "80mm", objectFit: "contain", borderRadius: "2mm", float: floatDir, ...marginStyle }} />
-              <div style={{ textAlign: "justify", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto") }} />
-              <div style={{ clear: "both" }} />
-            </div>
-          );
-          i += 2; continue;
-        }
-      }
-
-      if (block.type === "title") {
-        rendered.push(
-          <h1 key={block.id} data-block-id={block.id} style={{ textAlign: align, fontSize: "16pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "6mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
-            {block.content || "Título da Atividade"}
-          </h1>
-        );
-      } else if (block.type === "separator") {
-        rendered.push(
-          <h2 key={block.id} data-block-id={block.id} style={{ textAlign: align, fontSize: "13pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginTop: "8mm", marginBottom: "5mm", borderBottom: "1.5px solid #94a3b8", paddingBottom: "2mm", color: "#1e293b" }}>
-            {block.content || "Atividades"}
-          </h2>
-        );
-      } else if (block.type === "text") {
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} style={{ textAlign: "justify", marginBottom: "4mm", textIndent: "10mm" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.content || "Texto do bloco") }} />
-        );
-      } else if (block.type === "question-open") {
-        questionCounter++;
-        const num = autoNumber ? questionCounter : "";
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} style={{ marginBottom: "6mm" }}>
-            {block.questionImageUrl && (
-              <div style={{ marginBottom: "3mm", textAlign: "center" }}>
-                <img src={block.questionImageUrl} alt="" style={{ maxWidth: "60%", maxHeight: "50mm", objectFit: "contain", borderRadius: "2mm" }} />
-              </div>
-            )}
-            <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
-              <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
-            </p>
-            {showLines && Array.from({ length: block.lines || 4 }).map((_, li) => (
-              <div key={li} style={{ borderBottom: "1px solid #d1d5db", height: "8mm", marginBottom: "1mm" }} />
-            ))}
-          </div>
-        );
-      } else if (block.type === "question-mc") {
-        questionCounter++;
-        const num = autoNumber ? questionCounter : "";
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} style={{ marginBottom: "6mm" }}>
-            {block.questionImageUrl && (
-              <div style={{ marginBottom: "3mm", textAlign: "center" }}>
-                <img src={block.questionImageUrl} alt="" style={{ maxWidth: "60%", maxHeight: "50mm", objectFit: "contain", borderRadius: "2mm" }} />
-              </div>
-            )}
-            <p style={{ fontWeight: 600, marginBottom: "2mm", textAlign: "justify" }}>
-              <span dangerouslySetInnerHTML={{ __html: `${num ? num + ") " : ""}${renderKaTeX(block.content || "Enunciado")}` }} />
-            </p>
-            {block.alternatives?.map((alt, ai) => (
-              <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1mm" }}>
-                <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + ai)})</span>{" "}
-                <span dangerouslySetInnerHTML={{ __html: renderKaTeX(alt || `Alternativa ${String.fromCharCode(65 + ai)}`) }} />
-              </p>
-            ))}
-          </div>
-        );
-      } else if (block.type === "question-enem") {
-        questionCounter++;
-        const num = autoNumber ? questionCounter : "";
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} style={{ marginBottom: "8mm" }}>
-            {block.textoBase && (
-              <div style={{ border: "1px solid #cbd5e1", borderRadius: "2mm", padding: "3mm 4mm", marginBottom: "3mm", backgroundColor: "#f8fafc", fontSize: "10pt", lineHeight: 1.5 }}>
-                <div style={{ textAlign: "justify" }} dangerouslySetInnerHTML={{ __html: renderKaTeX(block.textoBase) }} />
-                {block.fonte && <p style={{ textAlign: "right", fontSize: "8pt", color: "#64748b", marginTop: "2mm", fontStyle: "italic" }}>{block.fonte}</p>}
-              </div>
-            )}
-            {block.questionImageUrl && (
-              <div style={{ marginBottom: "3mm", textAlign: "center" }}>
-                <img src={block.questionImageUrl} alt="" style={{ maxWidth: "70%", maxHeight: "60mm", objectFit: "contain", borderRadius: "2mm", border: "1px solid #e2e8f0" }} />
-              </div>
-            )}
-            <p style={{ fontWeight: 600, marginBottom: "3mm", textAlign: "justify" }}>
-              <span dangerouslySetInnerHTML={{ __html: `${num ? `<strong>QUESTÃO ${num}</strong> — ` : ""}${renderKaTeX(block.content || "Enunciado da questão")}` }} />
-            </p>
-            {block.alternatives?.map((alt, ai) => (
-              <p key={ai} style={{ marginLeft: "5mm", marginBottom: "1.5mm", lineHeight: 1.5 }}>
-                <span style={{ fontWeight: 700, marginRight: "2mm" }}>({String.fromCharCode(65 + ai)})</span>
-                <span dangerouslySetInnerHTML={{ __html: renderKaTeX(alt || `Alternativa ${String.fromCharCode(65 + ai)}`) }} />
-              </p>
-            ))}
-          </div>
-        );
-      } else if (block.type === "page-break") {
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} data-page-break="true" style={{ height: 0, overflow: "hidden" }} />
-        );
-      } else if (block.type === "image" && block.imageUrl) {
-        const size = imageSizeMap[block.imageSize || "medium"];
-        rendered.push(
-          <div key={block.id} data-block-id={block.id} style={{ textAlign: align, marginBottom: "4mm" }}>
-            <img src={block.imageUrl} alt="" style={{ maxWidth: size, maxHeight: "80mm", display: "inline-block", objectFit: "contain", borderRadius: "2mm" }} />
-          </div>
-        );
-      }
-
-      i++;
+  const handleTimbreSelect = (timbre: TimbreData | null) => {
+    if (timbre) {
+      setSelectedTimbreId(timbre.id);
+      setEscola(timbre.escola || "");
+      setLogoUrl(timbre.logoUrl || undefined);
+      setBannerUrl(timbre.bannerUrl || undefined);
+      setShowAluno(timbre.showAluno);
+      setShowData(timbre.showData);
+      if (timbre.showProfessor && !professor) setProfessor("");
+    } else {
+      setSelectedTimbreId(undefined);
+      setEscola("");
+      setLogoUrl(undefined);
+      setBannerUrl(undefined);
     }
-    return rendered;
-  }, [blocks, autoNumber]);
-
-  const renderedBlocks = buildRendered();
-
-  // Stable key for pagination dependency — avoids infinite re-renders
-  const blocksKey = blocks.map(b => `${b.id}:${b.type}:${(b.content || "").length}:${(b.alternatives || []).length}:${b.lines || 0}:${b.imageUrl || ""}:${b.questionImageUrl || ""}`).join("|");
-
-  // After rendering in the hidden measure container, paginate
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!measureRef.current) return;
-      const container = measureRef.current;
-      const children = Array.from(container.children) as HTMLElement[];
-      if (children.length === 0) { setPages([]); return; }
-
-      // Convert mm to px using the container's actual rendered width
-      const containerWidth = container.getBoundingClientRect().width;
-      // 210mm = containerWidth px, so 1mm = containerWidth/210 px
-      const pxPerMm = containerWidth / 210;
-      const maxContentHeight = CONTENT_HEIGHT_MM * pxPerMm;
-
-      // Find header elements (before block content)
-      const headerEls: HTMLElement[] = [];
-      const blockEls: HTMLElement[] = [];
-      for (const child of children) {
-        if (child.dataset.blockId) {
-          blockEls.push(child);
-        } else {
-          headerEls.push(child);
-        }
-      }
-
-      // Measure header height
-      let headerHeight = 0;
-      for (const el of headerEls) {
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        headerHeight += rect.height + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
-      }
-
-      // Paginate block elements
-      const pagesList: number[][] = [];
-      let currentPage: number[] = [];
-      let currentHeight = headerHeight; // first page includes header
-
-      for (let idx = 0; idx < blockEls.length; idx++) {
-        const el = blockEls[idx];
-
-        // Check if this block is a page-break
-        if (el.dataset.pageBreak === "true") {
-          if (currentPage.length > 0) {
-            pagesList.push(currentPage);
-            currentPage = [];
-            currentHeight = 0;
-          }
-          continue;
-        }
-
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        const elHeight = rect.height + parseFloat(style.marginTop || "0") + parseFloat(style.marginBottom || "0");
-
-        if (currentPage.length > 0 && currentHeight + elHeight > maxContentHeight) {
-          // Start new page
-          pagesList.push(currentPage);
-          currentPage = [idx];
-          currentHeight = elHeight;
-        } else {
-          currentPage.push(idx);
-          currentHeight += elHeight;
-        }
-      }
-      if (currentPage.length > 0) pagesList.push(currentPage);
-
-      setPages(pagesList);
-
-      const totalPages = pagesList.length;
-      console.log(`[A4Preview] Atividade paginada: ${totalPages} página(s), ${blockEls.length} blocos`);
-      pagesList.forEach((p, i) => console.log(`  Página ${i + 1}: ${p.length} blocos`));
-    }, 150); // wait for images/katex to load
-
-    return () => clearTimeout(timer);
-  }, [blocksKey, showHeader, showLines, showAluno, showData, escola, professor, turma, bannerUrl, logoUrl]);
-
-  // Separate header and block elements from rendered
-  const headerElements: JSX.Element[] = [];
-  const blockElements = renderedBlocks;
-
-  // Build header JSX
-  const headerJSX = (
-    <>
-      {showHeader && bannerUrl && (
-        <div style={{ textAlign: "center", marginBottom: "4mm" }}>
-          <img src={bannerUrl} alt="Timbre da escola" style={{ display: "block", margin: "0 auto", maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
-        </div>
-      )}
-      {showHeader && (escola || logoUrl) && (
-        <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm" }}>
-          {logoUrl && !bannerUrl && (
-            <img src={logoUrl} alt="" style={{ maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />
-          )}
-          {escola && <span>{escola}</span>}
-        </div>
-      )}
-      {(professor || turma) && (
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
-          {professor && <span><strong>Professor(a):</strong> {professor}</span>}
-          {turma && <span><strong>Turma:</strong> {turma}</span>}
-        </div>
-      )}
-      {(showAluno || showData) && (
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "4mm", gap: "4mm", borderBottom: "1px solid #e2e8f0", paddingBottom: "3mm" }}>
-          {showAluno && <span><strong>Aluno(a):</strong> ________________________________________</span>}
-          {showData && <span><strong>Data:</strong> ____/____/________</span>}
-        </div>
-      )}
-    </>
-  );
-
-  const pageStyle: React.CSSProperties = {
-    width: PAGE_WIDTH,
-    height: `${PAGE_HEIGHT_MM}mm`,
-    padding: `${PADDING_TOP_MM}mm ${PADDING_LR} ${PADDING_BOTTOM_MM}mm ${PADDING_LR}`,
-    ...baseFontStyle,
-    background: "#fff",
-    boxSizing: "border-box",
-    overflow: "hidden",
-    position: "relative",
   };
 
-  const [viewMode, setViewMode] = useState<"print" | "mobile">("print");
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scaleFactor, setScaleFactor] = useState(1);
+  const handleGenerate = async () => {
+    if (!prompt.trim()) { toast.error("Digite o tema da atividade"); return; }
+    if (!canUseAI) { toast.error("Créditos insuficientes"); return; }
 
-  // Dynamic scale calculation
-  useEffect(() => {
-    const updateScale = () => {
-      const container = containerRef.current;
-      if (!container) return;
-      const containerWidth = container.clientWidth;
-      const a4WidthPx = 793.7; // 210mm in px at 96dpi
-      if (containerWidth < a4WidthPx) {
-        setScaleFactor(Math.min(1, (containerWidth - 16) / a4WidthPx));
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-atividade", {
+        body: {
+          prompt: prompt.trim(),
+          serie,
+          nivel,
+          disciplina,
+          tipo: tipoQuestoes,
+          num_abertas: numAbertas,
+          num_fechadas: numFechadas,
+          tamanho_texto: tamanhoTexto,
+          separator_title: separatorTitle,
+          modo_enem: modoEnem,
+          texto_importado: textoImportado || undefined,
+        },
+      });
+      if (error) throw error;
+      if (data?.blocks && Array.isArray(data.blocks)) {
+        const newBlocks = data.blocks.map((b: any) => ({
+          ...b,
+          id: genId(),
+          alignment: b.alignment || "left",
+          alternatives: b.alternatives || (b.type === "question-mc" ? ["", "", "", ""] : b.type === "question-enem" ? ["", "", "", "", ""] : undefined),
+        }));
+        setBlocks(newBlocks);
+        await deductCredit();
+        toast.success("Atividade gerada com sucesso!");
       } else {
-        setScaleFactor(1);
+        toast.error("Resposta inesperada da IA");
       }
-    };
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, []);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar atividade");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const isMobileView = viewMode === "mobile";
+  const handleSave = async () => {
+    if (!user || blocks.length === 0) return;
+    setSaving(true);
+    try {
+      const payload = {
+        user_id: user.id,
+        tipo: "atividade" as const,
+        titulo: blocks.find(b => b.type === "title")?.content || prompt || "Atividade sem título",
+        disciplina: disciplina || null,
+        nivel: nivel || null,
+        conteudo: JSON.parse(JSON.stringify({ blocks })),
+      };
 
-  const mobileReadStyle: React.CSSProperties = isMobileView ? {
-    width: "100%",
-    height: "auto",
-    padding: "4mm",
-    minHeight: "unset",
-    transform: "none",
-    fontSize: "10pt",
-  } : {};
+      if (currentDocId) {
+        const { error } = await supabase.from("documentos_salvos").update(payload).eq("id", currentDocId);
+        if (error) throw error;
+        toast.success("Atividade atualizada!");
+      } else {
+        const { data, error } = await supabase.from("documentos_salvos").insert([payload]).select("id").single();
+        if (error) throw error;
+        setCurrentDocId(data.id);
+        toast.success("Atividade salva!");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePrint = () => window.print();
+  const handlePdf = () => exportToPdf("atividade-print-area", blocks.find(b => b.type === "title")?.content || "atividade");
+
+  const addBlock = (type: BlockType) => {
+    setBlocks(prev => [...prev, createBlock(type)]);
+  };
+
+  const updateBlock = (id: string, updates: Partial<Block>) => {
+    setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  };
+
+  const removeBlock = (id: string) => {
+    setBlocks(prev => prev.filter(b => b.id !== id));
+  };
+
+  const moveBlock = (id: string, dir: -1 | 1) => {
+    setBlocks(prev => {
+      const idx = prev.findIndex(b => b.id === id);
+      if (idx < 0) return prev;
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      const arr = [...prev];
+      [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+      return arr;
+    });
+  };
+
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    setTextoImportado(text.substring(0, 8000));
+    toast.success(`Texto importado: ${file.name}`);
+  };
+
+  const seriesOptions = nivel ? niveis[nivel] || [] : [];
 
   return (
-    <div ref={containerRef} data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
-      {/* View mode toggle */}
-      <div className="flex items-center gap-1 rounded-lg border bg-card p-0.5 self-end">
-        <button
-          onClick={() => setViewMode("print")}
-          className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${viewMode === "print" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          <Monitor className="h-3 w-3" /> Impressão
-        </button>
-        <button
-          onClick={() => setViewMode("mobile")}
-          className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${viewMode === "mobile" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          <Smartphone className="h-3 w-3" /> Leitura
-        </button>
-      </div>
+    <div className="space-y-4">
+      <EditorTopBar
+        title="Atividades A4"
+        onSave={blocks.length > 0 ? handleSave : undefined}
+        onPrint={blocks.length > 0 ? handlePrint : undefined}
+        onPdf={blocks.length > 0 ? handlePdf : undefined}
+        saving={saving}
+        leading={<CreditsIndicator />}
+      />
 
-      <style>{`
-        [data-a4-container] .a4-page-scaled {
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-          hyphens: auto;
-        }
-        [data-a4-container] .a4-page-scaled img,
-        [data-a4-container] .a4-page-scaled table {
-          max-width: 100% !important;
-          height: auto !important;
-        }
-      `}</style>
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4">
+        {/* Left Panel */}
+        <ScrollArea className="max-h-[calc(100vh-140px)]">
+          <div className="space-y-4 pr-2">
+            {/* Generation form */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" /> Gerar com IA
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-[10px]">Tema / Assunto *</Label>
+                  <Textarea
+                    value={prompt}
+                    onChange={e => setPrompt(e.target.value)}
+                    placeholder="Ex: Revolução Industrial e suas consequências sociais"
+                    className="min-h-[60px] text-xs"
+                  />
+                </div>
 
-      {/* Hidden measurement container */}
-      <div
-        ref={measureRef}
-        style={{
-          ...baseFontStyle,
-          width: PAGE_WIDTH,
-          padding: `0 ${PADDING_LR}`,
-          position: "absolute",
-          visibility: "hidden",
-          left: "-9999px",
-          background: "#fff",
-        }}
-      >
-        {headerJSX}
-        {blockElements}
-      </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px]">Disciplina</Label>
+                    <Input value={disciplina} onChange={e => setDisciplina(e.target.value)} placeholder="Matemática" className="h-7 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Nível</Label>
+                    <Select value={nivel} onValueChange={v => { setNivel(v); setSerie(""); }}>
+                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(niveis).map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-      {/* Visible paginated output */}
-      {pages.length > 0 ? (
-        <div
-          id="atividade-print-area"
-          className="flex flex-col items-center gap-6"
-          style={!isMobileView && scaleFactor < 1 ? {
-            transform: `scale(${scaleFactor})`,
-            transformOrigin: "top center",
-            width: PAGE_WIDTH,
-          } : undefined}
-        >
-          {pages.map((pageBlockIndices, pageIdx) => (
-            <div
-              key={pageIdx}
-              className="bg-white text-black shadow-lg a4-page-scaled"
-              style={{ ...pageStyle, ...mobileReadStyle }}
-            >
-              {pageIdx === 0 && headerJSX}
-              {pageBlockIndices.map(blockIdx => blockElements[blockIdx])}
-            </div>
-          ))}
+                {seriesOptions.length > 0 && (
+                  <div>
+                    <Label className="text-[10px]">Série</Label>
+                    <Select value={serie} onValueChange={setSerie}>
+                      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {seriesOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px]">Tamanho do texto</Label>
+                    <Select value={tamanhoTexto} onValueChange={setTamanhoTexto}>
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="curto">Curto</SelectItem>
+                        <SelectItem value="medio">Médio</SelectItem>
+                        <SelectItem value="longo">Longo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Separador</Label>
+                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} className="h-7 text-xs" />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch checked={modoEnem} onCheckedChange={setModoEnem} />
+                  <Label className="text-[10px]">Modo ENEM</Label>
+                </div>
+
+                {!modoEnem && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[10px]">Questões abertas</Label>
+                      <Input type="number" min={0} max={10} value={numAbertas} onChange={e => setNumAbertas(+e.target.value)} className="h-7 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-[10px]">Múltipla escolha</Label>
+                      <Input type="number" min={0} max={10} value={numFechadas} onChange={e => setNumFechadas(+e.target.value)} className="h-7 text-xs" />
+                    </div>
+                  </div>
+                )}
+
+                {modoEnem && (
+                  <div>
+                    <Label className="text-[10px]">Nº questões ENEM</Label>
+                    <Input type="number" min={1} max={10} value={numFechadas} onChange={e => setNumFechadas(+e.target.value)} className="h-7 text-xs" />
+                  </div>
+                )}
+
+                {/* Import text */}
+                <div className="space-y-1">
+                  <Label className="text-[10px] flex items-center gap-1"><Upload className="h-3 w-3" /> Importar texto base</Label>
+                  <input type="file" accept=".txt,.md" onChange={handleFileImport} className="text-[10px]" />
+                  {textoImportado && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-muted-foreground truncate flex-1">Texto importado ({textoImportado.length} chars)</span>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setTextoImportado("")}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  )}
+                </div>
+
+                <Button onClick={handleGenerate} disabled={loading} className="w-full" size="sm">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  {loading ? "Gerando..." : "Gerar Atividade"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Timbre */}
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <TimbreSelector onSelect={handleTimbreSelect} selectedId={selectedTimbreId} />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={showHeader} onCheckedChange={setShowHeader} />
+                    <Label className="text-[10px]">Exibir cabeçalho</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={autoNumber} onCheckedChange={setAutoNumber} />
+                    <Label className="text-[10px]">Numerar questões</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={showLines} onCheckedChange={setShowLines} />
+                    <Label className="text-[10px]">Linhas para resposta</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={showAluno} onCheckedChange={setShowAluno} />
+                    <Label className="text-[10px]">Campo Aluno</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={showData} onCheckedChange={setShowData} />
+                    <Label className="text-[10px]">Campo Data</Label>
+                  </div>
+                </div>
+                {showHeader && (
+                  <div className="space-y-2">
+                    <Input value={professor} onChange={e => setProfessor(e.target.value)} placeholder="Professor(a)" className="h-7 text-xs" />
+                    <Input value={turma} onChange={e => setTurma(e.target.value)} placeholder="Turma" className="h-7 text-xs" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Add blocks */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar blocos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1">
+                  {(["title", "text", "separator", "question-open", "question-mc", "question-enem", "image", "page-break"] as BlockType[]).map(type => (
+                    <Button key={type} variant="outline" size="sm" className="text-[10px] h-6" onClick={() => addBlock(type)}>
+                      {type === "title" ? "Título" : type === "text" ? "Texto" : type === "separator" ? "Separador" : type === "question-open" ? "Q. Aberta" : type === "question-mc" ? "Q. M.E." : type === "question-enem" ? "Q. ENEM" : type === "image" ? "Imagem" : "Quebra de Página"}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Block editors */}
+            {blocks.length > 0 && (
+              <div className="space-y-2">
+                {blocks.map((block, idx) => (
+                  <BlockEditor
+                    key={block.id}
+                    block={block}
+                    index={idx}
+                    totalBlocks={blocks.length}
+                    onUpdate={updates => updateBlock(block.id, updates)}
+                    onRemove={() => removeBlock(block.id)}
+                    onMove={dir => moveBlock(block.id, dir)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Right Panel - Preview */}
+        <div className="min-w-0">
+          <A4Preview
+            blocks={blocks}
+            showHeader={showHeader}
+            escola={escola}
+            autoNumber={autoNumber}
+            showLines={showLines}
+            showAluno={showAluno}
+            showData={showData}
+            professor={professor}
+            turma={turma}
+            logoUrl={logoUrl}
+            bannerUrl={bannerUrl}
+          />
         </div>
-      ) : (
-        <div
-          id="atividade-print-area"
-          className="bg-white text-black shadow-lg a4-page-scaled"
-          style={{
-            ...pageStyle,
-            minHeight: isMobileView ? "unset" : `${PAGE_HEIGHT_MM}mm`,
-            height: "auto",
-            ...mobileReadStyle,
-            ...((!isMobileView && scaleFactor < 1) ? {
-              transform: `scale(${scaleFactor})`,
-              transformOrigin: "top center",
-            } : {}),
-          }}
-        >
-          {headerJSX}
-          {blocks.length === 0 && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", color: "#94a3b8", fontSize: "10pt" }}>
-              Adicione elementos à atividade usando o painel esquerdo
-            </div>
-          )}
-          {blockElements}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
