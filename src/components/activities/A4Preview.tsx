@@ -213,6 +213,10 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
             ))}
           </div>
         );
+      } else if (block.type === "page-break") {
+        rendered.push(
+          <div key={block.id} data-block-id={block.id} data-page-break="true" style={{ height: 0, overflow: "hidden" }} />
+        );
       } else if (block.type === "image" && block.imageUrl) {
         const size = imageSizeMap[block.imageSize || "medium"];
         rendered.push(
@@ -272,6 +276,17 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
 
       for (let idx = 0; idx < blockEls.length; idx++) {
         const el = blockEls[idx];
+
+        // Check if this block is a page-break
+        if (el.dataset.pageBreak === "true") {
+          if (currentPage.length > 0) {
+            pagesList.push(currentPage);
+            currentPage = [];
+            currentHeight = 0;
+          }
+          continue;
+        }
+
         const rect = el.getBoundingClientRect();
         const style = window.getComputedStyle(el);
         const elHeight = rect.height + parseFloat(style.marginTop || "0") + parseFloat(style.marginBottom || "0");

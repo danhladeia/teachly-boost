@@ -1,4 +1,4 @@
-export type BlockType = "title" | "text" | "question-open" | "question-mc" | "question-enem" | "image" | "separator";
+export type BlockType = "title" | "text" | "question-open" | "question-mc" | "question-enem" | "image" | "separator" | "page-break";
 export type Alignment = "left" | "center" | "right";
 export type ImageFloat = "none" | "left" | "right" | "alternating";
 
