@@ -71,6 +71,7 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
   // Build rendered elements
   const buildRendered = useCallback(() => {
     const rendered: JSX.Element[] = [];
+    if (!blocks || blocks.length === 0) return rendered;
     let questionCounter = 0;
     let alternatingIdx = 0;
     let i = 0;
