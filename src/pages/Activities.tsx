@@ -613,7 +613,11 @@ export default function Activities() {
                       </Select>
                     </div>
                   )}
-
+                 {/* Separator title */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
+                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {!modoEnem && aiTipo !== "multipla_escolha" && (
                       <div className="space-y-1">
@@ -641,11 +645,7 @@ export default function Activities() {
                     </Select>
                   </div>
 
-                  {/* Separator title */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
-                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
-                  </div>
+                 
 
                   {/* AI Image Generation */}
                   <div className="space-y-2 rounded-lg border border-dashed border-primary/30 p-2">
