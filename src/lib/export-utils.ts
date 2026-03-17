@@ -36,84 +36,59 @@ export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
   if (!element) return;
 
-  const html2pdf = (await import("html2pdf.js")).default;
   const directChildren = Array.from(element.children).filter((child): child is HTMLElement => child instanceof HTMLElement);
   const isPaginatedA4 = directChildren.some((el) => el.style.height.includes("297mm"));
 
   // Special handling for paginated A4 previews (atividades)
+  // Renders each page independently via html2canvas → jsPDF to avoid blank pages
+  // caused by floating-point rounding when html2pdf splits a 297mm-tall div.
   if (isPaginatedA4) {
-    // Filter only actual page divs (with height 297mm)
     const pageEls = directChildren.filter((el) => el.style.height.includes("297mm"));
     if (pageEls.length === 0) return;
 
-    // Save original styles
-    const origTransform = element.style.transform;
-    const origTransformOrigin = element.style.transformOrigin;
-    const origWidth = element.style.width;
-    const origGap = element.style.gap;
-    const origDisplay = element.style.display;
-    const origAlignItems = element.style.alignItems;
+    const html2canvas = (await import("html2canvas")).default;
+    const { jsPDF } = await import("jspdf");
 
-    // Remove any scaling on the container
-    element.style.transform = "none";
-    element.style.transformOrigin = "";
-    element.style.width = "210mm";
-    element.style.gap = "0";
-    element.style.display = "block";
-    element.style.alignItems = "";
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
 
-    const savedPageStyles = pageEls.map((el) => ({
-      el,
-      boxShadow: el.style.boxShadow,
-      margin: el.style.margin,
-      overflow: el.style.overflow,
-      pageBreakAfter: el.style.pageBreakAfter,
-      pageBreakInside: el.style.pageBreakInside,
-      breakInside: el.style.breakInside,
-    }));
+    for (let i = 0; i < pageEls.length; i++) {
+      const el = pageEls[i];
 
-    // Hide non-page elements temporarily
-    const nonPageEls = directChildren.filter((el) => !el.style.height.includes("297mm"));
-    const savedNonPage = nonPageEls.map(el => ({ el, display: el.style.display }));
-    nonPageEls.forEach(el => { el.style.display = "none"; });
-
-    pageEls.forEach((el, index) => {
+      // Temporarily strip decorative styles that shouldn't appear in PDF
+      const origBoxShadow = el.style.boxShadow;
+      const origMargin = el.style.margin;
+      const origTransform = el.style.transform;
       el.style.boxShadow = "none";
       el.style.margin = "0";
-      el.style.overflow = "hidden";
-      el.style.pageBreakInside = "avoid";
-      el.style.breakInside = "avoid";
-      el.style.pageBreakAfter = index === pageEls.length - 1 ? "auto" : "always";
-    });
+      el.style.transform = "none";
 
-    await html2pdf()
-      .set({
-        margin: [0, 0, 0, 0],
-        filename: `${filename}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, width: pageEls[0].scrollWidth || 793 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] },
-      })
-      .from(element)
-      .save();
+      // Also clear any scaling on the parent container
+      const origContainerTransform = element.style.transform;
+      element.style.transform = "none";
 
-    // Restore everything
-    savedPageStyles.forEach((s) => {
-      s.el.style.boxShadow = s.boxShadow;
-      s.el.style.margin = s.margin;
-      s.el.style.overflow = s.overflow;
-      s.el.style.pageBreakAfter = s.pageBreakAfter;
-      s.el.style.pageBreakInside = s.pageBreakInside;
-      s.el.style.breakInside = s.breakInside;
-    });
-    savedNonPage.forEach(s => { s.el.style.display = s.display; });
-    element.style.transform = origTransform;
-    element.style.transformOrigin = origTransformOrigin;
-    element.style.width = origWidth;
-    element.style.gap = origGap;
-    element.style.display = origDisplay;
-    element.style.alignItems = origAlignItems;
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        // Force exact A4 pixel dimensions at 96 dpi to avoid overflow bleed
+        width: 794,
+        height: 1123,
+        windowWidth: 794,
+        logging: false,
+      });
+
+      // Restore styles
+      el.style.boxShadow = origBoxShadow;
+      el.style.margin = origMargin;
+      el.style.transform = origTransform;
+      element.style.transform = origContainerTransform;
+
+      if (i > 0) pdf.addPage();
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      // Fill exactly the A4 page — no margins — so no gap/blank appears
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+    }
+
+    pdf.save(`${filename}.pdf`);
     return;
   }
 
