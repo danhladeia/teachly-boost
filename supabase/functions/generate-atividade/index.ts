@@ -106,13 +106,10 @@ ${textoImportadoInstrucao}
 
 REGRA FUNDAMENTAL: As questões (abertas e de múltipla escolha) devem ser DIRETAMENTE relacionadas e correlacionadas ao texto gerado ou importado. O aluno deve precisar LER E COMPREENDER o texto para responder as questões. NÃO gere questões genéricas ou desconectadas do conteúdo textual apresentado. Cada questão deve fazer referência explícita ou implícita a informações presentes no texto.
 
-REGRA DE PAGINAÇÃO OBRIGATÓRIA:
-- Gere texto SUFICIENTE para preencher a primeira página inteira (pelo menos 4-6 parágrafos).
-- Insira o bloco "page-break" ANTES do separador para forçar a quebra de página.
-- Após o page-break, insira o separador e as questões.
-
 ${tipoInstrucao}
 ${imagemInstrucao}
+REGRA DE LAYOUT: NÃO insira blocos "page-break". O separador deve aparecer imediatamente após o último parágrafo de texto, sem quebra de página — as questões continuam na mesma folha logo abaixo do texto para evitar desperdício de papel. O conteúdo do separador deve ser exatamente o texto informado abaixo, sem alterações.
+
 Responda APENAS com JSON no formato:
 {
   "blocks": [
@@ -120,15 +117,12 @@ Responda APENAS com JSON no formato:
     { "type": "text", "content": "Primeiro parágrafo...", "alignment": "left" },
     { "type": "text", "content": "Segundo parágrafo...", "alignment": "left" },
     { "type": "text", "content": "Terceiro parágrafo...", "alignment": "left" },
-    { "type": "text", "content": "Quarto parágrafo...", "alignment": "left" },
-    { "type": "text", "content": "Quinto parágrafo...", "alignment": "left" },
-    { "type": "page-break", "content": "", "alignment": "center" },
     { "type": "separator", "content": "${sepTitle}", "alignment": "center" },
     { "type": "question-open", "content": "Pergunta aberta?", "alignment": "left", "lines": 4 },
     { "type": "question-mc", "content": "Pergunta MC?", "alignment": "left", "alternatives": ["A", "B", "C", "D"], "correctIndex": 0 }${isEnem ? `,${enemJsonExample}` : ""}
   ]
 }
-Gere 1 título, texto dividido em pelo menos 5 parágrafos (para preencher a página 1), 1 page-break, 1 separador e ${totalQ} questões.
+Gere 1 título, texto com parágrafos adequados ao tamanho solicitado, 1 separador com o texto exato "${sepTitle}" e ${totalQ} questões.
 Sem markdown, apenas JSON.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
