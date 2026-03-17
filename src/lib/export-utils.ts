@@ -50,6 +50,7 @@ export async function exportToPdf(elementId: string, filename: string) {
     const { jsPDF } = await import("jspdf");
 
     const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    let addedPages = 0;
 
     for (let i = 0; i < pageEls.length; i++) {
       const el = pageEls[i];
@@ -82,10 +83,31 @@ export async function exportToPdf(elementId: string, filename: string) {
       el.style.transform = origTransform;
       element.style.transform = origContainerTransform;
 
-      if (i > 0) pdf.addPage();
-      const imgData = canvas.toDataURL("image/jpeg", 0.98);
-      // Fill exactly the A4 page — no margins — so no gap/blank appears
-      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+      // Last-resort blank-page detection: sample a grid of pixels.
+      // If < 0.5% of sampled pixels are non-white, skip this page entirely.
+      const isBlank = (() => {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return false;
+        const { width, height } = canvas;
+        // Sample inner area (skip 2% border to avoid shadow/edge artefacts)
+        const x0 = Math.floor(width * 0.02);
+        const y0 = Math.floor(height * 0.02);
+        const sw = Math.floor(width * 0.96);
+        const sh = Math.floor(height * 0.96);
+        const data = ctx.getImageData(x0, y0, sw, sh).data;
+        let nonWhite = 0;
+        // Sample every 8th pixel (r channel only for speed)
+        for (let p = 0; p < data.length; p += 32) {
+          if (data[p] < 245 || data[p + 1] < 245 || data[p + 2] < 245) nonWhite++;
+        }
+        return nonWhite / Math.floor(data.length / 32) < 0.005;
+      })();
+
+      if (isBlank) continue;
+
+      if (addedPages > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 210, 297);
+      addedPages++;
     }
 
     pdf.save(`${filename}.pdf`);
