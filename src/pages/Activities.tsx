@@ -43,7 +43,7 @@ const createBlock = (type: BlockType): Block => ({
 
 export default function Activities() {
   const { user } = useAuth();
-  const { credits, useCredit } = useCredits();
+  const { plan, canUseAI, deductCredit } = useCredits();
   const docLimits = useDocumentLimits();
   const location = useLocation();
 
