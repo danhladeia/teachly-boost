@@ -111,7 +111,7 @@ export default function Activities() {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) { toast.error("Digite o tema da atividade"); return; }
-    if (!credits || credits.credits_general <= 0) { toast.error("Créditos insuficientes"); return; }
+    if (!canUseAI) { toast.error("Créditos insuficientes"); return; }
 
     setLoading(true);
     try {
