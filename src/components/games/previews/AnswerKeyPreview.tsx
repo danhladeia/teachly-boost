@@ -18,6 +18,7 @@ const PAGE_STYLE: React.CSSProperties = {
   boxSizing: "border-box",
   pageBreakBefore: "always",
   overflow: "hidden",
+  boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 6px rgba(0,0,0,0.08)",
 };
 
 interface Props {
