@@ -3,8 +3,10 @@ import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
 import CreditsIndicator from "@/components/CreditsIndicator";
 import { useLocation } from "react-router-dom";
 import { FileCheck, Sparkles, Loader2, Building2, Printer, FileDown, Save, Trash2, MoveUp, MoveDown, Plus, Image, Shuffle, List, ChevronDown, Camera, FileText, Upload, FileUp, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,6 +111,7 @@ export default function Exams() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [respostasAlunos, setRespostasAlunos] = useState<any[]>([]);
   const [loadingRespostas, setLoadingRespostas] = useState(false);
+  const [expandedProvaId, setExpandedProvaId] = useState<string | null>(null);
 
   // Load profile data
   useEffect(() => {
@@ -214,6 +217,34 @@ export default function Exams() {
         .limit(100);
       setRespostasAlunos(data || []);
     } catch {} finally { setLoadingRespostas(false); }
+  };
+
+  const computeGradeStats = (respostas: any[]) => {
+    const grades = respostas
+      .map(r => (typeof r.nota === "number" ? r.nota : null))
+      .filter((n): n is number => n !== null && !isNaN(n));
+
+    const total = grades.length;
+    if (total === 0) {
+      return { total: 0, avg: 0, min: 0, max: 0, median: 0, passRate: 0, distribution: [] as Array<{ range: string; count: number }> };
+    }
+
+    const sorted = [...grades].sort((a, b) => a - b);
+    const sum = grades.reduce((acc, v) => acc + v, 0);
+    const avg = sum / total;
+    const min = sorted[0];
+    const max = sorted[sorted.length - 1];
+    const median = sorted.length % 2 === 1 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const passCount = grades.filter(g => g >= 7).length;
+    const passRate = total ? passCount / total : 0;
+
+    const distribution = Array.from({ length: 10 }, (_, i) => ({ range: `${i}-${i + 1}`, count: 0 }));
+    grades.forEach(g => {
+      const idx = Math.min(9, Math.floor(g));
+      distribution[idx].count += 1;
+    });
+
+    return { total, avg, min, max, median, passRate, distribution };
   };
 
   const handleFileImportProva = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1109,40 +1140,57 @@ export default function Exams() {
               <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhuma prova salva ainda</CardContent></Card>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {savedProvas.map(p => (
-                  <Card key={p.id} className="shadow-card hover:shadow-md transition-shadow">
-                    <CardContent className="pt-4 space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors flex-1 min-w-0 truncate" onClick={() => { loadProva(p.id); setMainTab("criar"); }}>{p.titulo}</h3>
-                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir prova" onClick={async (e) => {
-                          e.stopPropagation();
-                          if (!confirm("Excluir esta prova e todas as suas versões?")) return;
-                          try {
-                            await supabase.from("respostas_alunos").delete().eq("prova_id", p.id);
-                            await supabase.from("versoes_prova").delete().eq("prova_id", p.id);
-                            await supabase.from("questoes").delete().eq("prova_id", p.id);
-                            const { error } = await supabase.from("provas").delete().eq("id", p.id);
-                            if (error) throw error;
-                            setSavedProvas(prev => prev.filter(x => x.id !== p.id));
-                            if (currentProvaId === p.id) handleNewExam();
-                            toast.success("Prova excluída");
-                          } catch { toast.error("Erro ao excluir"); }
-                        }}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      {p.temas && <p className="text-xs text-muted-foreground line-clamp-1">{p.temas}</p>}
-                      <div className="flex items-center justify-between">
-                        <Badge variant={p.status === "rascunho" ? "secondary" : "default"} className="text-[10px]">
-                          {p.status}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(p.created_at).toLocaleDateString("pt-BR")}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {savedProvas.map(p => {
+                  const hasCorrecoes = respostasAlunos.some(r => r.prova_id === p.id);
+
+                  return (
+                    <Card key={p.id} className="shadow-card hover:shadow-md transition-shadow">
+                      <CardContent className="pt-4 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3
+                            className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors flex-1 min-w-0 truncate"
+                            onClick={() => {
+                              loadProva(p.id);
+                              if (hasCorrecoes) {
+                                setMainTab("resultados");
+                                setExpandedProvaId(p.id);
+                              } else {
+                                setMainTab("criar");
+                              }
+                            }}
+                          >
+                            {p.titulo}
+                          </h3>
+                          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir prova" onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!confirm("Excluir esta prova e todas as suas versões?")) return;
+                            try {
+                              await supabase.from("respostas_alunos").delete().eq("prova_id", p.id);
+                              await supabase.from("versoes_prova").delete().eq("prova_id", p.id);
+                              await supabase.from("questoes").delete().eq("prova_id", p.id);
+                              const { error } = await supabase.from("provas").delete().eq("id", p.id);
+                              if (error) throw error;
+                              setSavedProvas(prev => prev.filter(x => x.id !== p.id));
+                              if (currentProvaId === p.id) handleNewExam();
+                              toast.success("Prova excluída");
+                            } catch { toast.error("Erro ao excluir"); }
+                          }}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {p.temas && <p className="text-xs text-muted-foreground line-clamp-1">{p.temas}</p>}
+                        <div className="flex items-center justify-between">
+                          <Badge variant={p.status === "rascunho" ? "secondary" : "default"} className="text-[10px]">
+                            {p.status}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1171,50 +1219,126 @@ export default function Exams() {
                   const provaNames: Record<string, string> = {};
                   savedProvas.forEach(p => { provaNames[p.id] = p.titulo; });
                   
-                  return Object.entries(grouped).map(([provaId, respostas]) => (
-                    <Card key={provaId} className="shadow-card">
-                      <CardHeader className="py-3">
-                        <CardTitle className="text-sm font-semibold">
-                          📝 {provaNames[provaId] || "Prova"} 
-                          <Badge variant="secondary" className="ml-2 text-[10px]">{respostas.length} aluno(s)</Badge>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-1 pt-0">
-                        <div className="rounded border overflow-hidden">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-muted/50">
-                                <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
-                                <th className="text-center px-3 py-1.5 font-medium">Nota</th>
-                                <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
-                                <th className="text-right px-3 py-1.5 font-medium">Data</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {respostas.map(r => (
-                                <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
-                                  <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
-                                  <td className="text-center px-3 py-1.5">
-                                    {r.nota !== null ? (
-                                      <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
-                                        {r.nota.toFixed(1)}
-                                      </Badge>
-                                    ) : "—"}
-                                  </td>
-                                  <td className="text-center px-3 py-1.5 text-muted-foreground">
-                                    {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
-                                  </td>
-                                  <td className="text-right px-3 py-1.5 text-muted-foreground">
-                                    {new Date(r.created_at).toLocaleDateString("pt-BR")}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ));
+                  return Object.entries(grouped).map(([provaId, respostas]) => {
+                    const stats = computeGradeStats(respostas);
+                    const isExpanded = expandedProvaId === provaId;
+
+                    return (
+                      <Card key={provaId} className="shadow-card">
+                        <CardHeader className="py-3 cursor-pointer" onClick={() => setExpandedProvaId(prev => (prev === provaId ? null : provaId))}>
+                          <CardTitle className="text-sm font-semibold flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-2">
+                              📝 {provaNames[provaId] || "Prova"}
+                              <Badge variant="secondary" className="text-[10px]">{respostas.length} aluno(s)</Badge>
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">{isExpanded ? "Ocultar" : "Ver"}</span>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 pt-0">
+                          {isExpanded ? (
+                            <>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="rounded-lg border p-3">
+                                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Média</div>
+                                  <div className="text-2xl font-semibold">{stats.avg.toFixed(1)}</div>
+                                  <div className="text-[10px] text-muted-foreground">(mín {stats.min.toFixed(1)} / máx {stats.max.toFixed(1)})</div>
+                                </div>
+                                <div className="rounded-lg border p-3">
+                                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Mediana</div>
+                                  <div className="text-2xl font-semibold">{stats.median.toFixed(1)}</div>
+                                  <div className="text-[10px] text-muted-foreground">{stats.total} notas</div>
+                                </div>
+                                <div className="rounded-lg border p-3">
+                                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Aprovados</div>
+                                  <div className="text-2xl font-semibold">{(stats.passRate * 100).toFixed(0)}%</div>
+                                  <div className="text-[10px] text-muted-foreground">{Math.round(stats.passRate * stats.total)}/{stats.total}</div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                <div className="rounded-lg border p-3">
+                                  <div className="text-xs font-semibold mb-2">Distribuição de notas</div>
+                                  <ChartContainer config={{ scores: { label: "Notas", color: "#2563eb" } }}>
+                                    <ResponsiveContainer width="100%" height={180}>
+                                      <BarChart data={stats.distribution} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                        <XAxis dataKey="range" tick={{ fontSize: 10 }} />
+                                        <YAxis tick={{ fontSize: 10 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#2563eb" />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </ChartContainer>
+                                </div>
+                                <div className="rounded-lg border p-3">
+                                  <div className="text-xs font-semibold mb-2">Aprovados vs Reprovados</div>
+                                  <ChartContainer config={{ pass: { label: "Aprovados", color: "#16a34a" }, fail: { label: "Reprovados", color: "#dc2626" } }}>
+                                    <ResponsiveContainer width="100%" height={180}>
+                                      <PieChart>
+                                        <Pie
+                                          data={[
+                                            { name: "Aprovados", value: Math.round(stats.passRate * stats.total) },
+                                            { name: "Reprovados", value: stats.total - Math.round(stats.passRate * stats.total) },
+                                          ]}
+                                          dataKey="value"
+                                          nameKey="name"
+                                          innerRadius={40}
+                                          outerRadius={60}
+                                          paddingAngle={2}
+                                        >
+                                          <Cell fill="#16a34a" />
+                                          <Cell fill="#dc2626" />
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend verticalAlign="bottom" height={20} />
+                                      </PieChart>
+                                    </ResponsiveContainer>
+                                  </ChartContainer>
+                                </div>
+                              </div>
+
+                              <div className="rounded border overflow-hidden">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="bg-muted/50">
+                                      <th className="text-left px-3 py-1.5 font-medium">Aluno</th>
+                                      <th className="text-center px-3 py-1.5 font-medium">Nota</th>
+                                      <th className="text-center px-3 py-1.5 font-medium">Tempo</th>
+                                      <th className="text-right px-3 py-1.5 font-medium">Data</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {respostas.map(r => (
+                                      <tr key={r.id} className="border-t hover:bg-muted/30 transition-colors">
+                                        <td className="px-3 py-1.5 font-medium">{r.nome_aluno}</td>
+                                        <td className="text-center px-3 py-1.5">
+                                          {r.nota !== null ? (
+                                            <Badge variant={r.nota >= 7 ? "default" : r.nota >= 5 ? "secondary" : "destructive"} className="text-[10px]">
+                                              {r.nota.toFixed(1)}
+                                            </Badge>
+                                          ) : "—"}
+                                        </td>
+                                        <td className="text-center px-3 py-1.5 text-muted-foreground">
+                                          {r.tempo_gasto ? `${Math.floor(r.tempo_gasto / 60)}min` : "—"}
+                                        </td>
+                                        <td className="text-right px-3 py-1.5 text-muted-foreground">
+                                          {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="rounded border p-3 text-xs text-muted-foreground">
+                              Clique no cabeçalho para ver detalhes, gráficos e notas dos alunos.
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  });
                 })()}
               </div>
             )}
