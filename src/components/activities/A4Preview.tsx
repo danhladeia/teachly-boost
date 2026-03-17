@@ -213,6 +213,10 @@ export default function A4Preview({ blocks, showHeader, escola, autoNumber, show
             ))}
           </div>
         );
+      } else if (block.type === "page-break") {
+        rendered.push(
+          <div key={block.id} data-block-id={block.id} data-page-break="true" style={{ height: 0, overflow: "hidden" }} />
+        );
       } else if (block.type === "image" && block.imageUrl) {
         const size = imageSizeMap[block.imageSize || "medium"];
         rendered.push(
