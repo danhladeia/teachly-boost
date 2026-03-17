@@ -1021,14 +1021,14 @@ export default function Exams() {
                 >
                   {showHeader && selectedTimbre?.bannerUrl && (
                     <div style={{ textAlign: "center", marginBottom: "4mm" }}>
-                      <img src={selectedTimbre.bannerUrl} alt="Timbre da escola" style={{ maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
+                      <img src={selectedTimbre.bannerUrl} alt="Timbre da escola" style={{ display: "block", margin: "0 auto", maxWidth: "100%", maxHeight: "25mm", objectFit: "contain" }} crossOrigin="anonymous" />
                     </div>
                   )}
                   {/* Logo + school name */}
                   {showHeader && (escola || selectedTimbre?.logoUrl) && (
                     <div style={{ textAlign: "center", fontWeight: 700, fontSize: "14pt", marginBottom: "4mm", fontFamily: "'Montserrat', sans-serif", borderBottom: "2px solid #2563eb", paddingBottom: "3mm", display: "flex", alignItems: "center", justifyContent: "center", gap: "3mm" }}>
                       {selectedTimbre?.logoUrl && !selectedTimbre?.bannerUrl && (
-                        <img src={selectedTimbre.logoUrl} alt="" style={{ maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />
+                        <img src={selectedTimbre.logoUrl} alt="" style={{ display: "block", margin: "0 auto", maxHeight: "12mm", objectFit: "contain" }} crossOrigin="anonymous" />
                       )}
                       {escola && <span>{escola}</span>}
                     </div>
