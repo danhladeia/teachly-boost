@@ -1036,7 +1036,7 @@ export default function Exams() {
                   <h1 style={{ textAlign: "center", fontSize: "14pt", fontWeight: 700, fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
                     {titulo || "Prova"}{selectedVersao ? ` — Versão ${selectedVersao.versao_label}` : ""}
                   </h1>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
+                  <div style={{ display: "flex", justifyContent: "center", gap: "8mm", fontSize: "9pt", marginBottom: "2mm", color: "#475569" }}>
                     {professor && <span><strong>Professor(a):</strong> {professor}</span>}
                     {turma && <span><strong>Turma:</strong> {turma}</span>}
                   </div>
