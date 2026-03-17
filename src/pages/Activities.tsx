@@ -157,11 +157,11 @@ export default function Activities() {
     try {
       const payload = {
         user_id: user.id,
-        tipo: "atividade",
+        tipo: "atividade" as const,
         titulo: blocks.find(b => b.type === "title")?.content || prompt || "Atividade sem título",
         disciplina: disciplina || null,
         nivel: nivel || null,
-        conteudo: { blocks },
+        conteudo: JSON.parse(JSON.stringify({ blocks })),
       };
 
       if (currentDocId) {
@@ -169,7 +169,7 @@ export default function Activities() {
         if (error) throw error;
         toast.success("Atividade atualizada!");
       } else {
-        const { data, error } = await supabase.from("documentos_salvos").insert(payload).select("id").single();
+        const { data, error } = await supabase.from("documentos_salvos").insert([payload]).select("id").single();
         if (error) throw error;
         setCurrentDocId(data.id);
         toast.success("Atividade salva!");
