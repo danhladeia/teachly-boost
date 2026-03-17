@@ -79,14 +79,18 @@ export default function AppSettings() {
     setManagingPortal(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
-    } catch (err: any) {
-      if (err.message?.includes("No Stripe customer")) {
-        toast.info("Você ainda não possui uma assinatura ativa para gerenciar.");
-      } else {
-        toast.error(err.message || "Erro ao abrir portal de assinatura");
+      if (error) {
+        // Check if it's a FunctionsHttpError with 404 (no customer)
+        if (error?.context?.status === 404 || error?.message?.includes("404") || error?.message?.includes("no_customer")) {
+          toast.info("Você ainda não possui uma assinatura ativa para gerenciar.");
+        } else {
+          toast.error("Erro ao abrir portal de assinatura");
+        }
+        return;
       }
+      if (data?.url) window.open(data.url, "_blank");
+    } catch {
+      toast.error("Erro ao abrir portal de assinatura");
     } finally { setManagingPortal(false); }
   };
 
