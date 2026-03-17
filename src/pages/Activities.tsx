@@ -551,7 +551,6 @@ export default function Activities() {
                       <p className="text-[9px] text-muted-foreground">A IA usará este texto como base para gerar a atividade.</p>
                     </div>
                   )}
-
                   <div className="space-y-1">
                     <Label className="text-[10px]">Disciplina</Label>
                     <Input placeholder="Ex: Matemática, História, Ciências..." value={aiDisciplina} onChange={e => setAiDisciplina(e.target.value)} className="h-8 text-xs" />
@@ -602,6 +601,12 @@ export default function Activities() {
                   {/* Question type - hidden in ENEM mode */}
                   {!modoEnem && (
                     <div className="space-y-2">
+                      {/* Separator title */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
+                        <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
+                      </div>
+
                       <Label className="text-xs font-semibold">Tipo de questões</Label>
                       <Select value={aiTipo} onValueChange={setAiTipo}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
@@ -613,11 +618,7 @@ export default function Activities() {
                       </Select>
                     </div>
                   )}
-                 {/* Separator title */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Título separador (antes das questões)</Label>
-                    <Input value={separatorTitle} onChange={e => setSeparatorTitle(e.target.value)} placeholder="Atividades" className="h-8 text-xs" />
-                  </div>
+
                   <div className="grid grid-cols-2 gap-2">
                     {!modoEnem && aiTipo !== "multipla_escolha" && (
                       <div className="space-y-1">
@@ -645,8 +646,7 @@ export default function Activities() {
                     </Select>
                   </div>
 
-                 
-
+                  
                   {/* AI Image Generation */}
                   <div className="space-y-2 rounded-lg border border-dashed border-primary/30 p-2">
                     <Label className="text-xs font-semibold flex items-center gap-1"><Sparkles className="h-3 w-3 text-primary" /> Imagens geradas por IA</Label>
