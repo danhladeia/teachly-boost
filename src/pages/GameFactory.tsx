@@ -275,15 +275,20 @@ export default function GameFactory() {
     const el = document.getElementById("game-print-area");
     const ak = document.getElementById("answer-key-area");
     if (!el) return;
+
     const pw = window.open("", "_blank");
     if (!pw) return;
+
     pw.document.write(`<html><head><title>${tema || "Jogo"}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      @page { size: A4; margin: 15mm; }
-      body { font-family: 'Inter', 'Arial', sans-serif; }
+      @page { size: A4; margin: 0; }
+      body { font-family: 'Inter', 'Arial', sans-serif; background: #fff; }
+      .a4-page-scaled { width: 210mm !important; min-height: 297mm !important; margin: 0 auto; box-shadow: none !important; page-break-after: always; }
+      img { max-width: 100%; height: auto; }
+      table { max-width: 100%; }
     </style></head><body>`);
-    pw.document.write(el.innerHTML);
-    if (ak && answerKey !== "none") pw.document.write(ak.innerHTML);
+    pw.document.write(el.outerHTML);
+    if (ak && answerKey !== "none") pw.document.write(ak.outerHTML);
     pw.document.write("</body></html>");
     pw.document.close();
     pw.focus();
