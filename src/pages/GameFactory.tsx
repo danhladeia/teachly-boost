@@ -478,9 +478,9 @@ export default function GameFactory() {
         )}
       </div>
 
-      <div className="flex gap-4 items-start" style={{ minHeight: "calc(100vh - 180px)" }}>
+      <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)] overflow-hidden" style={{ minHeight: "calc(100vh - 180px)" }}>
         {/* LEFT PANEL */}
-        <div className="w-[340px] shrink-0 sticky top-4 space-y-2.5 overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
+        <div className="w-full lg:w-[340px] lg:shrink-0 lg:sticky lg:top-4 space-y-2.5 overflow-visible lg:overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
           <Card className="shadow-card">
             <CardContent className="p-3 space-y-3">
 
