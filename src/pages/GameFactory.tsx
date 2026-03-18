@@ -451,7 +451,7 @@ export default function GameFactory() {
 
   // --- SPLIT EDITOR ---
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 overflow-x-hidden">
       {/* Top bar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
