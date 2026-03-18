@@ -119,6 +119,7 @@ export async function exportToPdf(elementId: string, filename: string) {
   const origWidth = element.style.width;
   const origMinHeight = element.style.minHeight;
   const origBoxShadow = element.style.boxShadow;
+  const html2pdf = (await import("html2pdf.js")).default;
 
   // Temporarily normalize: remove internal padding and constrain width to
   // A4 minus margins so html2pdf doesn't double-count padding.
