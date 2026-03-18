@@ -942,7 +942,7 @@ export default function GameFactory() {
                   <p className="text-sm font-medium text-center px-6">
                     {mode === "ai" ? 'Insira o tema e clique em "Gerar com IA"' : 'Configure e clique em "Gerar Jogo"'}
                   </p>
-                  <p className="text-xs mt-1 opacity-60 text-center px-6">A folha A4 aparecerá aqui com o timbre da escola</p>
+                  <p className="text-xs mt-1 opacity-60 text-center px-6">O preview A4 com timbre aparecerá aqui</p>
                 </div>
               )}
             </ResponsiveA4Wrapper>
