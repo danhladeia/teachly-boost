@@ -146,19 +146,29 @@ export default function GameFactory() {
     if (t) {
       setHeader(h => ({
         ...h,
+        showHeader: true,
         escola: t.escola || h.escola,
         logoUrl: t.logoUrl || h.logoUrl,
         bannerUrl: t.bannerUrl || h.bannerUrl,
       }));
+      return;
     }
+
+    setHeader(h => ({
+      ...h,
+      logoUrl: "",
+      bannerUrl: "",
+    }));
   };
 
   // Always sync header with branding from Timbres e Branding
   useEffect(() => {
     setHeader(h => ({
       ...h,
-      logoUrl: timbre.logoUrl || h.logoUrl,
-      bannerUrl: timbre.bannerUrl || h.bannerUrl,
+      showHeader: h.showHeader || Boolean(timbre.escola || timbre.logoUrl || timbre.bannerUrl),
+      escola: h.escola || timbre.escola || "",
+      logoUrl: h.logoUrl || timbre.logoUrl || "",
+      bannerUrl: h.bannerUrl || timbre.bannerUrl || "",
     }));
   }, [timbre]);
 
