@@ -898,30 +898,40 @@ export default function GameFactory() {
           </Card>
         </div>
 
-        {/* RIGHT: Preview — visual idêntico ao A4Preview das atividades */}
+        {/* RIGHT: Preview — estrutura semelhante ao preview de atividades */}
         <div className="flex-1 min-w-0 overflow-x-hidden">
-          <ResponsiveA4Wrapper>
-            <div className="bg-muted/30 rounded-xl p-3 sm:p-6 flex flex-col items-center gap-6 w-full">
+          <div data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
+            <style>{`
+              [data-a4-container] .a4-page-scaled {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                hyphens: auto;
+              }
+              [data-a4-container] .a4-page-scaled img,
+              [data-a4-container] .a4-page-scaled table {
+                max-width: 100% !important;
+                height: auto !important;
+              }
+            `}</style>
+            <ResponsiveA4Wrapper>
               {gameData ? (
-                <>
-                  {/* Papel A4 do jogo — sombra aplicada no GameA4Shell */}
+                <div className="flex flex-col items-center gap-6">
                   {renderPreview()}
-                  {/* Gabarito (folha separada) */}
                   {answerKey !== "none" && showAnswerKey && (
                     <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
                   )}
-                </>
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+                <div className="flex flex-col items-center justify-center py-24 text-muted-foreground bg-card text-card-foreground shadow-lg a4-page-scaled min-h-[420px] w-full max-w-[210mm]">
                   <Gamepad2 className="h-14 w-14 mb-4 opacity-20" />
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium text-center px-6">
                     {mode === "ai" ? 'Insira o tema e clique em "Gerar com IA"' : 'Configure e clique em "Gerar Jogo"'}
                   </p>
-                  <p className="text-xs mt-1 opacity-60">A folha A4 aparecerá aqui com o timbre da escola</p>
+                  <p className="text-xs mt-1 opacity-60 text-center px-6">A folha A4 aparecerá aqui com o timbre da escola</p>
                 </div>
               )}
-            </div>
-          </ResponsiveA4Wrapper>
+            </ResponsiveA4Wrapper>
+          </div>
         </div>
       </div>
     </div>

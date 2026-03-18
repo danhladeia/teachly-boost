@@ -1,7 +1,6 @@
 import React from "react";
 import type { GameHeader, ColorMode } from "./types";
 
-// Base A4 page style — used both on-screen and when printing
 const PAGE_STYLE: React.CSSProperties = {
   width: "210mm",
   minHeight: "297mm",
@@ -9,17 +8,16 @@ const PAGE_STYLE: React.CSSProperties = {
   padding: "15mm 15mm",
   fontFamily: "'Inter', 'Arial', sans-serif",
   fontSize: "11pt",
-  lineHeight: 1.5,
+  lineHeight: 1.6,
   position: "relative",
   boxSizing: "border-box",
-  background: "#fff",
-  color: "#000",
+  background: "hsl(var(--card))",
+  color: "hsl(var(--foreground))",
   overflow: "hidden",
   pageBreakAfter: "always",
   pageBreakInside: "avoid",
   maxWidth: "100vw",
-  // Paper-sheet shadow — ignored by most print drivers
-  boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 6px rgba(0,0,0,0.08)",
+  boxShadow: "0 4px 24px hsl(var(--foreground) / 0.12), 0 1px 6px hsl(var(--foreground) / 0.08)",
 };
 
 interface Props {
@@ -45,18 +43,17 @@ export default function GameA4Shell({
   return (
     <div
       id={pageId || "game-print-area"}
+      className="a4-page-scaled bg-card text-foreground"
       style={{
         ...PAGE_STYLE,
         filter: grayscale ? "grayscale(1)" : highContrast ? "contrast(1.4)" : undefined,
       }}
     >
-      {/* ── Cabeçalho institucional ── */}
       {header.showHeader && (
         <div style={{ marginBottom: "4mm" }}>
           {header.bannerUrl ? (
-            /* Banner mode — imagem horizontal da escola */
             <>
-              <div style={{ textAlign: "center", marginBottom: "2mm" }}>
+              <div style={{ textAlign: "center", marginBottom: "4mm" }}>
                 <img
                   src={header.bannerUrl}
                   alt="Timbre da escola"
@@ -70,95 +67,105 @@ export default function GameA4Shell({
                   crossOrigin="anonymous"
                 />
               </div>
-              <div style={{ borderBottom: "1px solid #cbd5e1", paddingBottom: "2mm" }}>
-                {(header.professor || header.disciplina || header.serie) && (
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", flexWrap: "wrap", gap: "2mm" }}>
-                    {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
-                    {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
-                    {header.serie && <span><strong>Série/Turma:</strong> {header.serie}</span>}
-                  </div>
-                )}
-                {(header.aluno !== undefined || header.data !== undefined) && (
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm" }}>
-                    {header.aluno !== undefined && (
-                      <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>
-                    )}
-                    {header.data !== undefined && (
-                      <span><strong>Data:</strong> {header.data || "____/____/________"}</span>
-                    )}
-                  </div>
-                )}
-              </div>
             </>
-          ) : (
-            /* Logo + nome da escola */
-            <div style={{ borderBottom: "2px solid #1e40af", paddingBottom: "3mm" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
-                {header.logoUrl && (
-                  <img
-                    src={header.logoUrl}
-                    alt="Logo da escola"
-                    style={{ height: "14mm", maxWidth: "30mm", objectFit: "contain" }}
-                    crossOrigin="anonymous"
-                  />
-                )}
-                {header.escola && (
-                  <div style={{
-                    textAlign: "center",
-                    fontWeight: 700,
-                    fontSize: "14pt",
-                    fontFamily: "'Montserrat', sans-serif",
-                    color: "#1e293b",
-                  }}>
-                    {header.escola}
-                  </div>
-                )}
-              </div>
-              {(header.professor || header.disciplina || header.serie) && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1mm", flexWrap: "wrap", gap: "2mm", color: "#475569" }}>
-                  {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
-                  {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
-                  {header.serie && <span><strong>Série/Turma:</strong> {header.serie}</span>}
-                </div>
+          ) : null}
+
+          {(header.escola || (header.logoUrl && !header.bannerUrl)) && (
+            <div
+              style={{
+                textAlign: "center",
+                fontWeight: 700,
+                fontSize: "14pt",
+                marginBottom: "4mm",
+                fontFamily: "'Montserrat', sans-serif",
+                borderBottom: "2px solid hsl(var(--primary))",
+                paddingBottom: "3mm",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "3mm",
+              }}
+            >
+              {header.logoUrl && !header.bannerUrl && (
+                <img
+                  src={header.logoUrl}
+                  alt="Logo da escola"
+                  style={{ maxHeight: "12mm", objectFit: "contain" }}
+                  crossOrigin="anonymous"
+                />
               )}
-              {(header.aluno !== undefined || header.data !== undefined) && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9pt", marginTop: "1.5mm" }}>
-                  {header.aluno !== undefined && (
-                    <span><strong>Aluno(a):</strong> {header.aluno || "________________________________"}</span>
-                  )}
-                  {header.data !== undefined && (
-                    <span><strong>Data:</strong> {header.data || "____/____/________"}</span>
-                  )}
-                </div>
+              {header.escola && <span>{header.escola}</span>}
+            </div>
+          )}
+
+          {(header.professor || header.disciplina || header.serie) && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                flexWrap: "wrap",
+                gap: "2mm 8mm",
+                fontSize: "9pt",
+                marginBottom: "2mm",
+                color: "hsl(var(--muted-foreground))",
+              }}
+            >
+              {header.professor && <span><strong>Professor(a):</strong> {header.professor}</span>}
+              {header.disciplina && <span><strong>Disciplina:</strong> {header.disciplina}</span>}
+              {header.serie && <span><strong>Série/Turma:</strong> {header.serie}</span>}
+            </div>
+          )}
+
+          {(header.aluno !== undefined || header.data !== undefined) && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                flexWrap: "wrap",
+                gap: "2mm 10mm",
+                fontSize: "10pt",
+                marginBottom: "4mm",
+                borderBottom: "1px solid hsl(var(--border))",
+                paddingBottom: "3mm",
+              }}
+            >
+              {header.aluno !== undefined && (
+                <span><strong>Aluno(a):</strong> {header.aluno || "______________________________________"}</span>
+              )}
+              {header.data !== undefined && (
+                <span><strong>Data:</strong> {header.data || "____/____/________"}</span>
               )}
             </div>
           )}
         </div>
       )}
 
-      {/* ── Título e subtítulo do jogo ── */}
-      <h1 style={{
-        textAlign: "center",
-        fontSize: "16pt",
-        fontWeight: 700,
-        fontFamily: "'Montserrat', sans-serif",
-        marginBottom: subtitle ? "1mm" : "4mm",
-        color: "#0f172a",
-      }}>
+      <h1
+        style={{
+          textAlign: "center",
+          fontSize: "16pt",
+          fontWeight: 700,
+          fontFamily: "'Montserrat', sans-serif",
+          marginBottom: subtitle ? "1mm" : "6mm",
+          borderBottom: "1px solid hsl(var(--border))",
+          paddingBottom: "3mm",
+        }}
+      >
         {title}
       </h1>
       {subtitle && (
-        <p style={{
-          textAlign: "center",
-          fontSize: "9pt",
-          color: "#64748b",
-          marginBottom: "4mm",
-        }}>
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "9pt",
+            color: "hsl(var(--muted-foreground))",
+            marginBottom: "4mm",
+          }}
+        >
           {subtitle}
         </p>
       )}
 
-      {/* ── Conteúdo do jogo ── */}
       <div style={{ overflow: "hidden" }}>{children}</div>
     </div>
   );
