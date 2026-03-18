@@ -28,9 +28,20 @@ interface Props {
 }
 
 export default function AnswerKeyPreview({ gameType, gameData, config }: Props) {
+  const shouldShowHeader = config.header.showHeader || Boolean(
+    config.header.escola ||
+    config.header.logoUrl ||
+    config.header.bannerUrl ||
+    config.header.professor ||
+    config.header.disciplina ||
+    config.header.serie ||
+    config.header.aluno ||
+    config.header.data
+  );
+
   return (
-    <div id="answer-key-area" style={PAGE_STYLE}>
-      {config.header.showHeader && (
+    <div id="answer-key-area" className="a4-page-scaled" style={PAGE_STYLE}>
+      {shouldShowHeader && (
         <div style={{ borderBottom: "2px solid #000", paddingBottom: "3mm", marginBottom: "4mm" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4mm", marginBottom: "2mm" }}>
             {config.header.logoUrl && (

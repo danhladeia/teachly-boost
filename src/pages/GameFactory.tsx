@@ -146,19 +146,29 @@ export default function GameFactory() {
     if (t) {
       setHeader(h => ({
         ...h,
+        showHeader: true,
         escola: t.escola || h.escola,
         logoUrl: t.logoUrl || h.logoUrl,
         bannerUrl: t.bannerUrl || h.bannerUrl,
       }));
+      return;
     }
+
+    setHeader(h => ({
+      ...h,
+      logoUrl: "",
+      bannerUrl: "",
+    }));
   };
 
   // Always sync header with branding from Timbres e Branding
   useEffect(() => {
     setHeader(h => ({
       ...h,
-      logoUrl: timbre.logoUrl || h.logoUrl,
-      bannerUrl: timbre.bannerUrl || h.bannerUrl,
+      showHeader: h.showHeader || Boolean(timbre.escola || timbre.logoUrl || timbre.bannerUrl),
+      escola: h.escola || timbre.escola || "",
+      logoUrl: h.logoUrl || timbre.logoUrl || "",
+      bannerUrl: h.bannerUrl || timbre.bannerUrl || "",
     }));
   }, [timbre]);
 
@@ -265,15 +275,20 @@ export default function GameFactory() {
     const el = document.getElementById("game-print-area");
     const ak = document.getElementById("answer-key-area");
     if (!el) return;
+
     const pw = window.open("", "_blank");
     if (!pw) return;
+
     pw.document.write(`<html><head><title>${tema || "Jogo"}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      @page { size: A4; margin: 15mm; }
-      body { font-family: 'Inter', 'Arial', sans-serif; }
+      @page { size: A4; margin: 0; }
+      body { font-family: 'Inter', 'Arial', sans-serif; background: #fff; }
+      .a4-page-scaled { width: 210mm !important; min-height: 297mm !important; margin: 0 auto; box-shadow: none !important; page-break-after: always; }
+      img { max-width: 100%; height: auto; }
+      table { max-width: 100%; }
     </style></head><body>`);
-    pw.document.write(el.innerHTML);
-    if (ak && answerKey !== "none") pw.document.write(ak.innerHTML);
+    pw.document.write(el.outerHTML);
+    if (ak && answerKey !== "none") pw.document.write(ak.outerHTML);
     pw.document.write("</body></html>");
     pw.document.close();
     pw.focus();
@@ -436,7 +451,7 @@ export default function GameFactory() {
 
   // --- SPLIT EDITOR ---
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 overflow-x-hidden">
       {/* Top bar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
@@ -463,9 +478,9 @@ export default function GameFactory() {
         )}
       </div>
 
-      <div className="flex gap-4 items-start" style={{ minHeight: "calc(100vh - 180px)" }}>
+      <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)] overflow-hidden" style={{ minHeight: "calc(100vh - 180px)" }}>
         {/* LEFT PANEL */}
-        <div className="w-[340px] shrink-0 sticky top-4 space-y-2.5 overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
+        <div className="w-full lg:w-[340px] lg:shrink-0 lg:sticky lg:top-4 space-y-2.5 overflow-visible lg:overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
           <Card className="shadow-card">
             <CardContent className="p-3 space-y-3">
 
@@ -899,7 +914,7 @@ export default function GameFactory() {
         </div>
 
         {/* RIGHT: Preview — estrutura semelhante ao preview de atividades */}
-        <div className="flex-1 min-w-0 overflow-x-hidden">
+        <div className="overflow-x-hidden min-w-0">
           <div data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
             <style>{`
               [data-a4-container] .a4-page-scaled {
@@ -915,7 +930,7 @@ export default function GameFactory() {
             `}</style>
             <ResponsiveA4Wrapper>
               {gameData ? (
-                <div className="flex flex-col items-center gap-6">
+                <div className="flex flex-col items-center gap-6 w-full">
                   {renderPreview()}
                   {answerKey !== "none" && showAnswerKey && (
                     <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
@@ -927,7 +942,7 @@ export default function GameFactory() {
                   <p className="text-sm font-medium text-center px-6">
                     {mode === "ai" ? 'Insira o tema e clique em "Gerar com IA"' : 'Configure e clique em "Gerar Jogo"'}
                   </p>
-                  <p className="text-xs mt-1 opacity-60 text-center px-6">A folha A4 aparecerá aqui com o timbre da escola</p>
+                  <p className="text-xs mt-1 opacity-60 text-center px-6">O preview A4 com timbre aparecerá aqui</p>
                 </div>
               )}
             </ResponsiveA4Wrapper>
