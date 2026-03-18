@@ -24,10 +24,8 @@ export default function CrosswordPreview({ data, config }: Props) {
             {Array.from({ length: data.size }).map((_, r) => (
               <tr key={r}>
                 {Array.from({ length: data.size }).map((_, c) => {
-                  const cell = data.grid[r * data.size + c] || data.grid.flat()[r * data.size + c];
-                  // Handle both flat and 2D grid formats
-                  const cellData = Array.isArray(data.grid[0]) 
-                    ? (data.grid as any)[r][c] 
+                  const cellData = Array.isArray(data.grid[0])
+                    ? (data.grid as any)[r][c]
                     : data.grid[r * data.size + c];
                   return (
                     <td
@@ -35,8 +33,8 @@ export default function CrosswordPreview({ data, config }: Props) {
                       style={{
                         width: `${cellSize}px`,
                         height: `${cellSize}px`,
-                        border: cellData?.empty ? "none" : "1.5px solid #000",
-                        background: cellData?.empty ? "transparent" : "#fff",
+                        border: cellData?.empty ? "none" : "1.5px solid hsl(var(--foreground))",
+                        background: cellData?.empty ? "transparent" : "hsl(var(--card))",
                         textAlign: "center",
                         verticalAlign: "middle",
                         position: "relative",
@@ -46,7 +44,7 @@ export default function CrosswordPreview({ data, config }: Props) {
                       }}
                     >
                       {cellData?.number && (
-                        <span style={{ position: "absolute", top: 1, left: 2, fontSize: "7px", fontWeight: 400, color: "#333" }}>
+                        <span style={{ position: "absolute", top: 1, left: 2, fontSize: "7px", fontWeight: 400, color: "hsl(var(--muted-foreground))" }}>
                           {cellData.number}
                         </span>
                       )}
@@ -59,7 +57,7 @@ export default function CrosswordPreview({ data, config }: Props) {
         </table>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm", fontSize: "10pt" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm", fontSize: "10pt", borderTop: "1px solid hsl(var(--border))", paddingTop: "4mm" }}>
         <div>
           <strong>→ Horizontal:</strong>
           {data.clues.filter(c => c.direction === "across").map(c => (
