@@ -914,7 +914,7 @@ export default function GameFactory() {
         </div>
 
         {/* RIGHT: Preview — estrutura semelhante ao preview de atividades */}
-        <div className="flex-1 min-w-0 overflow-x-hidden">
+        <div className="overflow-x-hidden min-w-0">
           <div data-a4-container className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
             <style>{`
               [data-a4-container] .a4-page-scaled {
@@ -930,7 +930,7 @@ export default function GameFactory() {
             `}</style>
             <ResponsiveA4Wrapper>
               {gameData ? (
-                <div className="flex flex-col items-center gap-6">
+                <div className="flex flex-col items-center gap-6 w-full">
                   {renderPreview()}
                   {answerKey !== "none" && showAnswerKey && (
                     <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
