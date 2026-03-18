@@ -39,6 +39,16 @@ export default function GameA4Shell({
 }: Props) {
   const grayscale = colorMode === "grayscale";
   const highContrast = colorMode === "high-contrast";
+  const shouldShowHeader = header.showHeader || Boolean(
+    header.escola ||
+    header.logoUrl ||
+    header.bannerUrl ||
+    header.professor ||
+    header.disciplina ||
+    header.serie ||
+    header.aluno ||
+    header.data
+  );
 
   return (
     <div
@@ -49,7 +59,7 @@ export default function GameA4Shell({
         filter: grayscale ? "grayscale(1)" : highContrast ? "contrast(1.4)" : undefined,
       }}
     >
-      {header.showHeader && (
+      {shouldShowHeader && (
         <div style={{ marginBottom: "4mm" }}>
           {header.bannerUrl ? (
             <>
