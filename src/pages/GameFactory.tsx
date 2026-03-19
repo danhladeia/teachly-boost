@@ -180,11 +180,11 @@ export default function GameFactory() {
     if (isMobile) setPreviewMode("mobile");
   }, [isMobile]);
 
-  // Helper to apply etapa defaults for tema and palavras
+  // Helper to apply etapa defaults for caça-palavras
   const applyEtapaDefaults = (etapa: EtapaEscolar, diff: Difficulty) => {
     const defaults = getWordSearchDefaults(etapa, diff);
-    setTema(defaults.tema);
-    setPalavras(defaults.palavras);
+    setGridSize(defaults.gridSize);
+    setDirections(defaults.directions);
   };
 
   // Generate game data
