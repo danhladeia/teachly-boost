@@ -347,6 +347,7 @@ export default function GameFactory() {
     etapa,
     header,
     colorMode,
+    answerKey,
     customInstructions,
     gridSize,
     directions,
