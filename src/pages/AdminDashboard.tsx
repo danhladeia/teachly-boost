@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, Search, CreditCard, Users, Gift, LogOut, User, MessageSquare, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Search, CreditCard, Users, Gift, LogOut, User, MessageSquare, ArrowLeft, FolderOpen, FileText, BookOpen, Gamepad2, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logoGoPedagoX from "@/assets/logo-gopedagox.png";
 import AdminNotificationSender from "@/components/AdminNotificationSender";
 
@@ -30,11 +31,35 @@ interface UserProfile {
   created_at: string;
 }
 
+interface SavedDoc {
+  id: string;
+  titulo: string;
+  tipo: string;
+  created_at: string;
+  disciplina: string | null;
+  nivel: string | null;
+  modelo: string | null;
+}
+
 const planColors: Record<string, string> = {
   starter: "bg-muted text-muted-foreground",
   pro: "bg-yellow-100 text-yellow-800",
   master: "bg-orange-100 text-orange-800",
   ultra: "bg-primary/10 text-primary",
+};
+
+const docTypeIcons: Record<string, React.ReactNode> = {
+  plano: <BookOpen className="h-3.5 w-3.5 text-green-600" />,
+  atividade: <FileText className="h-3.5 w-3.5 text-primary" />,
+  jogo: <Gamepad2 className="h-3.5 w-3.5 text-orange-500" />,
+  diagrama: <GitBranch className="h-3.5 w-3.5 text-purple-500" />,
+};
+
+const docTypeLabels: Record<string, string> = {
+  plano: "Plano de Aula",
+  atividade: "Atividade",
+  jogo: "Jogo",
+  diagrama: "Diagrama",
 };
 
 export default function AdminDashboard() {
@@ -51,6 +76,12 @@ export default function AdminDashboard() {
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({
     open: false, title: "", description: "", onConfirm: () => {},
   });
+
+  // Documents viewer
+  const [showDocsDialog, setShowDocsDialog] = useState(false);
+  const [docsUser, setDocsUser] = useState<UserProfile | null>(null);
+  const [userDocs, setUserDocs] = useState<SavedDoc[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
 
   useEffect(() => {
     checkAdmin();
@@ -85,6 +116,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadUserDocs = async (userProfile: UserProfile) => {
+    setDocsUser(userProfile);
+    setShowDocsDialog(true);
+    setDocsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("documentos_salvos")
+        .select("id, titulo, tipo, created_at, disciplina, nivel, modelo")
+        .eq("user_id", userProfile.user_id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      setUserDocs(data || []);
+    } catch {
+      toast.error("Erro ao carregar documentos");
+      setUserDocs([]);
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
   const creditTypeLabels: Record<string, string> = {
     credits_remaining: "Créditos gerais",
     creditos_ia: "Créditos IA",
@@ -108,12 +160,7 @@ export default function AdminDashboard() {
     if (!selected) return;
     const currentValue = (selected as any)[creditType] as number;
     const newValue = currentValue + amount;
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ [creditType]: newValue } as any)
-      .eq("id", selected.id);
-
+    const { error } = await supabase.from("profiles").update({ [creditType]: newValue } as any).eq("id", selected.id);
     if (error) { toast.error("Erro ao dar créditos"); return; }
     toast.success(`+${amount} créditos adicionados com sucesso!`);
     setSelected({ ...selected, [creditType]: newValue } as any);
@@ -138,7 +185,6 @@ export default function AdminDashboard() {
       master: { credits_remaining: 60, credits_general: 60, credits_exams: 100, logos_limit: 3, subscription_status: "active" },
       ultra: { credits_remaining: 9999, credits_general: 9999, credits_exams: 9999, logos_limit: 9999, subscription_status: "active" },
     };
-
     const update = { plan_type: newPlan, ...planCredits[newPlan] };
     const { error } = await supabase.from("profiles").update(update as any).eq("id", selected.id);
     if (error) { toast.error("Erro ao alterar plano"); return; }
@@ -157,7 +203,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={logoGoPedagoX} alt="GoPedagoX" className="h-8 w-auto" />
@@ -209,12 +254,7 @@ export default function AdminDashboard() {
               </CardTitle>
               <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  className="pl-10"
-                  placeholder="Buscar por nome ou email..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+                <Input className="pl-10" placeholder="Buscar por nome ou email..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
             </CardHeader>
             <CardContent>
@@ -242,7 +282,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* User detail / credit management */}
+          {/* User detail */}
           {selected ? (
             <div className="space-y-4">
               <Card className="shadow-card">
@@ -280,6 +320,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground">Cadastro: {new Date(selected.created_at).toLocaleDateString("pt-BR")}</p>
+
+                  {/* View documents button */}
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => loadUserDocs(selected)}>
+                    <FolderOpen className="h-4 w-4 mr-2" /> Ver Documentos Criados
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -301,13 +346,7 @@ export default function AdminDashboard() {
                     </SelectContent>
                   </Select>
                   <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      min="1"
-                      value={creditAmount}
-                      onChange={(e) => setCreditAmount(e.target.value)}
-                      className="text-sm"
-                    />
+                    <Input type="number" min="1" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} className="text-sm" />
                     <Button onClick={requestGiveCredits} className="shrink-0 gradient-primary border-0 text-primary-foreground">
                       <Gift className="h-4 w-4 mr-1" /> Dar
                     </Button>
@@ -340,7 +379,6 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Send Notification */}
               <AdminNotificationSender users={users} />
             </div>
           ) : (
@@ -350,6 +388,49 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Documents Dialog */}
+      <Dialog open={showDocsDialog} onOpenChange={setShowDocsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-primary" />
+              Documentos de {docsUser?.nome || docsUser?.email || "Usuário"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-1 pt-2">
+            {docsLoading ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando...
+              </div>
+            ) : userDocs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-12">Nenhum documento encontrado.</p>
+            ) : (
+              userDocs.map(doc => (
+                <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                  <div className="shrink-0">
+                    {docTypeIcons[doc.tipo] || <FileText className="h-3.5 w-3.5 text-muted-foreground" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{doc.titulo}</p>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <Badge variant="outline" className="text-[9px] h-4">{docTypeLabels[doc.tipo] || doc.tipo}</Badge>
+                      {doc.disciplina && <span>{doc.disciplina}</span>}
+                      {doc.nivel && <span>· {doc.nivel}</span>}
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground shrink-0">
+                    {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="pt-2 border-t text-[10px] text-muted-foreground">
+            {userDocs.length} documento(s) encontrado(s)
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>

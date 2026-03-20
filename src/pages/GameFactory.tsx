@@ -28,6 +28,7 @@ import TimbreSelector from "@/components/TimbreSelector";
 import type { TimbreData } from "@/hooks/useTimbre";
 import { useCredits } from "@/hooks/useCredits";
 import { useDocumentLimits } from "@/hooks/useDocumentLimits";
+import { exportToPdf } from "@/lib/export-utils";
 import {
   defaultHeader, defaultDirections, etapaConfig, getWordSearchDefaults,
   type Difficulty, type EtapaEscolar, type EditorMode, type GameConfig, type GameHeader,
@@ -144,7 +145,6 @@ export default function GameFactory() {
 
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
 
-  // Sync selected timbre to header
   const handleTimbreSelect = (t: TimbreData | null) => {
     setSelectedTimbre(t);
     if (t) {
@@ -157,15 +157,9 @@ export default function GameFactory() {
       }));
       return;
     }
-
-    setHeader(h => ({
-      ...h,
-      logoUrl: "",
-      bannerUrl: "",
-    }));
+    setHeader(h => ({ ...h, logoUrl: "", bannerUrl: "" }));
   };
 
-  // Always sync header with branding from Timbres e Branding
   useEffect(() => {
     setHeader(h => ({
       ...h,
@@ -180,14 +174,12 @@ export default function GameFactory() {
     if (isMobile) setPreviewMode("mobile");
   }, [isMobile]);
 
-  // Helper to apply etapa defaults for caça-palavras
   const applyEtapaDefaults = (etapa: EtapaEscolar, diff: Difficulty) => {
     const defaults = getWordSearchDefaults(etapa, diff);
     setGridSize(defaults.gridSize);
     setDirections(defaults.directions);
   };
 
-  // Generate game data
   const handleGenerate = useCallback(async () => {
     if (!selectedGameDef) return;
     setGenerating(true);
@@ -197,57 +189,33 @@ export default function GameFactory() {
     try {
       let data: any = null;
       const config: GameConfig = {
-        tema,
-        palavras,
-        difficulty,
-        etapa,
-        header,
-        colorMode,
-        answerKey,
-        customInstructions,
-        gridSize,
-        directions,
+        tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
+        gridSize, directions,
         wordListPosition: wordListPosition as GameConfig["wordListPosition"],
         wordListOrder: wordListOrder as GameConfig["wordListOrder"],
         cellFormat: cellFormat as GameConfig["cellFormat"],
         letterCase: letterCase as GameConfig["letterCase"],
         fontStyle: fontStyle as GameConfig["fontStyle"],
-        spacing,
-        bonusWords,
-        miniText,
+        spacing, bonusWords, miniText,
         hintStyle: hintStyle as GameConfig["hintStyle"],
         crosswordSymmetry: crosswordSymmetry as GameConfig["crosswordSymmetry"],
-        mysteryWord,
-        symbolTheme,
-        cipherType,
-        caesarShift,
-        vigenereKey,
+        mysteryWord, symbolTheme, cipherType, caesarShift, vigenereKey,
         showCipherTable: showCipherTable as GameConfig["showCipherTable"],
         phraseLength: phraseLength as GameConfig["phraseLength"],
         sudokuSize,
         sudokuContentType: sudokuContentType as GameConfig["sudokuContentType"],
-        sudokuCustomSymbols: sudokuCustomSymbols
-          ? sudokuCustomSymbols.split(",").map(symbol => symbol.trim()).filter(Boolean)
-          : undefined,
-        sudokuFillPercent,
-        sudokuCount,
-        sudokuShowScratch,
+        sudokuCustomSymbols: sudokuCustomSymbols ? sudokuCustomSymbols.split(",").map(s => s.trim()).filter(Boolean) : undefined,
+        sudokuFillPercent, sudokuCount, sudokuShowScratch,
         mazeQuestions,
         mazeSize: mazeSize as GameConfig["mazeSize"],
         mazeQuestionType: mazeQuestionType as GameConfig["mazeQuestionType"],
       };
 
-      if (selectedGame === "caca-palavras") {
-        data = generateWordSearch(config);
-      } else if (selectedGame === "cruzadinha") {
-        data = generateCrossword(config);
-      } else if (selectedGame === "criptograma") {
-        data = generateCryptogram(config);
-      } else if (selectedGame === "sudoku") {
-        data = generateSudoku(config);
-      } else if (selectedGame === "labirinto") {
-        data = generateMaze(config);
-      }
+      if (selectedGame === "caca-palavras") data = generateWordSearch(config);
+      else if (selectedGame === "cruzadinha") data = generateCrossword(config);
+      else if (selectedGame === "criptograma") data = generateCryptogram(config);
+      else if (selectedGame === "sudoku") data = generateSudoku(config);
+      else if (selectedGame === "labirinto") data = generateMaze(config);
 
       setGameData(data);
     } catch (e) {
@@ -257,125 +225,87 @@ export default function GameFactory() {
       setGenerating(false);
     }
   }, [
-    selectedGame,
-    selectedGameDef,
-    tema,
-    palavras,
-    difficulty,
-    etapa,
-    editorMode,
-    header,
-    colorMode,
-    customInstructions,
-    gridSize,
-    directions,
-    wordListPosition,
-    wordListOrder,
-    cellFormat,
-    letterCase,
-    fontStyle,
-    spacing,
-    bonusWords,
-    miniText,
-    hintStyle,
-    crosswordSymmetry,
-    mysteryWord,
-    symbolTheme,
-    cipherType,
-    caesarShift,
-    vigenereKey,
-    showCipherTable,
-    phraseLength,
-    sudokuSize,
-    sudokuContentType,
-    sudokuCustomSymbols,
-    sudokuFillPercent,
-    sudokuCount,
-    sudokuShowScratch,
-    mazeQuestions,
-    mazeSize,
-    mazeQuestionType,
+    selectedGame, selectedGameDef, tema, palavras, difficulty, etapa, editorMode, header, colorMode,
+    customInstructions, gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase,
+    fontStyle, spacing, bonusWords, miniText, hintStyle, crosswordSymmetry, mysteryWord, symbolTheme,
+    cipherType, caesarShift, vigenereKey, showCipherTable, phraseLength, sudokuSize, sudokuContentType,
+    sudokuCustomSymbols, sudokuFillPercent, sudokuCount, sudokuShowScratch, mazeQuestions, mazeSize, mazeQuestionType,
   ]);
 
-  // Save game data (stub)
   const handleSave = async () => {
+    if (!docLimits.checkAndWarnLimit()) return;
     setSaving(true);
     try {
-      // Implement save logic here
-      toast.success("Jogo salvo com sucesso");
-    } catch {
-      toast.error("Erro ao salvar o jogo");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login"); return; }
+      const titulo = `${selectedGameDef?.title || "Jogo"} - ${tema || "Sem tema"}`;
+      const { error } = await supabase.from("documentos_salvos").insert({
+        user_id: user.id, tipo: "jogo", titulo,
+        conteudo: { gameData, gameType: selectedGame, config: getConfig() } as any,
+      });
+      if (error) throw error;
+      toast.success("Jogo salvo na biblioteca!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
     } finally {
       setSaving(false);
     }
   };
 
-  // Print handler (stub)
   const handlePrint = () => {
-    window.print();
+    const el = document.getElementById("game-print-area");
+    if (!el) return;
+    const pw = window.open("", "_blank");
+    if (!pw) return;
+    pw.document.write(`<html><head><title>Jogo</title><style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', 'Arial', sans-serif; }
+      @page { size: A4; margin: 0; }
+    </style></head><body>`);
+    pw.document.write(el.outerHTML);
+    const ak = document.getElementById("answer-key-area");
+    if (ak && answerKey !== "none" && showAnswerKey) pw.document.write(ak.outerHTML);
+    pw.document.write("</body></html>");
+    pw.document.close();
+    pw.focus();
+    pw.print();
+    pw.close();
   };
 
-  // PDF export handler (stub)
   const handlePDF = () => {
-    toast("Função de exportar PDF ainda não implementada");
+    exportToPdf("game-print-area", "jogo");
   };
 
-  // Render preview based on selected game and data
   const renderPreview = () => {
     if (!gameData || !selectedGame) return null;
     switch (selectedGame) {
-      case "caca-palavras":
-        return <WordSearchPreview data={gameData} config={getConfig()} />;
-      case "cruzadinha":
-        return <CrosswordPreview data={gameData} config={getConfig()} />;
-      case "criptograma":
-        return <CryptogramPreview data={gameData} config={getConfig()} />;
-      case "sudoku":
-        return <SudokuPreview data={gameData} config={getConfig()} />;
-      case "labirinto":
-        return <MazePreview data={gameData} config={getConfig()} />;
-      default:
-        return null;
+      case "caca-palavras": return <WordSearchPreview data={gameData} config={getConfig()} />;
+      case "cruzadinha": return <CrosswordPreview data={gameData} config={getConfig()} />;
+      case "criptograma": return <CryptogramPreview data={gameData} config={getConfig()} />;
+      case "sudoku": return <SudokuPreview data={gameData} config={getConfig()} />;
+      case "labirinto": return <MazePreview data={gameData} config={getConfig()} />;
+      default: return null;
     }
   };
 
-  // Compose config object for previews
   const getConfig = (): GameConfig => ({
-    tema,
-    palavras,
-    difficulty,
-    etapa,
-    header,
-    colorMode,
-    answerKey,
-    customInstructions,
-    gridSize,
-    directions,
+    tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
+    gridSize, directions,
     wordListPosition: wordListPosition as GameConfig["wordListPosition"],
     wordListOrder: wordListOrder as GameConfig["wordListOrder"],
     cellFormat: cellFormat as GameConfig["cellFormat"],
     letterCase: letterCase as GameConfig["letterCase"],
     fontStyle: fontStyle as GameConfig["fontStyle"],
-    spacing,
-    bonusWords,
-    miniText,
+    spacing, bonusWords, miniText,
     hintStyle: hintStyle as GameConfig["hintStyle"],
     crosswordSymmetry: crosswordSymmetry as GameConfig["crosswordSymmetry"],
-    mysteryWord,
-    symbolTheme,
-    cipherType,
-    caesarShift,
-    vigenereKey,
+    mysteryWord, symbolTheme, cipherType, caesarShift, vigenereKey,
     showCipherTable: showCipherTable as GameConfig["showCipherTable"],
     phraseLength: phraseLength as GameConfig["phraseLength"],
     sudokuSize,
     sudokuContentType: sudokuContentType as GameConfig["sudokuContentType"],
-    sudokuCustomSymbols: sudokuCustomSymbols
-      ? sudokuCustomSymbols.split(",").map(symbol => symbol.trim()).filter(Boolean)
-      : undefined,
-    sudokuFillPercent,
-    sudokuCount,
-    sudokuShowScratch,
+    sudokuCustomSymbols: sudokuCustomSymbols ? sudokuCustomSymbols.split(",").map(s => s.trim()).filter(Boolean) : undefined,
+    sudokuFillPercent, sudokuCount, sudokuShowScratch,
     mazeQuestions,
     mazeSize: mazeSize as GameConfig["mazeSize"],
     mazeQuestionType: mazeQuestionType as GameConfig["mazeQuestionType"],
@@ -389,7 +319,7 @@ export default function GameFactory() {
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
             <Gamepad2 className="h-6 w-6 text-primary" /> Criador de Jogos A4
           </h1>
-          <p className="text-muted-foreground mt-1">Escolha um jogo pedagógico com o mesmo fluxo visual de criação das atividades.</p>
+          <p className="text-muted-foreground mt-1">Escolha um jogo pedagógico para impressão em A4.</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {GAMES.map(game => (
@@ -434,7 +364,7 @@ export default function GameFactory() {
       )}
     </div>
   ) : (
-    <div className="flex flex-col items-center justify-center py-24 text-muted-foreground bg-card text-card-foreground shadow-lg a4-page-scaled min-h-[420px] w-full max-w-[210mm]">
+    <div className="flex flex-col items-center justify-center py-24 text-muted-foreground bg-card text-card-foreground shadow-lg rounded-lg min-h-[420px] w-full" style={{ maxWidth: "210mm" }}>
       <Gamepad2 className="h-14 w-14 mb-4 opacity-20" />
       <p className="text-sm font-medium text-center px-6">
         {mode === "ai" ? 'Insira o tema e clique em "Gerar com IA"' : 'Configure e clique em "Gerar Jogo"'}
@@ -452,17 +382,7 @@ export default function GameFactory() {
         onSave={gameData ? handleSave : undefined}
         saving={saving}
         leading={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedGame(null);
-              setGameData(null);
-              setPalavras("");
-              setMazeQuestions([]);
-              setShowAnswerKey(false);
-            }}
-          >
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedGame(null); setGameData(null); setPalavras(""); setMazeQuestions([]); setShowAnswerKey(false); }}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Jogos
           </Button>
         }
@@ -479,16 +399,13 @@ export default function GameFactory() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[380px_1fr] overflow-hidden">
-        <div className="space-y-4 pr-1">
+        {/* LEFT PANEL — scrollable config */}
+        <div className="space-y-4 pr-1 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:overflow-x-hidden">
           <Card className="shadow-card">
             <CardContent className="pt-4 space-y-3">
               <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
                 <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
-                <TimbreSelector
-                  selectedId={selectedTimbre?.id}
-                  onSelect={handleTimbreSelect}
-                  label="Selecionar escola/timbre"
-                />
+                <TimbreSelector selectedId={selectedTimbre?.id} onSelect={handleTimbreSelect} label="Selecionar escola/timbre" />
                 {!selectedTimbre && (
                   <Input placeholder="Ou digite o nome da escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-8 text-xs" />
                 )}
@@ -566,9 +483,6 @@ export default function GameFactory() {
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Palavras-chave (vírgula)</Label>
                   <Textarea placeholder="SUJEITO, VERBO, PREDICADO ou FRAÇÃO, NUMERADOR, DENOMINADOR" value={palavras} onChange={e => setPalavras(e.target.value)} className="min-h-[50px] text-xs" />
-                  <p className="text-[9px] text-muted-foreground">
-                    Ex: SUBSTANTIVO, ADJETIVO, VERBO ou SOMA, SUBTRAÇÃO, MULTIPLICAÇÃO
-                  </p>
                 </div>
               )}
 
@@ -590,7 +504,6 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="space-y-1">
                       <Label className="text-[10px]">Direções permitidas <Tip text="Mais direções = mais difícil" /></Label>
                       <div className="space-y-1">
@@ -602,17 +515,12 @@ export default function GameFactory() {
                           { key: "reversed" as const, label: "🔄 Invertidas (trás p/ frente)" },
                         ].map(d => (
                           <div key={d.key} className="flex items-center gap-2">
-                            <Checkbox
-                              id={`dir-${d.key}`}
-                              checked={directions[d.key]}
-                              onCheckedChange={v => setDirections(prev => ({ ...prev, [d.key]: !!v }))}
-                            />
+                            <Checkbox id={`dir-${d.key}`} checked={directions[d.key]} onCheckedChange={v => setDirections(prev => ({ ...prev, [d.key]: !!v }))} />
                             <label htmlFor={`dir-${d.key}`} className="text-[10px]">{d.label}</label>
                           </div>
                         ))}
                       </div>
                     </div>
-
                     <div className="space-y-1">
                       <Label className="text-[10px]">Lista de palavras <Tip text="Ocultar lista torna a atividade mais desafiadora" /></Label>
                       <Select value={wordListPosition} onValueChange={setWordListPosition}>
@@ -625,7 +533,6 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="flex items-center justify-between">
                       <Label className="text-[10px]">📖 Gerar minitexto com palavras <Tip text="Gera um pequeno texto com as palavras em CAIXA ALTA para o aluno encontrar" /></Label>
                       <Switch checked={miniText} onCheckedChange={setMiniText} />
@@ -680,42 +587,40 @@ export default function GameFactory() {
               )}
 
               {selectedGame === "cruzadinha" && (
-                <>
-                  <Section title="✏️ Configurações das Cruzadas">
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Estilo de Dica <Tip text="Define como as dicas são apresentadas" /></Label>
-                      <Select value={hintStyle} onValueChange={setHintStyle}>
-                        <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Texto descritivo</SelectItem>
-                          <SelectItem value="synonym">Sinônimo</SelectItem>
-                          <SelectItem value="fill-blank">Preencha a lacuna</SelectItem>
-                          <SelectItem value="question">Pergunta</SelectItem>
-                          <SelectItem value="riddle">Enigma/Charada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {isAdvanced && (
-                      <>
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Simetria da grade</Label>
-                          <Select value={crosswordSymmetry} onValueChange={setCrosswordSymmetry}>
-                            <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="symmetric">Simétrica</SelectItem>
-                              <SelectItem value="asymmetric">Assimétrica</SelectItem>
-                              <SelectItem value="radial">Radial</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Palavra misteriosa (opcional)</Label>
-                          <Input placeholder="Palavra que aparece na vertical" value={mysteryWord} onChange={e => setMysteryWord(e.target.value)} className="h-7 text-[10px]" />
-                        </div>
-                      </>
-                    )}
-                  </Section>
-                </>
+                <Section title="✏️ Configurações das Cruzadas">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Estilo de Dica <Tip text="Define como as dicas são apresentadas" /></Label>
+                    <Select value={hintStyle} onValueChange={setHintStyle}>
+                      <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text">Texto descritivo</SelectItem>
+                        <SelectItem value="synonym">Sinônimo</SelectItem>
+                        <SelectItem value="fill-blank">Preencha a lacuna</SelectItem>
+                        <SelectItem value="question">Pergunta</SelectItem>
+                        <SelectItem value="riddle">Enigma/Charada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isAdvanced && (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Simetria da grade</Label>
+                        <Select value={crosswordSymmetry} onValueChange={setCrosswordSymmetry}>
+                          <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="symmetric">Simétrica</SelectItem>
+                            <SelectItem value="asymmetric">Assimétrica</SelectItem>
+                            <SelectItem value="radial">Radial</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Palavra misteriosa (opcional)</Label>
+                        <Input placeholder="Palavra que aparece na vertical" value={mysteryWord} onChange={e => setMysteryWord(e.target.value)} className="h-7 text-[10px]" />
+                      </div>
+                    </>
+                  )}
+                </Section>
               )}
 
               {selectedGame === "criptograma" && (
@@ -734,21 +639,18 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     {cipherType === "caesar" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Deslocamento César ({caesarShift})</Label>
                         <Slider value={[caesarShift]} onValueChange={v => setCaesarShift(v[0])} min={1} max={25} step={1} />
                       </div>
                     )}
-
                     {cipherType === "vigenere" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Palavra-chave Vigenère</Label>
                         <Input placeholder="CHAVE" value={vigenereKey} onChange={e => setVigenereKey(e.target.value)} className="h-7 text-[10px]" />
                       </div>
                     )}
-
                     <div className="space-y-1">
                       <Label className="text-[10px]">Tema dos símbolos</Label>
                       <Select value={symbolTheme} onValueChange={v => setSymbolTheme(v as CryptoSymbolTheme)}>
@@ -762,7 +664,6 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     {mode === "manual" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Frase Secreta</Label>
@@ -770,7 +671,6 @@ export default function GameFactory() {
                       </div>
                     )}
                   </Section>
-
                   {isAdvanced && (
                     <Section title="⚙️ Configurações Avançadas" defaultOpen={false}>
                       <div className="space-y-1">
@@ -823,7 +723,6 @@ export default function GameFactory() {
                       </div>
                     )}
                   </Section>
-
                   {isAdvanced && (
                     <Section title="⚙️ Configurações Avançadas" defaultOpen={false}>
                       <div className="space-y-1">
@@ -887,19 +786,16 @@ export default function GameFactory() {
           </Card>
         </div>
 
+        {/* RIGHT PANEL — A4 Preview */}
         <div className="overflow-x-hidden min-w-0">
-          <div ref={undefined} data-a4-container data-preview-mode={previewMode} className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
+          <div data-a4-container data-preview-mode={previewMode} className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
             <div className="flex items-center gap-1 rounded-lg border bg-card p-0.5 self-end">
-              <button
-                onClick={() => setPreviewMode("print")}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "print" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
+              <button onClick={() => setPreviewMode("print")}
+                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "print" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                 <Monitor className="h-3 w-3" /> Impressão
               </button>
-              <button
-                onClick={() => setPreviewMode("mobile")}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "mobile" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
+              <button onClick={() => setPreviewMode("mobile")}
+                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "mobile" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                 <Smartphone className="h-3 w-3" /> Leitura
               </button>
             </div>
