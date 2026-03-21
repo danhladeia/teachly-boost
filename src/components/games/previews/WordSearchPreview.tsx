@@ -25,18 +25,19 @@ export default function WordSearchPreview({ data, config }: Props) {
       colorMode={config.colorMode}
     >
       {config.customInstructions && (
-        <p style={{ textAlign: "center", fontSize: "9pt", fontStyle: "italic", marginBottom: "4mm", color: "hsl(var(--muted-foreground))" }}>
+        <p style={{ textAlign: "center", fontSize: "9pt", fontStyle: "italic", marginBottom: "4mm", color: "#555" }}>
           📝 {config.customInstructions}
         </p>
       )}
 
+      {/* Mini-text with words in UPPERCASE */}
       {data.miniText && (
         <div style={{
           marginBottom: "5mm",
           padding: "3mm 4mm",
-          border: "1px solid hsl(var(--border))",
+          border: "1px solid #ccc",
           borderRadius: "2mm",
-          background: "hsl(var(--muted) / 0.35)",
+          background: "#fafafa",
           fontSize: "10pt",
           lineHeight: 1.6,
           textAlign: "justify",

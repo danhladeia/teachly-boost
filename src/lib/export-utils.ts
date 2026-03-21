@@ -36,81 +36,84 @@ export async function exportToPdf(elementId: string, filename: string) {
   const element = document.getElementById(elementId);
   if (!element) return;
 
+  const html2pdf = (await import("html2pdf.js")).default;
   const directChildren = Array.from(element.children).filter((child): child is HTMLElement => child instanceof HTMLElement);
   const isPaginatedA4 = directChildren.some((el) => el.style.height.includes("297mm"));
 
   // Special handling for paginated A4 previews (atividades)
-  // Renders each page independently via html2canvas → jsPDF to avoid blank pages
-  // caused by floating-point rounding when html2pdf splits a 297mm-tall div.
   if (isPaginatedA4) {
+    // Filter only actual page divs (with height 297mm)
     const pageEls = directChildren.filter((el) => el.style.height.includes("297mm"));
     if (pageEls.length === 0) return;
 
-    const html2canvas = (await import("html2canvas")).default;
-    const { jsPDF } = await import("jspdf");
+    // Save original styles
+    const origTransform = element.style.transform;
+    const origTransformOrigin = element.style.transformOrigin;
+    const origWidth = element.style.width;
+    const origGap = element.style.gap;
+    const origDisplay = element.style.display;
+    const origAlignItems = element.style.alignItems;
 
-    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-    let addedPages = 0;
+    // Remove any scaling on the container
+    element.style.transform = "none";
+    element.style.transformOrigin = "";
+    element.style.width = "210mm";
+    element.style.gap = "0";
+    element.style.display = "block";
+    element.style.alignItems = "";
 
-    for (let i = 0; i < pageEls.length; i++) {
-      const el = pageEls[i];
+    const savedPageStyles = pageEls.map((el) => ({
+      el,
+      boxShadow: el.style.boxShadow,
+      margin: el.style.margin,
+      overflow: el.style.overflow,
+      pageBreakAfter: el.style.pageBreakAfter,
+      pageBreakInside: el.style.pageBreakInside,
+      breakInside: el.style.breakInside,
+    }));
 
-      // Temporarily strip decorative styles that shouldn't appear in PDF
-      const origBoxShadow = el.style.boxShadow;
-      const origMargin = el.style.margin;
-      const origTransform = el.style.transform;
+    // Hide non-page elements temporarily
+    const nonPageEls = directChildren.filter((el) => !el.style.height.includes("297mm"));
+    const savedNonPage = nonPageEls.map(el => ({ el, display: el.style.display }));
+    nonPageEls.forEach(el => { el.style.display = "none"; });
+
+    pageEls.forEach((el, index) => {
       el.style.boxShadow = "none";
       el.style.margin = "0";
-      el.style.transform = "none";
+      el.style.overflow = "hidden";
+      el.style.pageBreakInside = "avoid";
+      el.style.breakInside = "avoid";
+      el.style.pageBreakAfter = index === pageEls.length - 1 ? "auto" : "always";
+    });
 
-      // Also clear any scaling on the parent container
-      const origContainerTransform = element.style.transform;
-      element.style.transform = "none";
+    await html2pdf()
+      .set({
+        margin: [0, 0, 0, 0],
+        filename: `${filename}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, width: pageEls[0].scrollWidth || 793 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] },
+      })
+      .from(element)
+      .save();
 
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        // Force exact A4 pixel dimensions at 96 dpi to avoid overflow bleed
-        width: 794,
-        height: 1123,
-        windowWidth: 794,
-        logging: false,
-      });
-
-      // Restore styles
-      el.style.boxShadow = origBoxShadow;
-      el.style.margin = origMargin;
-      el.style.transform = origTransform;
-      element.style.transform = origContainerTransform;
-
-      // Last-resort blank-page detection: sample a grid of pixels.
-      // If < 0.5% of sampled pixels are non-white, skip this page entirely.
-      const isBlank = (() => {
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return false;
-        const { width, height } = canvas;
-        // Sample inner area (skip 2% border to avoid shadow/edge artefacts)
-        const x0 = Math.floor(width * 0.02);
-        const y0 = Math.floor(height * 0.02);
-        const sw = Math.floor(width * 0.96);
-        const sh = Math.floor(height * 0.96);
-        const data = ctx.getImageData(x0, y0, sw, sh).data;
-        let nonWhite = 0;
-        // Sample every 8th pixel (r channel only for speed)
-        for (let p = 0; p < data.length; p += 32) {
-          if (data[p] < 245 || data[p + 1] < 245 || data[p + 2] < 245) nonWhite++;
-        }
-        return nonWhite / Math.floor(data.length / 32) < 0.005;
-      })();
-
-      if (isBlank) continue;
-
-      if (addedPages > 0) pdf.addPage();
-      pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 210, 297);
-      addedPages++;
-    }
-
-    pdf.save(`${filename}.pdf`);
+    // Restore everything
+    savedPageStyles.forEach((s) => {
+      s.el.style.boxShadow = s.boxShadow;
+      s.el.style.margin = s.margin;
+      s.el.style.overflow = s.overflow;
+      s.el.style.pageBreakAfter = s.pageBreakAfter;
+      s.el.style.pageBreakInside = s.pageBreakInside;
+      s.el.style.breakInside = s.breakInside;
+    });
+    savedNonPage.forEach(s => { s.el.style.display = s.display; });
+    element.style.transform = origTransform;
+    element.style.transformOrigin = origTransformOrigin;
+    element.style.width = origWidth;
+    element.style.gap = origGap;
+    element.style.display = origDisplay;
+    element.style.alignItems = origAlignItems;
     return;
   }
 
@@ -119,7 +122,6 @@ export async function exportToPdf(elementId: string, filename: string) {
   const origWidth = element.style.width;
   const origMinHeight = element.style.minHeight;
   const origBoxShadow = element.style.boxShadow;
-  const html2pdf = (await import("html2pdf.js")).default;
 
   // Temporarily normalize: remove internal padding and constrain width to
   // A4 minus margins so html2pdf doesn't double-count padding.

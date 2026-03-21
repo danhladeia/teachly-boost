@@ -1,12 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
-import EditorTopBar from "@/components/EditorTopBar";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Gamepad2, Search as SearchIcon, Grid3X3, Lock, MapPin,
-  Sparkles, Loader2, RotateCcw, ArrowLeft,
-  Wand2, Edit3, Zap, Settings2,
-  HelpCircle, ChevronDown, ChevronUp, Eye, Monitor, Smartphone,
+  Sparkles, Loader2, Printer, RotateCcw, FileDown, ArrowLeft,
+  Wand2, Edit3, Save, FileText, Palette, EyeOff, Zap, Settings2,
+  HelpCircle, ChevronDown, ChevronUp, Eye,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +26,6 @@ import TimbreSelector from "@/components/TimbreSelector";
 import type { TimbreData } from "@/hooks/useTimbre";
 import { useCredits } from "@/hooks/useCredits";
 import { useDocumentLimits } from "@/hooks/useDocumentLimits";
-import { exportToPdf } from "@/lib/export-utils";
 import {
   defaultHeader, defaultDirections, etapaConfig, getWordSearchDefaults,
   type Difficulty, type EtapaEscolar, type EditorMode, type GameConfig, type GameHeader,
@@ -84,7 +81,6 @@ export default function GameFactory() {
   const { user } = useAuth();
   const { timbre } = useTimbre();
   const docLimits = useDocumentLimits();
-  const isMobile = useIsMobile();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [tema, setTema] = useState("");
   const [palavras, setPalavras] = useState("");
@@ -100,7 +96,6 @@ export default function GameFactory() {
   const [mode, setMode] = useState<"ai" | "manual">("ai");
   const [customInstructions, setCustomInstructions] = useState("");
   const [showAnswerKey, setShowAnswerKey] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"print" | "mobile">(isMobile ? "mobile" : "print");
 
   // Word Search
   const [gridSize, setGridSize] = useState<GridSize>("10x10");
@@ -145,126 +140,140 @@ export default function GameFactory() {
 
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
 
+  // Sync selected timbre to header
   const handleTimbreSelect = (t: TimbreData | null) => {
     setSelectedTimbre(t);
     if (t) {
       setHeader(h => ({
         ...h,
-        showHeader: true,
         escola: t.escola || h.escola,
         logoUrl: t.logoUrl || h.logoUrl,
         bannerUrl: t.bannerUrl || h.bannerUrl,
       }));
-      return;
     }
-    setHeader(h => ({ ...h, logoUrl: "", bannerUrl: "" }));
   };
 
+  // Always sync header with branding from Timbres e Branding
   useEffect(() => {
     setHeader(h => ({
       ...h,
-      showHeader: h.showHeader || Boolean(timbre.escola || timbre.logoUrl || timbre.bannerUrl),
-      escola: h.escola || timbre.escola || "",
-      logoUrl: h.logoUrl || timbre.logoUrl || "",
-      bannerUrl: h.bannerUrl || timbre.bannerUrl || "",
+      logoUrl: timbre.logoUrl || h.logoUrl,
+      bannerUrl: timbre.bannerUrl || h.bannerUrl,
     }));
   }, [timbre]);
 
-  useEffect(() => {
-    if (isMobile) setPreviewMode("mobile");
-  }, [isMobile]);
-
-  const applyEtapaDefaults = (etapa: EtapaEscolar, diff: Difficulty) => {
-    const defaults = getWordSearchDefaults(etapa, diff);
-    setGridSize(defaults.gridSize);
-    setDirections(defaults.directions);
+  // Apply etapa defaults when etapa/difficulty changes for word search
+  const applyEtapaDefaults = (e: EtapaEscolar, d: Difficulty) => {
+    const defs = getWordSearchDefaults(e, d);
+    setGridSize(defs.gridSize);
+    setDirections(defs.directions);
   };
 
-  const handleGenerate = useCallback(async () => {
-    if (!selectedGameDef) return;
+  const getConfig = useCallback((): GameConfig => ({
+    tema, palavras, difficulty, etapa, header, colorMode, answerKey,
+    customInstructions: customInstructions || undefined,
+    gridSize, directions, wordListPosition: wordListPosition as any,
+    wordListOrder: wordListOrder as any, cellFormat: cellFormat as any,
+    letterCase: letterCase as any, fontStyle: fontStyle as any,
+    spacing, bonusWords: bonusWords || undefined, miniText,
+    hideWordList: wordListPosition === "hidden",
+    hintStyle: hintStyle as any, crosswordSymmetry: crosswordSymmetry as any,
+    mysteryWord: mysteryWord || undefined,
+    symbolTheme, cipherType, caesarShift, vigenereKey: vigenereKey || undefined,
+    showCipherTable: showCipherTable as any, phraseLength: phraseLength as any,
+    sudokuSize, sudokuContentType: sudokuContentType as any,
+    sudokuCustomSymbols: sudokuCustomSymbols ? sudokuCustomSymbols.split(",").map(s => s.trim()).filter(Boolean) : undefined,
+    sudokuFillPercent, sudokuCount, sudokuShowScratch,
+    mazeQuestions: mazeQuestions.length > 0 ? mazeQuestions : undefined,
+    mazeSize: mazeSize as any, mazeQuestionType: mazeQuestionType as any,
+    mazeStyle: "square",
+  }), [tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
+    gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase, fontStyle, spacing, bonusWords, miniText,
+    hintStyle, crosswordSymmetry, mysteryWord,
+    symbolTheme, cipherType, caesarShift, vigenereKey, showCipherTable, phraseLength,
+    sudokuSize, sudokuContentType, sudokuCustomSymbols, sudokuFillPercent, sudokuCount, sudokuShowScratch,
+    mazeQuestions, mazeSize, mazeQuestionType]);
+
+  const generators: Record<string, (c: GameConfig) => any> = {
+    "caca-palavras": generateWordSearch,
+    "cruzadinha": generateCrossword,
+    "criptograma": generateCryptogram,
+    "sudoku": generateSudoku,
+    "labirinto": generateMaze,
+  };
+
+  const handleGenerateManual = () => {
+    if (!tema.trim() && selectedGame !== "sudoku") { toast.error("Insira o tema"); return; }
+    if (selectedGameDef?.needsWords && !palavras.trim()) { toast.error("Insira as palavras-chave separadas por vírgula"); return; }
     setGenerating(true);
-    setGameData(null);
-    setShowAnswerKey(false);
+    setTimeout(() => {
+      try {
+        const gen = generators[selectedGame!];
+        if (gen) { setGameData(gen(getConfig())); toast.success("Jogo gerado!"); }
+      } catch { toast.error("Erro ao gerar"); }
+      finally { setGenerating(false); }
+    }, 200);
+  };
 
+  const { canUseAI, deductCredit } = useCredits();
+
+  const handleGenerateAI = async () => {
+    if (!tema.trim()) { toast.error("Insira o tema"); return; }
+    if (!canUseAI) { toast.error("Limite atingido. Faça o upgrade para continuar criando."); return; }
+    setGenerating(true);
     try {
-      let data: any = null;
-      const config: GameConfig = {
-        tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
-        gridSize, directions,
-        wordListPosition: wordListPosition as GameConfig["wordListPosition"],
-        wordListOrder: wordListOrder as GameConfig["wordListOrder"],
-        cellFormat: cellFormat as GameConfig["cellFormat"],
-        letterCase: letterCase as GameConfig["letterCase"],
-        fontStyle: fontStyle as GameConfig["fontStyle"],
-        spacing, bonusWords, miniText,
-        hintStyle: hintStyle as GameConfig["hintStyle"],
-        crosswordSymmetry: crosswordSymmetry as GameConfig["crosswordSymmetry"],
-        mysteryWord, symbolTheme, cipherType, caesarShift, vigenereKey,
-        showCipherTable: showCipherTable as GameConfig["showCipherTable"],
-        phraseLength: phraseLength as GameConfig["phraseLength"],
-        sudokuSize,
-        sudokuContentType: sudokuContentType as GameConfig["sudokuContentType"],
-        sudokuCustomSymbols: sudokuCustomSymbols ? sudokuCustomSymbols.split(",").map(s => s.trim()).filter(Boolean) : undefined,
-        sudokuFillPercent, sudokuCount, sudokuShowScratch,
-        mazeQuestions,
-        mazeSize: mazeSize as GameConfig["mazeSize"],
-        mazeQuestionType: mazeQuestionType as GameConfig["mazeQuestionType"],
-      };
-
-      if (selectedGame === "caca-palavras") data = generateWordSearch(config);
-      else if (selectedGame === "cruzadinha") data = generateCrossword(config);
-      else if (selectedGame === "criptograma") data = generateCryptogram(config);
-      else if (selectedGame === "sudoku") data = generateSudoku(config);
-      else if (selectedGame === "labirinto") data = generateMaze(config);
-
-      setGameData(data);
-    } catch (e) {
-      toast.error("Erro ao gerar o jogo");
-      console.error(e);
-    } finally {
-      setGenerating(false);
-    }
-  }, [
-    selectedGame, selectedGameDef, tema, palavras, difficulty, etapa, editorMode, header, colorMode,
-    customInstructions, gridSize, directions, wordListPosition, wordListOrder, cellFormat, letterCase,
-    fontStyle, spacing, bonusWords, miniText, hintStyle, crosswordSymmetry, mysteryWord, symbolTheme,
-    cipherType, caesarShift, vigenereKey, showCipherTable, phraseLength, sudokuSize, sudokuContentType,
-    sudokuCustomSymbols, sudokuFillPercent, sudokuCount, sudokuShowScratch, mazeQuestions, mazeSize, mazeQuestionType,
-  ]);
-
-  const handleSave = async () => {
-    if (!docLimits.checkAndWarnLimit()) return;
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Faça login"); return; }
-      const titulo = `${selectedGameDef?.title || "Jogo"} - ${tema || "Sem tema"}`;
-      const { error } = await supabase.from("documentos_salvos").insert({
-        user_id: user.id, tipo: "jogo", titulo,
-        conteudo: { gameData, gameType: selectedGame, config: getConfig() } as any,
+      const ok = await deductCredit();
+      if (!ok) { toast.error("Sem créditos disponíveis."); setGenerating(false); return; }
+      const wsDefaults = getWordSearchDefaults(etapa, difficulty);
+      const { data: aiData, error } = await supabase.functions.invoke("generate-game", {
+        body: { gameType: selectedGame, tema, difficulty, etapa, count: wsDefaults.wordCount },
       });
       if (error) throw error;
-      toast.success("Jogo salvo na biblioteca!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar");
-    } finally {
-      setSaving(false);
-    }
+      if (aiData?.error) { toast.error(aiData.error); setGenerating(false); return; }
+
+      const config = getConfig();
+      if (selectedGame === "caca-palavras" && aiData.palavras) {
+        const enriched = { ...config, palavras: aiData.palavras.join(", ") };
+        setPalavras(enriched.palavras);
+        setGameData(generateWordSearch(enriched));
+      } else if (selectedGame === "cruzadinha" && aiData.palavras) {
+        const enriched: GameConfig = { ...config, palavras: aiData.palavras.join(", "), _aiHints: aiData.dicas };
+        setPalavras(enriched.palavras);
+        setGameData(generateCrossword(enriched));
+      } else if (selectedGame === "criptograma" && aiData.mensagem) {
+        setGameData(generateCryptogram({ ...config, _aiCryptogramMessage: aiData.mensagem }));
+      } else if (selectedGame === "labirinto" && aiData.questions) {
+        setMazeQuestions(aiData.questions);
+        setGameData(generateMaze({ ...config, mazeQuestions: aiData.questions }));
+      } else {
+        const gen = generators[selectedGame!];
+        if (gen) setGameData(gen(config));
+      }
+      toast.success("🤖 Jogo gerado com IA!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao gerar com IA");
+    } finally { setGenerating(false); }
+  };
+
+  const handleGenerate = () => {
+    if (mode === "ai" && selectedGameDef?.supportsAI) handleGenerateAI();
+    else handleGenerateManual();
   };
 
   const handlePrint = () => {
     const el = document.getElementById("game-print-area");
+    const ak = document.getElementById("answer-key-area");
     if (!el) return;
     const pw = window.open("", "_blank");
     if (!pw) return;
-    pw.document.write(`<html><head><title>Jogo</title><style>
+    pw.document.write(`<html><head><title>${tema || "Jogo"}</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      @page { size: A4; margin: 15mm; }
       body { font-family: 'Inter', 'Arial', sans-serif; }
-      @page { size: A4; margin: 0; }
     </style></head><body>`);
-    pw.document.write(el.outerHTML);
-    const ak = document.getElementById("answer-key-area");
-    if (ak && answerKey !== "none" && showAnswerKey) pw.document.write(ak.outerHTML);
+    pw.document.write(el.innerHTML);
+    if (ak && answerKey !== "none") pw.document.write(ak.innerHTML);
     pw.document.write("</body></html>");
     pw.document.close();
     pw.focus();
@@ -272,67 +281,136 @@ export default function GameFactory() {
     pw.close();
   };
 
-  const handlePDF = () => {
-    exportToPdf("game-print-area", "jogo");
+  const handlePDF = async () => {
+    const el = document.getElementById("game-print-area");
+    if (!el) return;
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const container = document.createElement("div");
+
+      // Clone game page
+      const gameClone = el.cloneNode(true) as HTMLElement;
+      gameClone.style.width = "210mm";
+      gameClone.style.minHeight = "297mm";
+      gameClone.style.maxHeight = "297mm";
+      gameClone.style.padding = "20mm 15mm";
+      gameClone.style.boxSizing = "border-box";
+      gameClone.style.overflow = "hidden";
+      gameClone.style.background = "#fff";
+      gameClone.style.position = "relative";
+      container.appendChild(gameClone);
+
+      // Clone answer key if enabled
+      if (answerKey !== "none") {
+        const ak = document.getElementById("answer-key-area");
+        if (ak) {
+          const akClone = ak.cloneNode(true) as HTMLElement;
+          akClone.style.width = "210mm";
+          akClone.style.minHeight = "297mm";
+          akClone.style.padding = "20mm 15mm";
+          akClone.style.boxSizing = "border-box";
+          akClone.style.pageBreakBefore = "always";
+          akClone.style.background = "#fff";
+          container.appendChild(akClone);
+        }
+      }
+
+      // Force all table cells and grid cells to have centered text
+      container.querySelectorAll("td, div").forEach((node) => {
+        const el = node as HTMLElement;
+        if (el.style.textAlign === "center" || el.style.display === "flex") {
+          el.style.textAlign = "center";
+          el.style.verticalAlign = "middle";
+        }
+      });
+
+      await html2pdf().set({
+        margin: 0,
+        filename: `${tema || "jogo"}-${selectedGame}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          width: 794,  // 210mm at 96dpi
+          windowWidth: 794,
+          letterRendering: true,
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["table", "svg", ".no-break"] },
+      }).from(container).save();
+      toast.success("PDF exportado!");
+    } catch { toast.error("Erro ao exportar PDF"); }
+  };
+
+  const handleSave = async () => {
+    if (!user) { toast.error("Faça login para salvar"); return; }
+    if (!gameData) return;
+    if (!docLimits.checkAndWarnLimit()) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("documentos_salvos").insert({
+        user_id: user.id, tipo: "jogo",
+        titulo: `${selectedGameDef?.title}: ${tema || "Sem tema"}`,
+        conteudo: { gameType: selectedGame, gameData, config: getConfig() } as any,
+        disciplina: header.disciplina || null, nivel: difficulty,
+      });
+      if (error) throw error;
+      toast.success("Salvo!");
+    } catch { toast.error("Erro ao salvar"); }
+    finally { setSaving(false); }
   };
 
   const renderPreview = () => {
     if (!gameData || !selectedGame) return null;
-    switch (selectedGame) {
-      case "caca-palavras": return <WordSearchPreview data={gameData} config={getConfig()} />;
-      case "cruzadinha": return <CrosswordPreview data={gameData} config={getConfig()} />;
-      case "criptograma": return <CryptogramPreview data={gameData} config={getConfig()} />;
-      case "sudoku": return <SudokuPreview data={gameData} config={getConfig()} />;
-      case "labirinto": return <MazePreview data={gameData} config={getConfig()} />;
-      default: return null;
-    }
+    const config = getConfig();
+    const previews: Record<string, React.ReactNode> = {
+      "caca-palavras": <WordSearchPreview data={gameData} config={config} />,
+      "cruzadinha": <CrosswordPreview data={gameData} config={config} />,
+      "criptograma": <CryptogramPreview data={gameData} config={config} />,
+      "sudoku": <SudokuPreview data={gameData} config={config} />,
+      "labirinto": <MazePreview data={gameData} config={config} />,
+    };
+    return previews[selectedGame] || null;
   };
 
-  const getConfig = (): GameConfig => ({
-    tema, palavras, difficulty, etapa, header, colorMode, answerKey, customInstructions,
-    gridSize, directions,
-    wordListPosition: wordListPosition as GameConfig["wordListPosition"],
-    wordListOrder: wordListOrder as GameConfig["wordListOrder"],
-    cellFormat: cellFormat as GameConfig["cellFormat"],
-    letterCase: letterCase as GameConfig["letterCase"],
-    fontStyle: fontStyle as GameConfig["fontStyle"],
-    spacing, bonusWords, miniText,
-    hintStyle: hintStyle as GameConfig["hintStyle"],
-    crosswordSymmetry: crosswordSymmetry as GameConfig["crosswordSymmetry"],
-    mysteryWord, symbolTheme, cipherType, caesarShift, vigenereKey,
-    showCipherTable: showCipherTable as GameConfig["showCipherTable"],
-    phraseLength: phraseLength as GameConfig["phraseLength"],
-    sudokuSize,
-    sudokuContentType: sudokuContentType as GameConfig["sudokuContentType"],
-    sudokuCustomSymbols: sudokuCustomSymbols ? sudokuCustomSymbols.split(",").map(s => s.trim()).filter(Boolean) : undefined,
-    sudokuFillPercent, sudokuCount, sudokuShowScratch,
-    mazeQuestions,
-    mazeSize: mazeSize as GameConfig["mazeSize"],
-    mazeQuestionType: mazeQuestionType as GameConfig["mazeQuestionType"],
-  });
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setHeader(h => ({ ...h, logoUrl: ev.target?.result as string }));
+    reader.readAsDataURL(file);
+  };
+
+  const addMazeQuestion = () => {
+    if (mazeQuestions.length >= 5) { toast.error("Máximo 5 perguntas"); return; }
+    setMazeQuestions(q => [...q, { question: "", alternatives: ["", "", "", ""], correctIndex: 0 }]);
+  };
+  const updateMazeQuestion = (idx: number, field: string, value: any) => {
+    setMazeQuestions(qs => qs.map((q, i) => i === idx ? { ...q, [field]: value } : q));
+  };
+  const updateMazeAlternative = (qi: number, ai: number, value: string) => {
+    setMazeQuestions(qs => qs.map((q, i) => i === qi ? { ...q, alternatives: q.alternatives.map((a, j) => j === ai ? value : a) } : q));
+  };
+  const removeMazeQuestion = (idx: number) => {
+    setMazeQuestions(qs => qs.filter((_, i) => i !== idx));
+  };
 
   // --- GAME SELECTOR ---
   if (!selectedGame) {
     return (
-      <div className="space-y-6 overflow-x-hidden">
+      <div className="space-y-6">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <Gamepad2 className="h-6 w-6 text-primary" /> Criador de Jogos A4
+            <Gamepad2 className="h-6 w-6 text-primary" /> Gerador de Atividades Pedagógicas
           </h1>
-          <p className="text-muted-foreground mt-1">Escolha um jogo pedagógico para impressão em A4.</p>
+          <p className="text-muted-foreground mt-1">5 jogos educacionais personalizáveis para impressão A4</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {GAMES.map(game => (
             <Card
               key={game.id}
               className="shadow-card cursor-pointer transition-all hover:shadow-elevated hover:scale-[1.02]"
-              onClick={() => {
-                setSelectedGame(game.id);
-                setGameData(null);
-                setShowAnswerKey(false);
-                setMode(game.supportsAI ? "ai" : "manual");
-                applyEtapaDefaults(etapa, difficulty);
-              }}
+              onClick={() => { setSelectedGame(game.id); setGameData(null); setMode(game.supportsAI ? "ai" : "manual"); applyEtapaDefaults(etapa, difficulty); }}
             >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -356,75 +434,65 @@ export default function GameFactory() {
 
   const showWordsField = selectedGameDef?.needsWords && (mode === "manual" || palavras.trim());
 
-  const previewBody = gameData ? (
-    <div className="flex flex-col items-center gap-6 w-full">
-      {renderPreview()}
-      {answerKey !== "none" && showAnswerKey && (
-        <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
-      )}
-    </div>
-  ) : (
-    <div className="flex flex-col items-center justify-center py-24 text-muted-foreground bg-card text-card-foreground shadow-lg rounded-lg min-h-[420px] w-full" style={{ maxWidth: "210mm" }}>
-      <Gamepad2 className="h-14 w-14 mb-4 opacity-20" />
-      <p className="text-sm font-medium text-center px-6">
-        {mode === "ai" ? 'Insira o tema e clique em "Gerar com IA"' : 'Configure e clique em "Gerar Jogo"'}
-      </p>
-      <p className="text-xs mt-1 opacity-60 text-center px-6">O preview A4 aparecerá aqui</p>
-    </div>
-  );
-
+  // --- SPLIT EDITOR ---
   return (
-    <div className="space-y-4 overflow-x-hidden">
-      <EditorTopBar
-        title={`Criador de Jogos A4 · ${selectedGameDef?.title ?? "Jogo"}`}
-        onPrint={gameData ? handlePrint : undefined}
-        onPdf={gameData ? handlePDF : undefined}
-        onSave={gameData ? handleSave : undefined}
-        saving={saving}
-        leading={
-          <Button variant="ghost" size="sm" onClick={() => { setSelectedGame(null); setGameData(null); setPalavras(""); setMazeQuestions([]); setShowAnswerKey(false); }}>
+    <div className="space-y-3">
+      {/* Top bar */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedGame(null); setGameData(null); setPalavras(""); setMazeQuestions([]); }}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Jogos
           </Button>
-        }
-        actions={gameData ? [
-          <Button key="regenerate" variant="outline" size="sm" onClick={() => { setGameData(null); setTimeout(handleGenerate, 100); }} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3">
-            <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> Novo layout
-          </Button>,
-          ...(answerKey !== "none" ? [
-            <Button key="answer-key" variant="outline" size="sm" onClick={() => setShowAnswerKey(!showAnswerKey)} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3">
-              <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> {showAnswerKey ? "Ocultar" : "Ver"} gabarito
+          <h1 className="font-display text-lg font-bold flex items-center gap-2">
+            {selectedGameDef && <selectedGameDef.icon className="h-5 w-5 text-primary" />}
+            {selectedGameDef?.title}
+          </h1>
+        </div>
+        {gameData && (
+          <div className="flex gap-1.5">
+            <Button variant="outline" size="sm" onClick={handlePrint} className="h-7 text-[10px]">
+              <Printer className="h-3 w-3 mr-1" /> Imprimir
             </Button>
-          ] : []),
-        ] : []}
-      />
+            <Button variant="outline" size="sm" onClick={handlePDF} className="h-7 text-[10px]">
+              <FileDown className="h-3 w-3 mr-1" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSave} disabled={saving} className="h-7 text-[10px]">
+              <Save className="h-3 w-3 mr-1" /> {saving ? "..." : "Salvar"}
+            </Button>
+          </div>
+        )}
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr] overflow-hidden">
-        {/* LEFT PANEL — scrollable config */}
-        <div className="space-y-4 pr-1 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:overflow-x-hidden">
+      <div className="flex gap-4 items-start" style={{ minHeight: "calc(100vh - 180px)" }}>
+        {/* LEFT PANEL */}
+        <div className="w-[340px] shrink-0 sticky top-4 space-y-2.5 overflow-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
           <Card className="shadow-card">
-            <CardContent className="pt-4 space-y-3">
+            <CardContent className="p-3 space-y-3">
+
+              {/* Timbre / Branding - Cabeçalho Institucional (padrão BNCC) */}
               <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
                 <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
-                <TimbreSelector selectedId={selectedTimbre?.id} onSelect={handleTimbreSelect} label="Selecionar escola/timbre" />
+                <TimbreSelector
+                  selectedId={selectedTimbre?.id}
+                  onSelect={handleTimbreSelect}
+                  label="Selecionar escola/timbre"
+                />
                 {!selectedTimbre && (
-                  <Input placeholder="Ou digite o nome da escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-8 text-xs" />
+                  <Input placeholder="Ou digite o nome da escola" value={header.escola} onChange={e => setHeader(h => ({ ...h, escola: e.target.value }))} className="h-7 text-[9px]" />
                 )}
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label className="text-[10px]">Professor(a)</Label>
-                    <Input placeholder="Nome do professor" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-8 text-xs" />
+                    <Input placeholder="Nome do professor" value={header.professor} onChange={e => setHeader(h => ({ ...h, professor: e.target.value }))} className="h-7 text-[9px]" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px]">Turma</Label>
-                    <Input placeholder="Ex: 5ºA, Turma 301" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-8 text-xs" />
+                    <Input placeholder="Ex: 5ºA, Turma 301" value={header.serie} onChange={e => setHeader(h => ({ ...h, serie: e.target.value }))} className="h-7 text-[9px]" />
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className="shadow-card">
-            <CardContent className="pt-4 space-y-3">
+              {/* Quick/Advanced toggle */}
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold flex items-center gap-1">
                   {editorMode === "quick" ? <Zap className="h-3 w-3" /> : <Settings2 className="h-3 w-3" />}
@@ -433,6 +501,7 @@ export default function GameFactory() {
                 <Switch checked={isAdvanced} onCheckedChange={v => setEditorMode(v ? "advanced" : "quick")} />
               </div>
 
+              {/* Etapa Escolar */}
               <Section title="📚 Etapa Escolar">
                 <div className="grid grid-cols-3 gap-1">
                   {(Object.entries(etapaConfig) as [EtapaEscolar, typeof etapaConfig.iniciais][]).map(([key, cfg]) => (
@@ -446,6 +515,7 @@ export default function GameFactory() {
                 </div>
               </Section>
 
+              {/* Difficulty */}
               <Section title="🎯 Nível de Dificuldade">
                 <div className="grid grid-cols-3 gap-1">
                   {(["facil", "medio", "dificil"] as Difficulty[]).map(d => (
@@ -457,6 +527,7 @@ export default function GameFactory() {
                 </div>
               </Section>
 
+              {/* Mode toggle */}
               {selectedGameDef?.supportsAI && (
                 <Section title="⚡ Modo de Geração">
                   <div className="grid grid-cols-2 gap-1.5">
@@ -470,23 +541,30 @@ export default function GameFactory() {
                 </Section>
               )}
 
+              {/* Tema */}
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Tema <Tip text="O tema será usado pela IA ou como título" /></Label>
                 <Input placeholder="Ex: Adjetivos, Frações, Sistema Solar..." value={tema} onChange={e => setTema(e.target.value)} className="h-8 text-xs" />
                 <p className="text-[9px] text-muted-foreground">
-                  Português: <span className="font-medium">Substantivos, Verbos, Pontuação</span> ·
+                  Português: <span className="font-medium">Substantivos, Verbos, Pontuação</span> · 
                   Matemática: <span className="font-medium">Frações, Geometria, Álgebra</span>
                 </p>
               </div>
 
+              {/* Words */}
               {showWordsField && (
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Palavras-chave (vírgula)</Label>
                   <Textarea placeholder="SUJEITO, VERBO, PREDICADO ou FRAÇÃO, NUMERADOR, DENOMINADOR" value={palavras} onChange={e => setPalavras(e.target.value)} className="min-h-[50px] text-xs" />
+                  <p className="text-[9px] text-muted-foreground">
+                    Ex: SUBSTANTIVO, ADJETIVO, VERBO ou SOMA, SUBTRAÇÃO, MULTIPLICAÇÃO
+                  </p>
                 </div>
               )}
 
               {/* ===== GAME-SPECIFIC CONFIGS ===== */}
+
+              {/* CAÇA-PALAVRAS */}
               {selectedGame === "caca-palavras" && (
                 <>
                   <Section title="🔍 Configurações do Caça-Palavras">
@@ -504,6 +582,7 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div className="space-y-1">
                       <Label className="text-[10px]">Direções permitidas <Tip text="Mais direções = mais difícil" /></Label>
                       <div className="space-y-1">
@@ -515,12 +594,17 @@ export default function GameFactory() {
                           { key: "reversed" as const, label: "🔄 Invertidas (trás p/ frente)" },
                         ].map(d => (
                           <div key={d.key} className="flex items-center gap-2">
-                            <Checkbox id={`dir-${d.key}`} checked={directions[d.key]} onCheckedChange={v => setDirections(prev => ({ ...prev, [d.key]: !!v }))} />
+                            <Checkbox
+                              id={`dir-${d.key}`}
+                              checked={directions[d.key]}
+                              onCheckedChange={v => setDirections(prev => ({ ...prev, [d.key]: !!v }))}
+                            />
                             <label htmlFor={`dir-${d.key}`} className="text-[10px]">{d.label}</label>
                           </div>
                         ))}
                       </div>
                     </div>
+
                     <div className="space-y-1">
                       <Label className="text-[10px]">Lista de palavras <Tip text="Ocultar lista torna a atividade mais desafiadora" /></Label>
                       <Select value={wordListPosition} onValueChange={setWordListPosition}>
@@ -533,6 +617,7 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div className="flex items-center justify-between">
                       <Label className="text-[10px]">📖 Gerar minitexto com palavras <Tip text="Gera um pequeno texto com as palavras em CAIXA ALTA para o aluno encontrar" /></Label>
                       <Switch checked={miniText} onCheckedChange={setMiniText} />
@@ -586,23 +671,27 @@ export default function GameFactory() {
                 </>
               )}
 
+              {/* CRUZADINHA */}
               {selectedGame === "cruzadinha" && (
-                <Section title="✏️ Configurações das Cruzadas">
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Estilo de Dica <Tip text="Define como as dicas são apresentadas" /></Label>
-                    <Select value={hintStyle} onValueChange={setHintStyle}>
-                      <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Texto descritivo</SelectItem>
-                        <SelectItem value="synonym">Sinônimo</SelectItem>
-                        <SelectItem value="fill-blank">Preencha a lacuna</SelectItem>
-                        <SelectItem value="question">Pergunta</SelectItem>
-                        <SelectItem value="riddle">Enigma/Charada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <>
+                  <Section title="✏️ Configurações das Cruzadas">
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Estilo de Dica <Tip text="Define como as dicas são apresentadas" /></Label>
+                      <Select value={hintStyle} onValueChange={setHintStyle}>
+                        <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Texto descritivo</SelectItem>
+                          <SelectItem value="synonym">Sinônimo</SelectItem>
+                          <SelectItem value="fill-blank">Preencha a lacuna</SelectItem>
+                          <SelectItem value="question">Pergunta</SelectItem>
+                          <SelectItem value="riddle">Enigma/Charada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </Section>
+
                   {isAdvanced && (
-                    <>
+                    <Section title="⚙️ Configurações Avançadas" defaultOpen={false}>
                       <div className="space-y-1">
                         <Label className="text-[10px]">Simetria da grade</Label>
                         <Select value={crosswordSymmetry} onValueChange={setCrosswordSymmetry}>
@@ -618,11 +707,12 @@ export default function GameFactory() {
                         <Label className="text-[10px]">Palavra misteriosa (opcional)</Label>
                         <Input placeholder="Palavra que aparece na vertical" value={mysteryWord} onChange={e => setMysteryWord(e.target.value)} className="h-7 text-[10px]" />
                       </div>
-                    </>
+                    </Section>
                   )}
-                </Section>
+                </>
               )}
 
+              {/* CRIPTOGRAMA */}
               {selectedGame === "criptograma" && (
                 <>
                   <Section title="🔐 Configurações do Criptograma">
@@ -639,18 +729,21 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
+
                     {cipherType === "caesar" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Deslocamento César ({caesarShift})</Label>
                         <Slider value={[caesarShift]} onValueChange={v => setCaesarShift(v[0])} min={1} max={25} step={1} />
                       </div>
                     )}
+
                     {cipherType === "vigenere" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Palavra-chave Vigenère</Label>
                         <Input placeholder="CHAVE" value={vigenereKey} onChange={e => setVigenereKey(e.target.value)} className="h-7 text-[10px]" />
                       </div>
                     )}
+
                     <div className="space-y-1">
                       <Label className="text-[10px]">Tema dos símbolos</Label>
                       <Select value={symbolTheme} onValueChange={v => setSymbolTheme(v as CryptoSymbolTheme)}>
@@ -664,6 +757,7 @@ export default function GameFactory() {
                         </SelectContent>
                       </Select>
                     </div>
+
                     {mode === "manual" && (
                       <div className="space-y-1">
                         <Label className="text-[10px]">Frase Secreta</Label>
@@ -671,6 +765,7 @@ export default function GameFactory() {
                       </div>
                     )}
                   </Section>
+
                   {isAdvanced && (
                     <Section title="⚙️ Configurações Avançadas" defaultOpen={false}>
                       <div className="space-y-1">
@@ -689,6 +784,7 @@ export default function GameFactory() {
                 </>
               )}
 
+              {/* SUDOKU */}
               {selectedGame === "sudoku" && (
                 <>
                   <Section title="🧩 Configurações do Sudoku">
@@ -723,6 +819,7 @@ export default function GameFactory() {
                       </div>
                     )}
                   </Section>
+
                   {isAdvanced && (
                     <Section title="⚙️ Configurações Avançadas" defaultOpen={false}>
                       <div className="space-y-1">
@@ -742,6 +839,7 @@ export default function GameFactory() {
                 </>
               )}
 
+              {/* LABIRINTO */}
               {selectedGame === "labirinto" && (
                 <Section title="🏁 Configurações do Labirinto">
                   <div className="space-y-1">
@@ -758,6 +856,7 @@ export default function GameFactory() {
                 </Section>
               )}
 
+              {/* Gabarito */}
               <Section title="📋 Gabarito">
                 <div className="space-y-1">
                   <Label className="text-[10px]">Gabarito do Professor</Label>
@@ -771,6 +870,7 @@ export default function GameFactory() {
                 </div>
               </Section>
 
+              {/* Generate */}
               <div className="flex flex-col gap-2 pt-2 border-t">
                 <Button onClick={handleGenerate} disabled={generating} className="gradient-primary border-0 text-primary-foreground hover:opacity-90 h-9 text-xs">
                   {generating ? (
@@ -781,63 +881,47 @@ export default function GameFactory() {
                     <><Sparkles className="mr-1 h-3 w-3" /> Gerar Jogo</>
                   )}
                 </Button>
+                {gameData && (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button variant="outline" size="sm" onClick={() => { setGameData(null); setTimeout(handleGenerate, 100); }} className="h-7 text-[10px]">
+                      <RotateCcw className="h-3 w-3 mr-1" /> Novo Layout
+                    </Button>
+                    {answerKey !== "none" && (
+                      <Button variant="outline" size="sm" onClick={() => setShowAnswerKey(!showAnswerKey)} className="h-7 text-[10px]">
+                        <Eye className="h-3 w-3 mr-1" /> {showAnswerKey ? "Ocultar" : "Ver"} Gabarito
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* RIGHT PANEL — A4 Preview */}
-        <div className="overflow-x-hidden min-w-0">
-          <div data-a4-container data-preview-mode={previewMode} className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
-            <div className="flex items-center gap-1 rounded-lg border bg-card p-0.5 self-end">
-              <button onClick={() => setPreviewMode("print")}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "print" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <Monitor className="h-3 w-3" /> Impressão
-              </button>
-              <button onClick={() => setPreviewMode("mobile")}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "mobile" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <Smartphone className="h-3 w-3" /> Leitura
-              </button>
+        {/* RIGHT: Preview */}
+        <div className="flex-1 min-w-0 overflow-x-hidden">
+          <ResponsiveA4Wrapper>
+            <div className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-6">
+              {gameData ? (
+                <>
+                  <div className="shadow-elevated">{renderPreview()}</div>
+                  {answerKey !== "none" && showAnswerKey && (
+                    <div className="shadow-elevated">
+                      <AnswerKeyPreview gameType={selectedGame!} gameData={gameData} config={getConfig()} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                  <Gamepad2 className="h-12 w-12 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">
+                    {mode === "ai" ? "Insira o tema e clique em \"Gerar com IA\"" : "Configure e clique em \"Gerar Jogo\""}
+                  </p>
+                  <p className="text-xs mt-1">O preview A4 aparecerá aqui</p>
+                </div>
+              )}
             </div>
-
-            <style>{`
-              [data-a4-container] .a4-page-scaled {
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                hyphens: auto;
-              }
-              [data-a4-container] .a4-page-scaled img,
-              [data-a4-container] .a4-page-scaled table {
-                max-width: 100% !important;
-                height: auto !important;
-              }
-              [data-preview-mode="mobile"] .a4-page-scaled {
-                width: 100% !important;
-                max-width: 100% !important;
-                min-height: unset !important;
-                max-height: none !important;
-                height: auto !important;
-                padding: 4mm !important;
-                box-shadow: none !important;
-              }
-              [data-preview-mode="mobile"] .responsive-a4-inner {
-                width: 100% !important;
-                transform: none !important;
-                margin: 0 auto !important;
-              }
-              [data-preview-mode="mobile"] #game-print-area,
-              [data-preview-mode="mobile"] #answer-key-area {
-                width: 100% !important;
-                max-width: 100% !important;
-              }
-            `}</style>
-
-            {previewMode === "print" ? (
-              <ResponsiveA4Wrapper>{previewBody}</ResponsiveA4Wrapper>
-            ) : (
-              <div className="w-full max-w-full">{previewBody}</div>
-            )}
-          </div>
+          </ResponsiveA4Wrapper>
         </div>
       </div>
     </div>

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import ResponsiveA4Wrapper from "@/components/ResponsiveA4Wrapper";
-import { Sparkles, Loader2, Download, RefreshCw, Image, Code, FileText, Presentation, Monitor, Smartphone } from "lucide-react";
+import { Sparkles, Loader2, Download, RefreshCw, Image, Code, FileText, Presentation } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -42,9 +41,11 @@ const estilos = [
 
 type Orientation = "portrait" | "landscape";
 
-const A4_PORTRAIT = { width: 595 - 76, height: 842 - 76 };
-const A4_LANDSCAPE = { width: 842 - 76, height: 595 - 76 };
+// A4 dimensions in pixels at 96 DPI (minus 10mm margins = ~38px each side)
+const A4_PORTRAIT = { width: 595 - 76, height: 842 - 76 }; // ~519 x 766
+const A4_LANDSCAPE = { width: 842 - 76, height: 595 - 76 }; // ~766 x 519
 
+/** Convert SVG element to PNG blob, scaled to fit A4 */
 async function svgToPngBlob(
   svgEl: SVGSVGElement,
   scale = 2,
@@ -54,14 +55,17 @@ async function svgToPngBlob(
     const bbox = svgEl.getBoundingClientRect();
     let targetW = bbox.width;
     let targetH = bbox.height;
+
+    // Scale down to fit A4 if requested
     if (fitToA4) {
       const maxDims = fitToA4.isLandscape ? A4_LANDSCAPE : A4_PORTRAIT;
       const scaleX = maxDims.width / bbox.width;
       const scaleY = maxDims.height / bbox.height;
-      const fitScale = Math.min(scaleX, scaleY, 1);
+      const fitScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
       targetW = bbox.width * fitScale;
       targetH = bbox.height * fitScale;
     }
+
     const canvas = document.createElement("canvas");
     canvas.width = targetW * scale;
     canvas.height = targetH * scale;
@@ -69,6 +73,7 @@ async function svgToPngBlob(
     ctx.scale(scale, scale);
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, targetW, targetH);
+    
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -85,7 +90,6 @@ async function svgToPngBlob(
 
 export default function DiagramGenerator() {
   const { canUseAI, deductCredit } = useCredits();
-  const isMobile = useIsMobile();
   const [prompt, setPrompt] = useState("");
   const [tipo, setTipo] = useState("fluxograma");
   const [estilo, setEstilo] = useState("clean");
@@ -99,17 +103,13 @@ export default function DiagramGenerator() {
   const [selectedTimbre, setSelectedTimbre] = useState<TimbreData | null>(null);
   const [diagramTitle, setDiagramTitle] = useState("");
   const [diagramDescription, setDiagramDescription] = useState("");
-  const [previewMode, setPreviewMode] = useState<"print" | "mobile">(isMobile ? "mobile" : "print");
   const diagramRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isMobile) setPreviewMode("mobile");
-  }, [isMobile]);
 
   const renderMermaid = useCallback(async (code: string) => {
     if (!code.trim()) { setSvgOutput(""); return; }
     try {
+      // Remove any stray markdown fences that might have slipped through
       const cleanCode = code
         .replace(/^```(?:mermaid)?\s*/im, "")
         .replace(/\s*```\s*$/im, "")
@@ -117,15 +117,17 @@ export default function DiagramGenerator() {
         .trim();
       const id = "mermaid-" + Date.now();
       const { svg } = await mermaid.render(id, cleanCode);
+      // Force SVG to fill available width
       const scaledSvg = svg
         .replace(/width="[^"]*"/, 'width="100%"')
         .replace(/style="[^"]*max-width:[^;"]*;?/g, (m) => m.replace(/max-width:[^;"]*/g, "max-width:100%"));
       setSvgOutput(scaledSvg);
     } catch (err) {
       console.error("Mermaid render error:", err);
-      toast.error("Erro de sintaxe no diagrama.");
-      setSvgOutput(`<div style="color:hsl(var(--destructive));padding:16px;background:hsl(var(--destructive)/0.1);border-radius:8px;font-size:13px;">
-        <strong>Erro de sintaxe Mermaid.</strong><br/>Use "Pedir Ajuste à IA" e escreva: <em>"corrija a sintaxe"</em>
+      toast.error("Erro de sintaxe no diagrama. Tente gerar novamente ou ajuste o código.");
+      setSvgOutput(`<div style="color:#b91c1c;padding:16px;background:#fef2f2;border-radius:8px;font-size:13px;">
+        <strong>Erro de sintaxe Mermaid.</strong><br/>
+        Use o campo "Pedir Ajuste à IA" abaixo e escreva: <em>"corrija a sintaxe do diagrama"</em>
       </div>`);
     }
   }, []);
@@ -177,6 +179,7 @@ export default function DiagramGenerator() {
     }
   };
 
+  // ── Export: PNG (fit to A4) ──
   const handleDownloadPng = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) return;
@@ -186,22 +189,30 @@ export default function DiagramGenerator() {
     saveAs(blob, "diagrama.png");
   };
 
+  // ── Export: PDF (A4 portrait or landscape, diagram scaled to fit) ──
   const handleExportPdf = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
+    
     const isLandscape = orientation === "landscape";
+    // Get PNG blob scaled to fit A4
     const pngBlob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    
+    // Create a temporary container with proper A4 layout
     const tempDiv = document.createElement("div");
     tempDiv.style.width = isLandscape ? "267mm" : "180mm";
     tempDiv.style.padding = "0";
     tempDiv.style.background = "#fff";
     tempDiv.style.fontFamily = "'Inter', 'Arial', sans-serif";
+    
+    // Add branding if present
     if (bannerUrl || logoUrl || escolaFinal) {
       const headerDiv = document.createElement("div");
       headerDiv.style.marginBottom = "12px";
       headerDiv.style.paddingBottom = "8px";
       headerDiv.style.borderBottom = "1px solid #e5e7eb";
+      
       if (bannerUrl) {
         const bannerImg = document.createElement("img");
         bannerImg.src = bannerUrl;
@@ -233,10 +244,13 @@ export default function DiagramGenerator() {
       }
       tempDiv.appendChild(headerDiv);
     }
+    
+    // Add diagram image centered and scaled
     const imgContainer = document.createElement("div");
     imgContainer.style.display = "flex";
     imgContainer.style.justifyContent = "center";
     imgContainer.style.alignItems = "center";
+    
     const diagramImg = document.createElement("img");
     diagramImg.src = URL.createObjectURL(pngBlob);
     diagramImg.style.maxWidth = "100%";
@@ -244,7 +258,9 @@ export default function DiagramGenerator() {
     diagramImg.style.objectFit = "contain";
     imgContainer.appendChild(diagramImg);
     tempDiv.appendChild(imgContainer);
+    
     document.body.appendChild(tempDiv);
+    
     const html2pdf = (await import("html2pdf.js")).default;
     await html2pdf().set({
       margin: [10, 10, 10, 10],
@@ -253,10 +269,12 @@ export default function DiagramGenerator() {
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: "mm", format: "a4", orientation: isLandscape ? "landscape" : "portrait" },
     }).from(tempDiv).save();
+    
     document.body.removeChild(tempDiv);
     URL.revokeObjectURL(diagramImg.src);
   };
 
+  // ── Export: DOCX (scaled to fit A4) ──
   const handleExportDocx = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
@@ -264,13 +282,21 @@ export default function DiagramGenerator() {
     const blob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!blob) { toast.error("Erro ao gerar imagem"); return; }
     const buffer = await blob.arrayBuffer();
+    
+    // DOCX dimensions: A4 is 595x842 points, margins ~50pt each side
+    // Max content area: ~495x742 (portrait) or ~742x495 (landscape)
     const maxW = isLandscape ? 680 : 480;
     const maxH = isLandscape ? 420 : 680;
+    
+    // Get the scaled image dimensions from the blob
     const imgBitmap = await createImageBitmap(blob);
-    let w = imgBitmap.width / 3;
+    let w = imgBitmap.width / 3; // Divide by scale factor used in svgToPngBlob
     let h = imgBitmap.height / 3;
+    
+    // Further constrain to DOCX max dimensions
     if (w > maxW) { h = h * (maxW / w); w = maxW; }
     if (h > maxH) { w = w * (maxH / h); h = maxH; }
+    
     const children: Paragraph[] = [];
     if (escolaFinal) {
       const { TextRun } = await import("docx");
@@ -284,7 +310,7 @@ export default function DiagramGenerator() {
       sections: [{
         properties: {
           page: {
-            margin: { top: 720, bottom: 720, left: 720, right: 720 },
+            margin: { top: 720, bottom: 720, left: 720, right: 720 }, // ~1cm margins
             size: isLandscape ? { orientation: "landscape" } : undefined,
           },
         },
@@ -295,34 +321,50 @@ export default function DiagramGenerator() {
     saveAs(docBlob, "diagrama.docx");
   };
 
+  // ── Export: PPTX (scaled to fit slide) ──
   const handleExportPptx = async () => {
     const svgEl = diagramRef.current?.querySelector("svg") as SVGSVGElement | null;
     if (!svgEl) { toast.error("Gere um diagrama primeiro"); return; }
     const isLandscape = orientation === "landscape";
     const pngBlob = await svgToPngBlob(svgEl, 3, { isLandscape });
     if (!pngBlob) { toast.error("Erro ao gerar imagem"); return; }
+    
     const base64 = await new Promise<string>((res) => {
       const reader = new FileReader();
       reader.onloadend = () => res((reader.result as string).split(",")[1]);
       reader.readAsDataURL(pngBlob);
     });
+    
     const pptxgenjs = (await import("pptxgenjs")).default;
     const pres = new pptxgenjs();
-    if (isLandscape) pres.defineLayout({ name: "A4H", width: 11.69, height: 8.27 });
-    else pres.defineLayout({ name: "A4V", width: 8.27, height: 11.69 });
+    
+    // Define A4 layout
+    if (isLandscape) {
+      pres.defineLayout({ name: "A4H", width: 11.69, height: 8.27 }); // A4 landscape in inches
+    } else {
+      pres.defineLayout({ name: "A4V", width: 8.27, height: 11.69 }); // A4 portrait in inches
+    }
+    
     const slide = pres.addSlide();
     if (escolaFinal) {
       slide.addText(escolaFinal, { x: 0.5, y: 0.3, w: isLandscape ? 10.69 : 7.27, h: 0.5, fontSize: 14, bold: true, align: "center" });
     }
+    
+    // Get actual image dimensions from blob
     const imgBitmap = await createImageBitmap(pngBlob);
     const imgAspect = imgBitmap.width / imgBitmap.height;
+    
+    // Max content area (leaving margins)
     const maxW = isLandscape ? 10 : 7;
     const maxH = isLandscape ? 6.5 : 9.5;
+    
     let imgW = maxW;
     let imgH = maxW / imgAspect;
     if (imgH > maxH) { imgH = maxH; imgW = maxH * imgAspect; }
+    
     const xOff = isLandscape ? (11.69 - imgW) / 2 : (8.27 - imgW) / 2;
     const yOff = escolaFinal ? 1 : (isLandscape ? (8.27 - imgH) / 2 : (11.69 - imgH) / 2);
+    
     slide.addImage({ data: `image/png;base64,${base64}`, x: xOff, y: yOff, w: imgW, h: imgH });
     const buf = await pres.write({ outputType: "arraybuffer" });
     saveAs(new Blob([buf as ArrayBuffer]), "diagrama.pptx");
@@ -344,52 +386,8 @@ export default function DiagramGenerator() {
     lineHeight: 1.6,
   };
 
-  const a4Preview = (
-    <div
-      ref={printRef}
-      id="diagram-print-area"
-      className="a4-page-scaled bg-card text-card-foreground border rounded-lg shadow-sm shrink-0"
-      style={{
-        ...previewStyle,
-        maxWidth: "100%",
-        boxSizing: "border-box",
-      }}
-    >
-      {(bannerUrl || logoUrl || escolaFinal) && (
-        <div className="mb-4 pb-3 border-b border-border" style={{ textAlign: "center" }}>
-          {bannerUrl ? (
-            <img src={bannerUrl} alt="Banner" style={{ maxWidth: "100%", maxHeight: "96px", objectFit: "contain", margin: "0 auto", display: "block" }} crossOrigin="anonymous" />
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-              {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "contain" }} crossOrigin="anonymous" />}
-              {escolaFinal && <span style={{ fontWeight: 600, fontSize: "14px" }}>{escolaFinal}</span>}
-            </div>
-          )}
-        </div>
-      )}
-      {diagramTitle && (
-        <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: "16pt", fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
-          {diagramTitle}
-        </h2>
-      )}
-      {diagramDescription && (
-        <p style={{ textAlign: "justify", fontSize: "10pt", color: "hsl(var(--muted-foreground))", marginBottom: "6mm", lineHeight: 1.6 }}>
-          {diagramDescription}
-        </p>
-      )}
-      {svgOutput ? (
-        <div ref={diagramRef} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }} dangerouslySetInnerHTML={{ __html: svgOutput }} />
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "256px", color: "hsl(var(--muted-foreground))" }}>
-          <Image style={{ width: "48px", height: "48px", marginBottom: "12px", opacity: 0.3 }} />
-          <p style={{ fontSize: "14px" }}>Seu diagrama aparecerá aqui em formato A4</p>
-        </div>
-      )}
-    </div>
-  );
-
   return (
-    <div className="space-y-4 overflow-x-hidden">
+    <div className="flex flex-col h-full">
       <EditorTopBar
         title="Gerador de Diagramas"
         onPdf={mermaidCode ? handleExportPdf : undefined}
@@ -397,24 +395,24 @@ export default function DiagramGenerator() {
         onPptx={mermaidCode ? handleExportPptx : undefined}
         actions={[
           mermaidCode ? (
-            <Button key="code" variant="ghost" size="sm" onClick={() => setShowCode(!showCode)} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3">
-              <Code className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            <Button key="code" variant="ghost" size="sm" onClick={() => setShowCode(!showCode)}>
+              <Code className="h-4 w-4 mr-1" />
               {showCode ? "Ocultar Código" : "Ver Código"}
             </Button>
           ) : null,
           mermaidCode ? (
-            <Button key="png" variant="outline" size="sm" onClick={handleDownloadPng} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            <Button key="png" variant="outline" size="sm" onClick={handleDownloadPng}>
+              <Download className="h-4 w-4 mr-1" />
               PNG
             </Button>
           ) : null,
         ].filter(Boolean) as React.ReactNode[]}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr] overflow-hidden">
-        {/* LEFT PANEL — scrollable config, no page-level scrollbar */}
-        <div className="space-y-4 pr-1 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:overflow-x-hidden">
-          <Card className="shadow-card">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-auto">
+        {/* Left Panel */}
+        <div className="w-full lg:w-[340px] shrink-0 space-y-4">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -424,22 +422,43 @@ export default function DiagramGenerator() {
             <CardContent className="space-y-3">
               <div className="rounded-lg border border-dashed border-primary/30 p-3 space-y-3 bg-primary/5">
                 <Label className="text-xs font-semibold">🏫 Cabeçalho Institucional</Label>
-                <TimbreSelector onSelect={setSelectedTimbre} selectedId={selectedTimbre?.id || undefined} label="Selecionar escola/timbre" />
+                <TimbreSelector
+                  onSelect={setSelectedTimbre}
+                  selectedId={selectedTimbre?.id || undefined}
+                  label="Selecionar escola/timbre"
+                />
               </div>
 
               <div>
                 <Label className="text-xs">Descreva o diagrama</Label>
-                <Textarea placeholder="Ex: Crie um ciclo da água simples..." value={prompt} onChange={e => setPrompt(e.target.value)} rows={4} className="text-sm mt-1" />
+                <Textarea
+                  placeholder="Ex: Crie um ciclo da água simples..."
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                  rows={4}
+                  className="text-sm mt-1"
+                />
               </div>
 
               <div>
                 <Label className="text-xs">Título do diagrama (opcional)</Label>
-                <Input placeholder="Ex: Ciclo da Água" value={diagramTitle} onChange={e => setDiagramTitle(e.target.value)} className="h-8 text-xs mt-1" />
+                <Input
+                  placeholder="Ex: Ciclo da Água"
+                  value={diagramTitle}
+                  onChange={e => setDiagramTitle(e.target.value)}
+                  className="h-8 text-xs mt-1"
+                />
               </div>
 
               <div>
                 <Label className="text-xs">Descrição contextual (opcional)</Label>
-                <Textarea placeholder="Texto informativo para incluir acima ou abaixo do diagrama..." value={diagramDescription} onChange={e => setDiagramDescription(e.target.value)} rows={2} className="text-xs mt-1" />
+                <Textarea
+                  placeholder="Texto informativo para incluir acima ou abaixo do diagrama..."
+                  value={diagramDescription}
+                  onChange={e => setDiagramDescription(e.target.value)}
+                  rows={2}
+                  className="text-xs mt-1"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -474,7 +493,7 @@ export default function DiagramGenerator() {
                 </Select>
               </div>
 
-              <Button className="w-full gradient-primary border-0 text-primary-foreground hover:opacity-90" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
+              <Button className="w-full" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                 Gerar Diagrama via IA
               </Button>
@@ -482,7 +501,7 @@ export default function DiagramGenerator() {
           </Card>
 
           {mermaidCode && (
-            <Card className="shadow-card">
+            <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <RefreshCw className="h-4 w-4 text-primary" />
@@ -490,7 +509,13 @@ export default function DiagramGenerator() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Input placeholder="Ex: Mude a cor do nó 'Evaporação' para azul" value={ajuste} onChange={e => setAjuste(e.target.value)} className="text-sm" onKeyDown={e => e.key === "Enter" && handleAjuste()} />
+                <Input
+                  placeholder="Ex: Mude a cor do nó 'Evaporação' para azul"
+                  value={ajuste}
+                  onChange={e => setAjuste(e.target.value)}
+                  className="text-sm"
+                  onKeyDown={e => e.key === "Enter" && handleAjuste()}
+                />
                 <Button size="sm" className="w-full" onClick={handleAjuste} disabled={ajusteLoading || !ajuste.trim()}>
                   {ajusteLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                   Aplicar Ajuste
@@ -500,58 +525,75 @@ export default function DiagramGenerator() {
           )}
 
           {showCode && mermaidCode && (
-            <Card className="shadow-card">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Código Mermaid</CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea className="font-mono text-xs min-h-[150px]" value={mermaidCode} onChange={e => setMermaidCode(e.target.value)} />
+                <Textarea
+                  className="font-mono text-xs min-h-[150px]"
+                  value={mermaidCode}
+                  onChange={e => setMermaidCode(e.target.value)}
+                />
               </CardContent>
             </Card>
           )}
         </div>
 
-        {/* RIGHT PANEL — A4 Preview */}
-        <div className="overflow-x-hidden min-w-0">
-          <div data-a4-container data-preview-mode={previewMode} className="bg-muted/30 rounded-lg p-2 sm:p-4 flex flex-col items-center gap-4 w-full overflow-x-hidden max-w-full">
-            <div className="flex items-center gap-1 rounded-lg border bg-card p-0.5 self-end">
-              <button onClick={() => setPreviewMode("print")}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "print" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <Monitor className="h-3 w-3" /> Impressão
-              </button>
-              <button onClick={() => setPreviewMode("mobile")}
-                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all ${previewMode === "mobile" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <Smartphone className="h-3 w-3" /> Leitura
-              </button>
-            </div>
+        {/* Right Panel — Diagram Preview A4 */}
+        <div className="flex-1 flex items-start justify-center overflow-x-hidden pb-4 min-w-0">
+          <ResponsiveA4Wrapper>
+          <div
+            ref={printRef}
+            className="bg-white border rounded-lg shadow-sm shrink-0"
+            style={{
+              ...previewStyle,
+              maxWidth: "100%",
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Header / Branding — always centered */}
+            {(bannerUrl || logoUrl || escolaFinal) && (
+              <div className="mb-4 pb-3 border-b" style={{ borderColor: "#e5e7eb", textAlign: "center" }}>
+                {bannerUrl ? (
+                  <img src={bannerUrl} alt="Banner" style={{ maxWidth: "100%", maxHeight: "96px", objectFit: "contain", margin: "0 auto", display: "block" }} crossOrigin="anonymous" />
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "contain" }} crossOrigin="anonymous" />}
+                    {escolaFinal && <span style={{ fontWeight: 600, fontSize: "14px" }}>{escolaFinal}</span>}
+                  </div>
+                )}
+              </div>
+            )}
 
-            <style>{`
-              [data-preview-mode="mobile"] .a4-page-scaled {
-                width: 100% !important;
-                max-width: 100% !important;
-                min-height: unset !important;
-                max-height: none !important;
-                height: auto !important;
-                padding: 4mm !important;
-                box-shadow: none !important;
-              }
-              [data-preview-mode="mobile"] .responsive-a4-inner {
-                width: 100% !important;
-                transform: none !important;
-                margin: 0 auto !important;
-              }
-              [data-preview-mode="mobile"] #diagram-print-area {
-                width: 100% !important;
-                max-width: 100% !important;
-              }
-            `}</style>
+            {/* Title */}
+            {diagramTitle && (
+              <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: "16pt", fontFamily: "'Montserrat', sans-serif", marginBottom: "4mm" }}>
+                {diagramTitle}
+              </h2>
+            )}
 
-            {previewMode === "print" ? (
-              <ResponsiveA4Wrapper>{a4Preview}</ResponsiveA4Wrapper>
+            {/* Description above diagram */}
+            {diagramDescription && (
+              <p style={{ textAlign: "justify", fontSize: "10pt", color: "#374151", marginBottom: "6mm", lineHeight: 1.6 }}>
+                {diagramDescription}
+              </p>
+            )}
+
+            {svgOutput ? (
+              <div
+                ref={diagramRef}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                dangerouslySetInnerHTML={{ __html: svgOutput }}
+              />
             ) : (
-              <div className="w-full max-w-full">{a4Preview}</div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "256px", color: "#9ca3af" }}>
+                <Image style={{ width: "48px", height: "48px", marginBottom: "12px", opacity: 0.3 }} />
+                <p style={{ fontSize: "14px" }}>Seu diagrama aparecerá aqui em formato A4</p>
+              </div>
             )}
           </div>
+          </ResponsiveA4Wrapper>
         </div>
       </div>
     </div>
